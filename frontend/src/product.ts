@@ -68,6 +68,11 @@ type ProductRecordsResponse = {
   detail?: string;
 };
 
+type FocusConstraintSet = MediaTrackConstraintSet & {
+  focusMode?: string;
+  pointsOfInterest?: { x: number; y: number }[];
+};
+
 const settings: ProductSettings = {
   triggerMode: "auto",
   generationMode: "auto",
@@ -129,6 +134,10 @@ const imageLightbox = mustQuery<HTMLDivElement>("#imageLightbox");
 const lightboxImage = mustQuery<HTMLImageElement>("#lightboxImage");
 const closeImageLightboxButton = mustQuery<HTMLButtonElement>("#closeImageLightboxButton");
 
+const focusReticle = document.createElement("span");
+focusReticle.className = "focus-reticle";
+viewfinder.append(focusReticle);
+
 let selectedImageUrl = "";
 let cameraStream: MediaStream | undefined;
 let cameraFacingMode: "user" | "environment" = "environment";
@@ -147,7 +156,9 @@ let regenerateDraftSettings: ProductSettings = { ...settings };
 let productRecordsLoadPromise: Promise<void> | undefined;
 let productRecordsTotal = 0;
 let isLoadingMoreRecords = false;
+let usingLocalRecordStore = false;
 const productRecordsPageSize = 5;
+const localProductRecordsKey = "snap-roast-buddy.product-records.v1";
 
 const funGeneratingMessages = [
   "正在寻找照片里最会抢戏的角落。",
@@ -181,8 +192,14 @@ uploadPhotoButton.addEventListener("click", () => {
   closeSettings();
   openImagePicker();
 });
-viewfinder.addEventListener("click", () => {
-  if (!cameraStream) void startCamera();
+viewfinder.addEventListener("pointerdown", (event) => {
+  const target = event.target as HTMLElement;
+  if (target.closest(".manual-start, button")) return;
+  if (!cameraStream) {
+    void startCamera();
+    return;
+  }
+  void focusCameraAt(event);
 });
 viewfinder.addEventListener("keydown", (event) => {
   if (event.key === "Enter" || event.key === " ") void captureFromCamera();
@@ -285,11 +302,12 @@ async function startCamera() {
 
   stopCameraStream();
   try {
+    const isLandscape = isLandscapeCapture();
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: cameraFacingMode },
-        width: { ideal: 1440 },
-        height: { ideal: 1920 }
+        width: { ideal: isLandscape ? 1920 : 1440 },
+        height: { ideal: isLandscape ? 1440 : 1920 }
       },
       audio: false
     });
@@ -300,7 +318,7 @@ async function startCamera() {
     emptyViewfinder.hidden = true;
     manualStartPanel.hidden = true;
     cameraHint.textContent = "按下快门，生成今日照片审判。";
-  } catch {
+  } catch (error) {
     cameraStream = undefined;
     cameraFeed.hidden = true;
     emptyViewfinder.hidden = false;
@@ -309,6 +327,9 @@ async function startCamera() {
       ? "摄像头未打开。请检查浏览器权限，或在设置里导入照片。"
       : "摄像头需要 HTTPS 或 localhost。当前页面无法直接调用摄像头。";
     cameraHint.textContent = "无法打开摄像头，请允许权限，或在设置里导入照片。";
+    if (error instanceof Error) {
+      cameraDebugMessage.textContent = `${cameraDebugMessage.textContent} (${error.name}: ${error.message})`;
+    }
   }
 }
 
@@ -332,9 +353,10 @@ async function captureFromCamera() {
     if (!cameraStream || cameraFeed.readyState < cameraFeed.HAVE_CURRENT_DATA) return;
   }
 
+  const isLandscape = isLandscapeCapture();
   const canvas = document.createElement("canvas");
-  canvas.width = 900;
-  canvas.height = 1200;
+  canvas.width = isLandscape ? 1200 : 900;
+  canvas.height = isLandscape ? 900 : 1200;
   const context = canvas.getContext("2d");
   if (!context) return;
 
@@ -362,6 +384,39 @@ async function captureFromCamera() {
   if (settings.triggerMode === "auto") await startGenerationFromSelected();
 }
 
+async function focusCameraAt(event: PointerEvent) {
+  const rect = viewfinder.getBoundingClientRect();
+  const x = clamp01((event.clientX - rect.left) / rect.width);
+  const y = clamp01((event.clientY - rect.top) / rect.height);
+  showFocusReticle(event.clientX - rect.left, event.clientY - rect.top);
+
+  const track = cameraStream?.getVideoTracks()[0];
+  if (!track) return;
+
+  try {
+    const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
+      focusMode?: string[];
+      pointsOfInterest?: unknown;
+    };
+    const advanced: FocusConstraintSet = {};
+    if (capabilities.focusMode?.includes("continuous")) advanced.focusMode = "continuous";
+    if ("pointsOfInterest" in capabilities) advanced.pointsOfInterest = [{ x, y }];
+    if (Object.keys(advanced).length) await track.applyConstraints({ advanced: [advanced] });
+  } catch (error) {
+    cameraDebugMessage.textContent =
+      error instanceof Error ? `对焦调试：${error.name} ${error.message}` : "对焦调试：当前浏览器不支持点击对焦。";
+  }
+}
+
+function showFocusReticle(x: number, y: number) {
+  focusReticle.style.left = `${x}px`;
+  focusReticle.style.top = `${y}px`;
+  focusReticle.classList.remove("is-active");
+  void focusReticle.offsetWidth;
+  focusReticle.classList.add("is-active");
+  softHaptic();
+}
+
 function showSelectedImagePreview(imageUrl: string) {
   cameraPreview.src = imageUrl;
   cameraPreview.hidden = false;
@@ -379,6 +434,7 @@ async function startGenerationFromSelected() {
     const record = await generateSnapRoastResult(selectedImageUrl, settings);
     const savedRecord = await saveProductRecord(record);
     records = [savedRecord, ...records.filter((item) => item.id !== savedRecord.id)];
+    productRecordsTotal = Math.max(productRecordsTotal, records.length);
     renderLatestThumb();
     showResult(0);
   } catch (error) {
@@ -401,6 +457,7 @@ async function regenerateCurrent() {
     const record = await generateSnapRoastResult(selectedImageUrl, settings);
     const savedRecord = await saveProductRecord(record);
     records = [savedRecord, ...records.filter((item) => item.id !== savedRecord.id)];
+    productRecordsTotal = Math.max(productRecordsTotal, records.length);
     renderLatestThumb();
     showResult(0);
   } catch (error) {
@@ -438,8 +495,13 @@ async function confirmRegenerate() {
 async function deleteCurrentRecord() {
   const current = records[currentRecordIndex];
   if (!current) return;
-  await deleteProductRecord(current.id);
+  try {
+    await deleteProductRecord(current.id);
+  } catch {
+    usingLocalRecordStore = true;
+  }
   records = records.filter((item) => item.id !== current.id);
+  productRecordsTotal = Math.max(0, productRecordsTotal - 1);
   renderLatestThumb();
   if (records.length === 0) {
     showCamera();
@@ -840,13 +902,19 @@ function renderLatestThumb() {
 async function loadProductRecords() {
   try {
     const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=0&limit=${productRecordsPageSize}`);
-    records = [...(payload.records ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    productRecordsTotal = payload.total ?? records.length;
+    const remoteRecords = [...(payload.records ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+    const localRecords = readLocalProductRecords();
+    usingLocalRecordStore = remoteRecords.length === 0 && localRecords.length > 0;
+    records = usingLocalRecordStore ? localRecords.slice(0, productRecordsPageSize) : remoteRecords;
+    productRecordsTotal = usingLocalRecordStore ? localRecords.length : payload.total ?? records.length;
+    if (remoteRecords.length) writeLocalProductRecords(remoteRecords);
     renderLatestThumb();
     if (!resultScreen.hidden) renderCurrentRecord();
   } catch {
-    records = [];
-    productRecordsTotal = 0;
+    usingLocalRecordStore = true;
+    const localRecords = readLocalProductRecords();
+    records = localRecords.slice(0, productRecordsPageSize);
+    productRecordsTotal = localRecords.length;
     renderLatestThumb();
     if (!resultScreen.hidden) renderCurrentRecord();
   }
@@ -856,6 +924,17 @@ async function loadMoreProductRecordsIfNeeded(index: number) {
   if (isLoadingMoreRecords || records.length >= productRecordsTotal || index < records.length - 2) return;
   isLoadingMoreRecords = true;
   try {
+    if (usingLocalRecordStore) {
+      const localRecords = readLocalProductRecords();
+      const nextRecords = localRecords.slice(records.length, records.length + productRecordsPageSize);
+      records = [...records, ...nextRecords];
+      productRecordsTotal = localRecords.length;
+      if (!resultScreen.hidden) {
+        renderAlbumSlides();
+        scrollAlbumToIndex(currentRecordIndex, "auto");
+      }
+      return;
+    }
     const payload = await getJson<ProductRecordsResponse>(
       `/api/product-records?offset=${records.length}&limit=${productRecordsPageSize}`
     );
@@ -881,13 +960,57 @@ async function ensureProductRecordsLoaded() {
 }
 
 async function saveProductRecord(record: PhotoRecord): Promise<PhotoRecord> {
-  const payload = await postJson<ProductRecordsResponse>("/api/product-records", { record });
-  return payload.record ?? record;
+  try {
+    const payload = await postJson<ProductRecordsResponse>("/api/product-records", { record });
+    const savedRecord = payload.record ?? record;
+    upsertLocalProductRecord(savedRecord);
+    return savedRecord;
+  } catch {
+    usingLocalRecordStore = true;
+    upsertLocalProductRecord(record);
+    return record;
+  }
 }
 
 async function deleteProductRecord(id: string): Promise<void> {
+  removeLocalProductRecord(id);
   const response = await fetch(`/api/product-records/${encodeURIComponent(id)}`, { method: "DELETE" });
   if (!response.ok) throw new Error("删除记录失败。");
+}
+
+function readLocalProductRecords(): PhotoRecord[] {
+  try {
+    const raw = window.localStorage.getItem(localProductRecordsKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as PhotoRecord[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((record) => record?.id && record.originalImageUrl && record.createdAt)
+      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalProductRecords(nextRecords: PhotoRecord[]) {
+  const sortedRecords = [...nextRecords].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const recordCaps = [24, 12, 6, 3, 1];
+  for (const cap of recordCaps) {
+    try {
+      window.localStorage.setItem(localProductRecordsKey, JSON.stringify(sortedRecords.slice(0, cap)));
+      return;
+    } catch {
+      // Try again with fewer base64-heavy photos.
+    }
+  }
+}
+
+function upsertLocalProductRecord(record: PhotoRecord) {
+  writeLocalProductRecords([record, ...readLocalProductRecords().filter((item) => item.id !== record.id)]);
+}
+
+function removeLocalProductRecord(id: string) {
+  writeLocalProductRecords(readLocalProductRecords().filter((record) => record.id !== id));
 }
 
 async function getJson<T extends { error?: string; detail?: string }>(url: string): Promise<T> {
@@ -1002,6 +1125,18 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function isLandscapeCapture(): boolean {
+  return window.matchMedia?.("(orientation: landscape)").matches || window.innerWidth > window.innerHeight;
+}
+
+function syncOrientationState() {
+  document.body.classList.toggle("is-landscape", isLandscapeCapture());
+}
+
 function createId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -1013,6 +1148,9 @@ function mustQuery<T extends Element>(selector: string): T {
 }
 
 renderSettings();
+syncOrientationState();
 showCamera();
 window.setTimeout(centerSelectedCameraMode, 80);
 productRecordsLoadPromise = loadProductRecords();
+window.addEventListener("resize", syncOrientationState);
+window.addEventListener("orientationchange", syncOrientationState);

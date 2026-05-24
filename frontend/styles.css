@@ -677,7 +677,16 @@ pre {
   --product-secondary-label: rgba(235, 235, 245, 0.6);
   --product-tertiary-label: rgba(235, 235, 245, 0.3);
   --product-separator: rgba(84, 84, 88, 0.65);
+  --ui-rotation: 0deg;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+}
+
+.product-body.is-landscape {
+  --ui-rotation: 90deg;
+}
+
+.product-body.is-landscape .product-app {
+  width: 100vw;
 }
 
 .product-app {
@@ -836,6 +845,7 @@ pre {
 .shutter-button,
 .thumbnail-button,
 .product-back {
+  transform: rotate(var(--ui-rotation));
   transition:
     transform 120ms cubic-bezier(0.25, 0.1, 0.25, 1),
     background-color 180ms cubic-bezier(0.25, 0.1, 0.25, 1),
@@ -854,6 +864,24 @@ pre {
 .shutter-button:active,
 .thumbnail-button:active,
 .product-back:active {
+  transform: rotate(var(--ui-rotation)) scale(0.96);
+}
+
+.product-body.is-landscape .pill-button,
+.product-body.is-landscape .settings-upload-button,
+.product-body.is-landscape .camera-mode-strip button,
+.product-body.is-landscape .confirm-regenerate-button,
+.product-body.is-landscape .confirm-cancel-button,
+.product-body.is-landscape .confirm-delete-button {
+  transform: none;
+}
+
+.product-body.is-landscape .pill-button:active,
+.product-body.is-landscape .settings-upload-button:active,
+.product-body.is-landscape .camera-mode-strip button:active,
+.product-body.is-landscape .confirm-regenerate-button:active,
+.product-body.is-landscape .confirm-cancel-button:active,
+.product-body.is-landscape .confirm-delete-button:active {
   transform: scale(0.96);
 }
 
@@ -976,6 +1004,21 @@ pre {
   background: var(--product-surface);
   box-shadow: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.product-body.is-landscape .viewfinder {
+  --viewfinder-top: calc(max(8px, env(safe-area-inset-top)) + 58px);
+  --viewfinder-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 112px);
+  width: min(100%, calc((100dvh - var(--viewfinder-top) - var(--viewfinder-bottom)) * 1.333));
+  aspect-ratio: 4 / 3;
+}
+
+.viewfinder:focus,
+.viewfinder:focus-visible {
+  outline: 0;
 }
 
 .viewfinder::before {
@@ -1016,6 +1059,46 @@ pre {
 .viewfinder img:not([src]),
 .viewfinder video[hidden] {
   display: none;
+}
+
+.focus-reticle {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  width: 62px;
+  height: 62px;
+  border: 2px solid rgba(255, 210, 74, 0.95);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.72);
+}
+
+.focus-reticle::before,
+.focus-reticle::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 250, 241, 0.92);
+}
+
+.focus-reticle::before {
+  left: 50%;
+  top: -9px;
+  bottom: -9px;
+  width: 2px;
+  transform: translateX(-50%);
+}
+
+.focus-reticle::after {
+  top: 50%;
+  left: -9px;
+  right: -9px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.focus-reticle.is-active {
+  animation: focus-reticle-pop 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .viewfinder-empty {
@@ -1091,6 +1174,13 @@ pre {
   padding: 18px 0 6px;
   background: linear-gradient(transparent 0%, rgba(0, 0, 0, 0.88) 28%, #000 100%);
   pointer-events: auto;
+}
+
+.product-body.is-landscape .camera-dock {
+  right: max(12px, env(safe-area-inset-right));
+  left: max(12px, env(safe-area-inset-left));
+  gap: 8px;
+  padding-top: 10px;
 }
 
 .camera-mode-strip {
@@ -1378,6 +1468,25 @@ pre {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes focus-reticle-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.66);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.82);
   }
 }
 
