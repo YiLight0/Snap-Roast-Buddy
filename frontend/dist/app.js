@@ -1693,6 +1693,7 @@ var latestAiComment = "";
 var latestEnhancedDescription = "";
 var latestMangaImageUrl = "";
 var classifiedLayoutType;
+var statusStartTimes = /* @__PURE__ */ new WeakMap();
 input.value = textExamples[0].text;
 selectedImageUrl = imageExamples[0].url;
 imagePreview.src = selectedImageUrl;
@@ -1987,19 +1988,26 @@ function renderWorkflow() {
   workflowReadout.textContent = parts.join(" / ");
 }
 function setStatus(message, state) {
-  apiStatus.textContent = state === "loading" ? message : `${message} \xB7 ${formatRunTime(/* @__PURE__ */ new Date())}`;
+  apiStatus.textContent = formatStatusMessage(apiStatus, message, state);
   apiStatus.dataset.state = state;
 }
 function setStepStatus(element, message, state) {
-  element.textContent = state === "loading" ? message : `${message} \xB7 ${formatRunTime(/* @__PURE__ */ new Date())}`;
+  element.textContent = formatStatusMessage(element, message, state);
   element.dataset.state = state;
 }
-function formatRunTime(value) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  }).format(value);
+function formatStatusMessage(element, message, state) {
+  if (state === "loading") {
+    statusStartTimes.set(element, performance.now());
+    return message;
+  }
+  const startedAt = statusStartTimes.get(element);
+  if (startedAt === void 0) return message;
+  statusStartTimes.delete(element);
+  return `${message} \xB7 \u8017\u65F6 ${formatDuration(performance.now() - startedAt)}`;
+}
+function formatDuration(durationMs) {
+  if (durationMs < 1e3) return `${Math.max(1, Math.round(durationMs))}ms`;
+  return `${(durationMs / 1e3).toFixed(1)}s`;
 }
 function formatApiError(payload, fallback) {
   const detail = payload.detail || payload.error || fallback;

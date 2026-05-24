@@ -689,16 +689,6 @@ pre {
   width: 100vw;
 }
 
-@media (orientation: landscape) {
-  .product-body {
-    --ui-rotation: 90deg;
-  }
-
-  .product-body .product-app {
-    width: 100vw;
-  }
-}
-
 .product-app {
   position: relative;
   width: min(100vw, 430px);
@@ -895,31 +885,10 @@ pre {
   transform: scale(0.96);
 }
 
-@media (orientation: landscape) {
-  .product-body .pill-button,
-  .product-body .settings-upload-button,
-  .product-body .camera-mode-strip button,
-  .product-body .confirm-regenerate-button,
-  .product-body .confirm-cancel-button,
-  .product-body .confirm-delete-button {
-    transform: none;
-  }
-
-  .product-body .pill-button:active,
-  .product-body .settings-upload-button:active,
-  .product-body .camera-mode-strip button:active,
-  .product-body .confirm-regenerate-button:active,
-  .product-body .confirm-cancel-button:active,
-  .product-body .confirm-delete-button:active {
-    transform: scale(0.96);
-  }
-}
-
 .icon-button:focus-visible,
 .round-tool:focus-visible,
 .pill-button:focus-visible,
 .settings-upload-button:focus-visible,
-.camera-zoom-strip input:focus-visible,
 .camera-zoom-strip button:focus-visible,
 .camera-mode-strip button:focus-visible,
 .confirm-regenerate-button:focus-visible,
@@ -1018,8 +987,8 @@ pre {
 }
 
 .viewfinder {
-  --viewfinder-top: calc(max(10px, env(safe-area-inset-top)) + 64px);
-  --viewfinder-bottom: calc(max(12px, env(safe-area-inset-bottom)) + 176px);
+  --viewfinder-top: calc(max(10px, env(safe-area-inset-top)) + 72px);
+  --viewfinder-bottom: calc(max(12px, env(safe-area-inset-bottom)) + 154px);
   --camera-preview-scale: 1;
   --camera-mirror-scale: 1;
   position: absolute;
@@ -1045,18 +1014,9 @@ pre {
 
 .product-body.is-landscape .viewfinder {
   --viewfinder-top: calc(max(8px, env(safe-area-inset-top)) + 58px);
-  --viewfinder-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 112px);
+  --viewfinder-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 104px);
   width: min(100%, calc((100dvh - var(--viewfinder-top) - var(--viewfinder-bottom)) * 1.333));
   aspect-ratio: 4 / 3;
-}
-
-@media (orientation: landscape) {
-  .product-body .viewfinder {
-    --viewfinder-top: calc(max(8px, env(safe-area-inset-top)) + 58px);
-    --viewfinder-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 112px);
-    width: min(100%, calc((100dvh - var(--viewfinder-top) - var(--viewfinder-bottom)) * 1.333));
-    aspect-ratio: 4 / 3;
-  }
 }
 
 .viewfinder:focus,
@@ -1150,74 +1110,29 @@ pre {
 }
 
 .camera-zoom-strip {
-  --zoom-progress: 16.7%;
   position: absolute;
   right: 12px;
   bottom: 12px;
   left: 12px;
   z-index: 5;
-  display: grid;
-  gap: 2px;
-  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 42px;
   padding: 0 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
   background: transparent;
   pointer-events: auto;
 }
 
-.camera-zoom-strip input {
-  width: 100%;
-  height: 24px;
-  margin: 0;
-  appearance: none;
-  background: transparent;
+.camera-zoom-strip::-webkit-scrollbar {
+  display: none;
 }
 
-.camera-zoom-strip input::-webkit-slider-runnable-track {
-  height: 2px;
-  border-radius: 999px;
-  background:
-    linear-gradient(90deg, var(--product-accent) 0 var(--zoom-progress), rgba(255, 250, 241, 0.34) var(--zoom-progress) 100%);
-}
-
-.camera-zoom-strip input::-moz-range-track {
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(255, 250, 241, 0.34);
-}
-
-.camera-zoom-strip input::-moz-range-progress {
-  height: 2px;
-  border-radius: 999px;
-  background: var(--product-accent);
-}
-
-.camera-zoom-strip input::-webkit-slider-thumb {
-  width: 18px;
-  height: 18px;
-  margin-top: -8px;
-  appearance: none;
-  border: 2px solid #050505;
-  border-radius: 50%;
-  background: var(--product-accent);
-  box-shadow: 0 0 0 1px rgba(255, 250, 241, 0.72);
-}
-
-.camera-zoom-strip input::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #050505;
-  border-radius: 50%;
-  background: var(--product-accent);
-  box-shadow: 0 0 0 1px rgba(255, 250, 241, 0.72);
-}
-
-.camera-zoom-labels {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.camera-zoom-labels button {
+.camera-zoom-strip button {
   display: grid;
   place-items: center;
   min-width: 38px;
@@ -1236,11 +1151,11 @@ pre {
     color 180ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.camera-zoom-labels button:active {
+.camera-zoom-strip button:active {
   transform: scale(0.94);
 }
 
-.camera-zoom-labels button.is-selected {
+.camera-zoom-strip button.is-selected {
   background: transparent;
   color: var(--product-accent);
   text-shadow: 0 0 14px rgba(255, 210, 74, 0.36);
@@ -1315,8 +1230,8 @@ pre {
   left: calc((100vw - min(100vw, 430px)) / 2 + 12px);
   z-index: 50;
   display: grid;
-  gap: 12px;
-  padding: 18px 0 6px;
+  gap: 10px;
+  padding: 10px 0 6px;
   background: linear-gradient(transparent 0%, rgba(0, 0, 0, 0.88) 28%, #000 100%);
   pointer-events: auto;
 }
@@ -1721,7 +1636,7 @@ pre {
 }
 
 .regenerate-icon-button span {
-  transform: translate(-2px, 0);
+  transform: translate(-5px, -3px);
 }
 
 .regenerate-icon-button span::before {

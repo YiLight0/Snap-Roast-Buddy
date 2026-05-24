@@ -4,12 +4,14 @@ import { createStandaloneMangaTicket, createTicketHtmlWithManga, layoutSkills as
 
 type ProductLayoutType = "receipt" | "big_text" | "expression" | "sketch";
 type TriggerMode = "auto" | "manual";
+type CaptureOrientation = "portrait" | "landscape";
 type GenerationMode = "auto" | "receipt" | "big_text" | "expression";
 type ProductRoastLevel = RoastLevel | "public_execution";
 type SketchMode = "none" | "top" | "bottom" | "standalone";
 
 type ProductSettings = {
   triggerMode: TriggerMode;
+  captureOrientation: CaptureOrientation;
   generationMode: GenerationMode;
   roastLevel: ProductRoastLevel;
   sketchMode: SketchMode;
@@ -84,6 +86,7 @@ type ZoomCapabilities = MediaTrackCapabilities & {
 
 const settings: ProductSettings = {
   triggerMode: "auto",
+  captureOrientation: "portrait",
   generationMode: "auto",
   roastLevel: "normal",
   sketchMode: "none"
@@ -111,7 +114,6 @@ const manualStartPanel = mustQuery<HTMLDivElement>("#manualStartPanel");
 const cameraHint = mustQuery<HTMLParagraphElement>("#cameraHint");
 const modeStrip = mustQuery<HTMLDivElement>(".camera-mode-strip");
 const cameraZoomStrip = mustQuery<HTMLDivElement>("#cameraZoomStrip");
-const cameraZoomSlider = mustQuery<HTMLInputElement>("#cameraZoomSlider");
 const shutterButton = mustQuery<HTMLButtonElement>("#shutterButton");
 const galleryButton = mustQuery<HTMLButtonElement>("#galleryButton");
 const latestButton = mustQuery<HTMLButtonElement>("#latestButton");
@@ -268,12 +270,6 @@ cameraZoomStrip.addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-zoom]");
   if (!button) return;
   setCameraZoom(Number(button.dataset.zoom) || 1);
-});
-cameraZoomSlider.addEventListener("input", () => {
-  setCameraZoom(Number(cameraZoomSlider.value) || 1, false);
-});
-cameraZoomSlider.addEventListener("change", () => {
-  setCameraZoom(Number(cameraZoomSlider.value) || 1);
 });
 
 imageCarousel.addEventListener("scroll", () => syncAlbumScroll(imageCarousel));
@@ -464,7 +460,7 @@ function showFocusReticle(x: number, y: number) {
 }
 
 function setCameraZoom(nextZoom: number, shouldPulse = true) {
-  cameraZoom = Math.max(0.6, Math.min(3, nextZoom));
+  cameraZoom = Math.max(1, Math.min(3, nextZoom));
   renderCameraZoom();
   void applyCameraZoom();
   if (shouldPulse) softHaptic();
@@ -492,12 +488,9 @@ async function applyCameraZoom() {
 }
 
 function renderCameraZoom() {
-  cameraZoomSlider.value = String(cameraZoom);
-  const sliderProgress = ((cameraZoom - 0.6) / (3 - 0.6)) * 100;
-  cameraZoomStrip.style.setProperty("--zoom-progress", `${Math.max(0, Math.min(100, sliderProgress))}%`);
   cameraZoomStrip.querySelectorAll<HTMLButtonElement>("button[data-zoom]").forEach((button) => {
     const value = Number(button.dataset.zoom) || 1;
-    button.classList.toggle("is-selected", Math.abs(value - cameraZoom) < 0.12);
+    button.classList.toggle("is-selected", Math.abs(value - cameraZoom) < 0.05);
   });
 }
 
@@ -959,6 +952,11 @@ function updateRegenerateDraft(key: string, value: string) {
 
 function updateSetting(key: string, value: string) {
   if (key === "triggerMode") settings.triggerMode = value as TriggerMode;
+  if (key === "captureOrientation") {
+    settings.captureOrientation = value as CaptureOrientation;
+    syncOrientationState();
+    if (cameraStream) void startCamera();
+  }
   let shouldCenterMode = false;
   if (key === "generationMode") {
     settings.generationMode = value as GenerationMode;
@@ -1328,17 +1326,7 @@ function clamp01(value: number): number {
 }
 
 function isLandscapeCapture(): boolean {
-  const screenAngle = window.screen.orientation?.angle;
-  const legacyAngle = typeof window.orientation === "number" ? window.orientation : undefined;
-  const visualViewport = window.visualViewport;
-  return (
-    screenAngle === 90 ||
-    screenAngle === 270 ||
-    legacyAngle === 90 ||
-    legacyAngle === -90 ||
-    window.matchMedia?.("(orientation: landscape)").matches ||
-    (visualViewport ? visualViewport.width > visualViewport.height : window.innerWidth > window.innerHeight)
-  );
+  return settings.captureOrientation === "landscape";
 }
 
 function syncOrientationState() {
@@ -1364,5 +1352,4 @@ window.setTimeout(centerSelectedCameraMode, 80);
 productRecordsLoadPromise = loadProductRecords();
 window.addEventListener("resize", syncOrientationState);
 window.addEventListener("orientationchange", syncOrientationState);
-window.visualViewport?.addEventListener("resize", syncOrientationState);
 window.screen.orientation?.addEventListener("change", syncOrientationState);

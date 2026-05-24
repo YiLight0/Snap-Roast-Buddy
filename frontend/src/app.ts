@@ -1,4 +1,4 @@
-import { generateRoastLayoutWithSkills } from "../../packages/layout/src/generateRoastLayoutWithSkills.js";
+﻿import { generateRoastLayoutWithSkills } from "../../packages/layout/src/generateRoastLayoutWithSkills.js";
 import type { LayoutType, RoastLevel, RoastMode } from "../../packages/layout/src/types.js";
 import {
   createStandaloneMangaTicket,
@@ -116,6 +116,7 @@ let latestAiComment = "";
 let latestEnhancedDescription = "";
 let latestMangaImageUrl = "";
 let classifiedLayoutType: LayoutType | undefined;
+const statusStartTimes = new WeakMap<HTMLElement, number>();
 
 input.value = textExamples[0].text;
 selectedImageUrl = imageExamples[0].url;
@@ -445,21 +446,30 @@ function renderWorkflow() {
 }
 
 function setStatus(message: string, state: "ready" | "loading" | "error") {
-  apiStatus.textContent = state === "loading" ? message : `${message} · ${formatRunTime(new Date())}`;
+  apiStatus.textContent = formatStatusMessage(apiStatus, message, state);
   apiStatus.dataset.state = state;
 }
 
 function setStepStatus(element: HTMLElement, message: string, state: "ready" | "loading" | "error") {
-  element.textContent = state === "loading" ? message : `${message} · ${formatRunTime(new Date())}`;
+  element.textContent = formatStatusMessage(element, message, state);
   element.dataset.state = state;
 }
 
-function formatRunTime(value: Date): string {
-  return new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  }).format(value);
+function formatStatusMessage(element: HTMLElement, message: string, state: "ready" | "loading" | "error"): string {
+  if (state === "loading") {
+    statusStartTimes.set(element, performance.now());
+    return message;
+  }
+
+  const startedAt = statusStartTimes.get(element);
+  if (startedAt === undefined) return message;
+  statusStartTimes.delete(element);
+  return `${message} · 耗时 ${formatDuration(performance.now() - startedAt)}`;
+}
+
+function formatDuration(durationMs: number): string {
+  if (durationMs < 1000) return `${Math.max(1, Math.round(durationMs))}ms`;
+  return `${(durationMs / 1000).toFixed(1)}s`;
 }
 
 function formatApiError(payload: { error?: string; detail?: string }, fallback: string): string {
