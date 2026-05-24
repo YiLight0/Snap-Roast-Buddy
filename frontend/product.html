@@ -26,11 +26,10 @@
         </header>
 
         <div id="viewfinder" class="viewfinder" role="button" tabindex="0" aria-label="选择照片">
+          <video id="cameraFeed" autoplay playsinline muted hidden></video>
           <img id="cameraPreview" alt="待拍摄图片预览" />
           <div id="emptyViewfinder" class="viewfinder-empty">
-            <span class="pixel-face-mini">▣_▣</span>
-            <strong>点击快门选择一张照片</strong>
-            <small>当前阶段暂用相册代替拍摄</small>
+            <small id="cameraDebugMessage"></small>
           </div>
           <div id="manualStartPanel" class="manual-start" hidden>
             <p>照片已就位</p>
@@ -107,6 +106,20 @@
         <button id="closeImageLightboxButton" class="icon-button lightbox-close" type="button" aria-label="关闭大图">×</button>
         <img id="lightboxImage" alt="原始照片大图" />
       </div>
+
+      <div id="deleteConfirmBackdrop" class="sheet-backdrop" hidden></div>
+      <aside id="deleteConfirmSheet" class="settings-sheet delete-confirm-sheet" hidden aria-labelledby="deleteConfirmTitle">
+        <button class="settings-collapse" type="button" aria-hidden="true" tabindex="-1">
+          <span></span>
+        </button>
+        <div>
+          <h2 id="deleteConfirmTitle">删除这张结果？此操作无法恢复。</h2>
+          <div class="delete-confirm-actions">
+            <button id="cancelDeleteButton" class="confirm-cancel-button" value="cancel" type="button">取消</button>
+            <button id="confirmDeleteButton" class="confirm-delete-button" value="confirm" type="button">确定</button>
+          </div>
+        </div>
+      </aside>
 
       <div id="regenerateBackdrop" class="sheet-backdrop" hidden></div>
       <aside id="regenerateSheet" class="settings-sheet regenerate-sheet" hidden aria-label="重新生成设置">
@@ -191,6 +204,11 @@
             <button type="button" data-value="bottom">底部</button>
             <button type="button" data-value="standalone">单独</button>
           </div>
+        </section>
+
+        <section class="setting-group">
+          <h3>导入照片</h3>
+          <button id="uploadPhotoButton" class="settings-upload-button" type="button">从相册选择</button>
         </section>
       </aside>
 

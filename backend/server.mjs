@@ -34,7 +34,7 @@ const server = createServer(async (request, response) => {
   if (request.method === "POST" && url.pathname === "/api/classify-layout") return handleClassifyLayout(request, response);
   if (request.method === "POST" && url.pathname === "/api/roast") return handleRoast(request, response);
   if (request.method === "POST" && url.pathname === "/api/generate-doodle") return handleGenerateDoodle(request, response);
-  if (request.method === "GET" && url.pathname === "/api/product-records") return handleListProductRecords(response);
+  if (request.method === "GET" && url.pathname === "/api/product-records") return handleListProductRecords(url, response);
   if (request.method === "POST" && url.pathname === "/api/product-records") return handleSaveProductRecord(request, response);
   if (request.method === "DELETE" && url.pathname.startsWith("/api/product-records/")) {
     return handleDeleteProductRecord(url.pathname.split("/").pop() ?? "", response);
@@ -73,8 +73,13 @@ function loadDotEnv(filePath) {
   }
 }
 
-function handleListProductRecords(response) {
-  sendJson(response, 200, { records: readProductRecords() });
+function handleListProductRecords(url, response) {
+  const records = readProductRecords();
+  const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0) || 0);
+  const limitParam = Number(url.searchParams.get("limit") ?? 0) || 0;
+  const limit = Math.max(0, Math.min(limitParam, 24));
+  const page = limit > 0 ? records.slice(offset, offset + limit) : records;
+  sendJson(response, 200, { records: page, total: records.length, offset, limit: limit || records.length });
 }
 
 async function handleSaveProductRecord(request, response) {

@@ -61,6 +61,9 @@ type DoodleResponse = {
 type ProductRecordsResponse = {
   records?: PhotoRecord[];
   record?: PhotoRecord;
+  total?: number;
+  offset?: number;
+  limit?: number;
   error?: string;
   detail?: string;
 };
@@ -86,8 +89,10 @@ const sketchToggleButton = mustQuery<HTMLButtonElement>("#sketchToggleButton");
 const closeSettingsButton = mustQuery<HTMLButtonElement>("#closeSettingsButton");
 const closeRegenerateButton = mustQuery<HTMLButtonElement>("#closeRegenerateButton");
 const viewfinder = mustQuery<HTMLDivElement>("#viewfinder");
+const cameraFeed = mustQuery<HTMLVideoElement>("#cameraFeed");
 const cameraPreview = mustQuery<HTMLImageElement>("#cameraPreview");
 const emptyViewfinder = mustQuery<HTMLDivElement>("#emptyViewfinder");
+const cameraDebugMessage = mustQuery<HTMLElement>("#cameraDebugMessage");
 const manualStartPanel = mustQuery<HTMLDivElement>("#manualStartPanel");
 const cameraHint = mustQuery<HTMLParagraphElement>("#cameraHint");
 const modeStrip = mustQuery<HTMLDivElement>(".camera-mode-strip");
@@ -96,6 +101,7 @@ const galleryButton = mustQuery<HTMLButtonElement>("#galleryButton");
 const latestButton = mustQuery<HTMLButtonElement>("#latestButton");
 const latestThumb = mustQuery<HTMLSpanElement>("#latestThumb");
 const startGenerateButton = mustQuery<HTMLButtonElement>("#startGenerateButton");
+const uploadPhotoButton = mustQuery<HTMLButtonElement>("#uploadPhotoButton");
 const imageInput = mustQuery<HTMLInputElement>("#productImageInput");
 const generatingImage = mustQuery<HTMLImageElement>("#generatingImage");
 const generatingStep = mustQuery<HTMLParagraphElement>("#generatingStep");
@@ -108,27 +114,40 @@ const imageCarousel = mustQuery<HTMLDivElement>("#imageCarousel");
 const recordTime = mustQuery<HTMLSpanElement>("#recordTime");
 const recordMode = mustQuery<HTMLElement>("#recordMode");
 const recordCounter = mustQuery<HTMLHeadingElement>("#recordCounter");
+const fixedPrinterSlot = mustQuery<HTMLDivElement>("#fixedPrinterSlot");
 const ticketLongPreview = mustQuery<HTMLDivElement>("#ticketLongPreview");
 const ticketCarousel = mustQuery<HTMLDivElement>("#ticketCarousel");
 const regenerateButton = mustQuery<HTMLButtonElement>("#regenerateButton");
 const deleteRecordButton = mustQuery<HTMLButtonElement>("#deleteRecordButton");
 const backToCameraButton = mustQuery<HTMLButtonElement>("#backToCameraButton");
 const confirmRegenerateButton = mustQuery<HTMLButtonElement>("#confirmRegenerateButton");
+const deleteConfirmBackdrop = mustQuery<HTMLDivElement>("#deleteConfirmBackdrop");
+const deleteConfirmSheet = mustQuery<HTMLElement>("#deleteConfirmSheet");
+const cancelDeleteButton = mustQuery<HTMLButtonElement>("#cancelDeleteButton");
+const confirmDeleteButton = mustQuery<HTMLButtonElement>("#confirmDeleteButton");
 const imageLightbox = mustQuery<HTMLDivElement>("#imageLightbox");
 const lightboxImage = mustQuery<HTMLImageElement>("#lightboxImage");
 const closeImageLightboxButton = mustQuery<HTMLButtonElement>("#closeImageLightboxButton");
 
 let selectedImageUrl = "";
+let cameraStream: MediaStream | undefined;
+let cameraFacingMode: "user" | "environment" = "environment";
 let records: PhotoRecord[] = [];
 let currentRecordIndex = 0;
 let isGenerating = false;
 let messageTimer = 0;
 let swipeStartX = 0;
+let swipeStartY = 0;
 let modeSnapTimer = 0;
 let albumSnapTimer = 0;
 let isSyncingAlbum = false;
+let visibleAlbumIndex = -1;
 let funMessageIndex = 0;
 let regenerateDraftSettings: ProductSettings = { ...settings };
+let productRecordsLoadPromise: Promise<void> | undefined;
+let productRecordsTotal = 0;
+let isLoadingMoreRecords = false;
+const productRecordsPageSize = 5;
 
 const funGeneratingMessages = [
   "正在寻找照片里最会抢戏的角落。",
@@ -148,16 +167,25 @@ closeSettingsButton.addEventListener("click", closeSettings);
 settingsBackdrop.addEventListener("click", closeSettings);
 closeRegenerateButton.addEventListener("click", closeRegenerateSheet);
 regenerateBackdrop.addEventListener("click", closeRegenerateSheet);
-shutterButton.addEventListener("click", openImagePicker);
-galleryButton.addEventListener("click", () => {
-  if (records.length > 0) showResult(0);
+shutterButton.addEventListener("click", () => {
+  void captureFromCamera();
+});
+galleryButton.addEventListener("click", async () => {
+  await ensureProductRecordsLoaded();
+  showResult(0);
 });
 latestButton.addEventListener("click", () => {
-  cameraHint.textContent = "镜头翻转会在接入真实相机后启用。";
+  void flipCamera();
 });
-viewfinder.addEventListener("click", openImagePicker);
+uploadPhotoButton.addEventListener("click", () => {
+  closeSettings();
+  openImagePicker();
+});
+viewfinder.addEventListener("click", () => {
+  if (!cameraStream) void startCamera();
+});
 viewfinder.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") openImagePicker();
+  if (event.key === "Enter" || event.key === " ") void captureFromCamera();
 });
 manualStartPanel.addEventListener("click", (event) => event.stopPropagation());
 startGenerateButton.addEventListener("click", (event) => {
@@ -167,7 +195,16 @@ startGenerateButton.addEventListener("click", (event) => {
 backToCameraButton.addEventListener("click", showCamera);
 regenerateButton.addEventListener("click", openRegenerateSheet);
 confirmRegenerateButton.addEventListener("click", () => confirmRegenerate());
-deleteRecordButton.addEventListener("click", () => deleteCurrentRecord());
+deleteRecordButton.addEventListener("click", openDeleteConfirmDialog);
+cancelDeleteButton.addEventListener("click", closeDeleteConfirmDialog);
+confirmDeleteButton.addEventListener("click", () => {
+  closeDeleteConfirmDialog();
+  void deleteCurrentRecord();
+});
+deleteConfirmBackdrop.addEventListener("click", closeDeleteConfirmDialog);
+document.addEventListener("keydown", (event) => {
+  if (!deleteConfirmSheet.hidden && event.key === "Escape") closeDeleteConfirmDialog();
+});
 resultOriginalImage.addEventListener("click", openImageLightbox);
 closeImageLightboxButton.addEventListener("click", closeImageLightbox);
 imageLightbox.addEventListener("click", (event) => {
@@ -180,33 +217,33 @@ document.addEventListener("keydown", (event) => {
 });
 resultScreen.addEventListener("touchstart", (event) => {
   swipeStartX = event.touches[0]?.clientX ?? 0;
+  swipeStartY = event.touches[0]?.clientY ?? 0;
 });
 resultScreen.addEventListener("touchend", (event) => {
   if ((event.target as HTMLElement).closest(".album-carousel")) return;
   const endX = event.changedTouches[0]?.clientX ?? swipeStartX;
+  const endY = event.changedTouches[0]?.clientY ?? swipeStartY;
   const delta = endX - swipeStartX;
-  if (Math.abs(delta) > 58) shiftRecord(delta > 0 ? -1 : 1);
+  const verticalDelta = endY - swipeStartY;
+  if (Math.abs(delta) > 58 && Math.abs(delta) > Math.abs(verticalDelta)) shiftRecord(delta > 0 ? -1 : 1);
 });
 
 modeStrip.addEventListener("scroll", () => {
+  updateCameraModeFromScroll();
   window.clearTimeout(modeSnapTimer);
   modeSnapTimer = window.setTimeout(snapCameraModeToNearest, 90);
 });
 
 imageCarousel.addEventListener("scroll", () => syncAlbumScroll(imageCarousel));
-ticketCarousel.addEventListener("scroll", () => syncAlbumScroll(ticketCarousel));
 
 imageInput.addEventListener("change", async () => {
   const file = imageInput.files?.[0];
   imageInput.value = "";
   if (!file) return;
   selectedImageUrl = await fileToDataUrl(file);
-  cameraPreview.src = selectedImageUrl;
-  cameraPreview.hidden = false;
-  emptyViewfinder.hidden = true;
-  manualStartPanel.hidden = settings.triggerMode === "auto";
+  showSelectedImagePreview(selectedImageUrl);
   cameraHint.textContent =
-    settings.triggerMode === "auto" ? "Buddy 已经开始观察这张照片。" : "照片已放进取景框，按开始生成。";
+    settings.triggerMode === "auto" ? "Buddy 已经开始观察导入的照片。" : "照片已放进取景框，按开始生成。";
   if (settings.triggerMode === "auto") await startGenerationFromSelected();
 });
 
@@ -226,9 +263,111 @@ document.querySelectorAll<HTMLElement>("[data-regenerate-setting]").forEach((gro
   });
 });
 
+document
+  .querySelectorAll<HTMLButtonElement>(
+    ".product-back, .icon-button, .round-tool, .pill-button, .settings-upload-button, .shutter-button, .thumbnail-button, .segmented-control button, .option-list button"
+  )
+  .forEach((button) => {
+    button.addEventListener("pointerdown", softHaptic);
+  });
+
 function openImagePicker() {
   if (isGenerating) return;
   imageInput.click();
+}
+
+async function startCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    cameraHint.textContent = "当前浏览器不支持直接调用摄像头，请在设置里导入照片。";
+    emptyViewfinder.hidden = false;
+    return;
+  }
+
+  stopCameraStream();
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: cameraFacingMode },
+        width: { ideal: 1440 },
+        height: { ideal: 1920 }
+      },
+      audio: false
+    });
+    cameraFeed.srcObject = cameraStream;
+    await cameraFeed.play();
+    cameraFeed.hidden = false;
+    cameraPreview.hidden = true;
+    emptyViewfinder.hidden = true;
+    manualStartPanel.hidden = true;
+    cameraHint.textContent = "按下快门，生成今日照片审判。";
+  } catch {
+    cameraStream = undefined;
+    cameraFeed.hidden = true;
+    emptyViewfinder.hidden = false;
+    const isSecure = window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    cameraDebugMessage.textContent = isSecure
+      ? "摄像头未打开。请检查浏览器权限，或在设置里导入照片。"
+      : "摄像头需要 HTTPS 或 localhost。当前页面无法直接调用摄像头。";
+    cameraHint.textContent = "无法打开摄像头，请允许权限，或在设置里导入照片。";
+  }
+}
+
+function stopCameraStream() {
+  cameraStream?.getTracks().forEach((track) => track.stop());
+  cameraStream = undefined;
+  cameraFeed.srcObject = null;
+}
+
+async function flipCamera() {
+  if (isGenerating) return;
+  cameraFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+  cameraHint.textContent = cameraFacingMode === "environment" ? "正在切换到后置摄像头。" : "正在切换到前置摄像头。";
+  await startCamera();
+}
+
+async function captureFromCamera() {
+  if (isGenerating) return;
+  if (!cameraStream || cameraFeed.readyState < cameraFeed.HAVE_CURRENT_DATA) {
+    await startCamera();
+    if (!cameraStream || cameraFeed.readyState < cameraFeed.HAVE_CURRENT_DATA) return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 1200;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  const videoWidth = cameraFeed.videoWidth || canvas.width;
+  const videoHeight = cameraFeed.videoHeight || canvas.height;
+  const sourceRatio = videoWidth / videoHeight;
+  const targetRatio = canvas.width / canvas.height;
+  let sourceWidth = videoWidth;
+  let sourceHeight = videoHeight;
+  let sourceX = 0;
+  let sourceY = 0;
+
+  if (sourceRatio > targetRatio) {
+    sourceWidth = videoHeight * targetRatio;
+    sourceX = (videoWidth - sourceWidth) / 2;
+  } else {
+    sourceHeight = videoWidth / targetRatio;
+    sourceY = (videoHeight - sourceHeight) / 2;
+  }
+
+  context.drawImage(cameraFeed, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+  selectedImageUrl = canvas.toDataURL("image/jpeg", 0.92);
+  showSelectedImagePreview(selectedImageUrl);
+  cameraHint.textContent = settings.triggerMode === "auto" ? "Buddy 已经开始观察这张照片。" : "照片已就位，按开始生成。";
+  if (settings.triggerMode === "auto") await startGenerationFromSelected();
+}
+
+function showSelectedImagePreview(imageUrl: string) {
+  cameraPreview.src = imageUrl;
+  cameraPreview.hidden = false;
+  cameraFeed.hidden = true;
+  emptyViewfinder.hidden = true;
+  manualStartPanel.hidden = settings.triggerMode === "auto";
 }
 
 async function startGenerationFromSelected() {
@@ -417,9 +556,22 @@ async function generateSketch(imageUrl: string): Promise<string> {
 
 function renderCurrentRecord() {
   const record = records[currentRecordIndex];
-  if (!record) return;
+  if (!record) {
+    recordTime.textContent = "暂无照片";
+    recordMode.textContent = "等待生成";
+    recordCounter.textContent = "0 / 0";
+    regenerateButton.disabled = true;
+    deleteRecordButton.disabled = true;
+    fixedPrinterSlot.hidden = true;
+    renderAlbumSlides();
+    resultScroller.scrollTop = 0;
+    return;
+  }
 
   resultOriginalImage.src = record.originalImageUrl;
+  regenerateButton.disabled = false;
+  deleteRecordButton.disabled = false;
+  fixedPrinterSlot.hidden = false;
   updateResultMeta(record);
   renderAlbumSlides();
   scrollAlbumToIndex(currentRecordIndex, "auto");
@@ -438,9 +590,21 @@ function renderAlbumSlides() {
   ticketCarousel.innerHTML = "";
   ticketLongPreview.innerHTML = "";
 
+  if (records.length === 0) {
+    const emptySlide = document.createElement("article");
+    emptySlide.className = "album-slide album-combined-slide empty-album-slide";
+    const empty = document.createElement("p");
+    empty.className = "empty-ticket";
+    empty.textContent = "还没有照片结果。返回拍摄页生成第一张吧。";
+    emptySlide.append(empty);
+    imageCarousel.append(emptySlide);
+    return;
+  }
+
   records.forEach((record, index) => {
-    const imageSlide = document.createElement("article");
-    imageSlide.className = "album-slide image-slide";
+    const albumSlide = document.createElement("article");
+    albumSlide.className = "album-slide album-combined-slide";
+
     const img = document.createElement("img");
     img.className = "result-original";
     img.src = record.originalImageUrl;
@@ -450,14 +614,29 @@ function renderAlbumSlides() {
       updateResultMeta(record);
       openImageLightbox();
     });
-    imageSlide.append(img);
-    imageCarousel.append(imageSlide);
 
-    const ticketSlide = document.createElement("article");
-    ticketSlide.className = "album-slide ticket-slide";
-    ticketSlide.append(createTicketBody(record));
-    ticketCarousel.append(ticketSlide);
+    const fixedMiddleSpace = document.createElement("div");
+    fixedMiddleSpace.className = "album-fixed-middle-space";
+    fixedMiddleSpace.setAttribute("aria-hidden", "true");
+    albumSlide.append(img, fixedMiddleSpace, createTicketBody(record));
+    imageCarousel.append(albumSlide);
   });
+}
+
+function openDeleteConfirmDialog() {
+  if (!records[currentRecordIndex] || !deleteConfirmSheet.hidden) return;
+  deleteConfirmBackdrop.hidden = false;
+  deleteConfirmSheet.hidden = false;
+  cancelDeleteButton.focus();
+}
+
+function closeDeleteConfirmDialog() {
+  deleteConfirmBackdrop.hidden = true;
+  deleteConfirmSheet.hidden = true;
+}
+
+function softHaptic() {
+  navigator.vibrate?.(8);
 }
 
 function createTicketBody(record: PhotoRecord): HTMLElement {
@@ -491,24 +670,23 @@ function createTicketBody(record: PhotoRecord): HTMLElement {
   return body;
 }
 
-function createPrinterSlot(): HTMLElement {
-  const slot = document.createElement("div");
-  slot.className = "printer-slot";
-  const mouth = document.createElement("span");
-  slot.append(mouth);
-  return slot;
-}
-
 function showCamera() {
+  if (records.length) {
+    currentRecordIndex = 0;
+    scrollAlbumToIndex(0, "auto");
+  }
   cameraScreen.hidden = false;
   generatingScreen.hidden = true;
   resultScreen.hidden = true;
+  playScreenEntrance(cameraScreen, "camera");
+  if (!selectedImageUrl && !cameraStream) void startCamera();
 }
 
 function showGenerating(imageUrl: string) {
   cameraScreen.hidden = true;
   generatingScreen.hidden = false;
   resultScreen.hidden = true;
+  playScreenEntrance(generatingScreen, "generating");
   generatingImage.src = imageUrl;
   window.clearInterval(messageTimer);
   setGenerationStage(1, 3, "正在准备生成……", "Buddy 正在观察照片。");
@@ -519,11 +697,18 @@ function showGenerating(imageUrl: string) {
 }
 
 function showResult(index: number) {
-  currentRecordIndex = Math.max(0, Math.min(index, records.length - 1));
+  currentRecordIndex = records.length ? Math.max(0, Math.min(index, records.length - 1)) : 0;
   cameraScreen.hidden = true;
   generatingScreen.hidden = true;
   resultScreen.hidden = false;
+  playScreenEntrance(resultScreen, "result");
   renderCurrentRecord();
+}
+
+function playScreenEntrance(screen: HTMLElement, kind: "camera" | "generating" | "result") {
+  screen.classList.remove("screen-enter-camera", "screen-enter-generating", "screen-enter-result");
+  void screen.offsetWidth;
+  screen.classList.add(`screen-enter-${kind}`);
 }
 
 function shiftRecord(offset: number) {
@@ -536,27 +721,36 @@ function shiftRecord(offset: number) {
 
 function syncAlbumScroll(source: HTMLDivElement) {
   if (isSyncingAlbum) return;
-  const target = source === imageCarousel ? ticketCarousel : imageCarousel;
-  isSyncingAlbum = true;
-  target.scrollLeft = source.scrollLeft;
-  isSyncingAlbum = false;
+  updateAlbumMetaFromScroll(source);
   window.clearTimeout(albumSnapTimer);
   albumSnapTimer = window.setTimeout(() => snapAlbumToNearest(source), 110);
+}
+
+function updateAlbumMetaFromScroll(source: HTMLDivElement) {
+  if (!records.length) return;
+  const index = Math.max(0, Math.min(records.length - 1, Math.round(source.scrollLeft / Math.max(1, source.clientWidth))));
+  if (index === visibleAlbumIndex) return;
+  visibleAlbumIndex = index;
+  currentRecordIndex = index;
+  updateResultMeta(records[index]);
+  void loadMoreProductRecordsIfNeeded(index);
 }
 
 function snapAlbumToNearest(source: HTMLDivElement) {
   if (!records.length) return;
   const index = Math.max(0, Math.min(records.length - 1, Math.round(source.scrollLeft / Math.max(1, source.clientWidth))));
+  visibleAlbumIndex = index;
   currentRecordIndex = index;
   updateResultMeta(records[index]);
   scrollAlbumToIndex(index, "smooth");
+  void loadMoreProductRecordsIfNeeded(index);
 }
 
 function scrollAlbumToIndex(index: number, behavior: ScrollBehavior = "smooth") {
   const left = index * imageCarousel.clientWidth;
+  visibleAlbumIndex = index;
   isSyncingAlbum = true;
   imageCarousel.scrollTo({ left, behavior });
-  ticketCarousel.scrollTo({ left, behavior });
   window.setTimeout(() => {
     isSyncingAlbum = false;
   }, behavior === "smooth" ? 260 : 0);
@@ -645,13 +839,45 @@ function renderLatestThumb() {
 
 async function loadProductRecords() {
   try {
-    const payload = await getJson<ProductRecordsResponse>("/api/product-records");
+    const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=0&limit=${productRecordsPageSize}`);
     records = [...(payload.records ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+    productRecordsTotal = payload.total ?? records.length;
     renderLatestThumb();
+    if (!resultScreen.hidden) renderCurrentRecord();
   } catch {
     records = [];
+    productRecordsTotal = 0;
     renderLatestThumb();
+    if (!resultScreen.hidden) renderCurrentRecord();
   }
+}
+
+async function loadMoreProductRecordsIfNeeded(index: number) {
+  if (isLoadingMoreRecords || records.length >= productRecordsTotal || index < records.length - 2) return;
+  isLoadingMoreRecords = true;
+  try {
+    const payload = await getJson<ProductRecordsResponse>(
+      `/api/product-records?offset=${records.length}&limit=${productRecordsPageSize}`
+    );
+    const nextRecords = payload.records ?? [];
+    productRecordsTotal = payload.total ?? productRecordsTotal;
+    const seen = new Set(records.map((record) => record.id));
+    records = [...records, ...nextRecords.filter((record) => !seen.has(record.id))].sort(
+      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
+    );
+    renderLatestThumb();
+    if (!resultScreen.hidden) {
+      renderAlbumSlides();
+      scrollAlbumToIndex(currentRecordIndex, "auto");
+    }
+  } finally {
+    isLoadingMoreRecords = false;
+  }
+}
+
+async function ensureProductRecordsLoaded() {
+  productRecordsLoadPromise ??= loadProductRecords();
+  await productRecordsLoadPromise;
 }
 
 async function saveProductRecord(record: PhotoRecord): Promise<PhotoRecord> {
@@ -683,6 +909,20 @@ function centerSelectedCameraMode() {
   });
 }
 
+function updateCameraModeFromScroll() {
+  const buttons = Array.from(modeStrip.querySelectorAll<HTMLButtonElement>("button[data-value]"));
+  if (!buttons.length) return;
+  const center = modeStrip.scrollLeft + modeStrip.clientWidth / 2;
+  const nearest = buttons.reduce((best, button) => {
+    const distance = Math.abs(button.offsetLeft + button.offsetWidth / 2 - center);
+    return distance < best.distance ? { button, distance } : best;
+  }, { button: buttons[0], distance: Number.POSITIVE_INFINITY }).button;
+  const value = nearest.dataset.value as GenerationMode | undefined;
+  if (!value || value === settings.generationMode) return;
+  settings.generationMode = value;
+  renderSettings(false);
+}
+
 function snapCameraModeToNearest() {
   const buttons = Array.from(modeStrip.querySelectorAll<HTMLButtonElement>("button[data-value]"));
   if (!buttons.length) return;
@@ -693,7 +933,8 @@ function snapCameraModeToNearest() {
   }, { button: buttons[0], distance: Number.POSITIVE_INFINITY }).button;
   const value = nearest.dataset.value;
   if (value && value !== settings.generationMode) {
-    updateSetting("generationMode", value);
+    settings.generationMode = value as GenerationMode;
+    renderSettings(true);
   } else {
     centerSelectedCameraMode();
   }
@@ -774,4 +1015,4 @@ function mustQuery<T extends Element>(selector: string): T {
 renderSettings();
 showCamera();
 window.setTimeout(centerSelectedCameraMode, 80);
-void loadProductRecords();
+productRecordsLoadPromise = loadProductRecords();
