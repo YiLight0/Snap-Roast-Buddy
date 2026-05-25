@@ -1107,15 +1107,16 @@ pre {
 
 .camera-zoom-strip {
   position: absolute;
-  right: 18px;
+  right: 20px;
   bottom: 10px;
-  left: 18px;
+  left: 20px;
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 4px;
   min-height: 38px;
-  padding: 5px calc(50% - 19px);
+  padding: 5px calc(50% - 14px);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-snap-stop: always;
@@ -1142,11 +1143,11 @@ pre {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  min-width: 38px;
+  min-width: 18px;
   height: 28px;
   border: 0;
   border-radius: 999px;
-  padding: 0 7px;
+  padding: 0;
   background: transparent;
   color: rgba(255, 250, 241, 0);
   font-size: 0.78rem;
@@ -1157,6 +1158,18 @@ pre {
     transform 120ms cubic-bezier(0.25, 0.1, 0.25, 1),
     opacity 160ms cubic-bezier(0.25, 0.1, 0.25, 1),
     color 180ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.camera-zoom-strip button.zoom-major {
+  min-width: 34px;
+}
+
+.zoom-tick {
+  display: block;
+  width: 2px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .camera-zoom-strip.is-choosing button {
