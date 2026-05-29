@@ -135,6 +135,91 @@ static void handlePrintGet() {
   doPrint(text, /*returnHtml=*/true);
 }
 
+// ---- base64 流式解码：每解一字节立刻 Printer.write，不缓存解码后的数据 ----
+// 字母表索引：A-Z (0-25), a-z (26-51), 0-9 (52-61), '+' (62), '/' (63)
+// 返回 -1 表示非字母表字符（空格/换行/=padding/控制字符），调用方跳过
+static int base64Index(char c) {
+  if (c >= 'A' && c <= 'Z') return c - 'A';
+  if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+  if (c >= '0' && c <= '9') return c - '0' + 52;
+  if (c == '+') return 62;
+  if (c == '/') return 63;
+  return -1;
+}
+
+// 把 base64 串流式解码并立刻发给 Printer，返回真实输出的字节数
+static size_t streamBase64ToPrinter(const String& b64) {
+  uint32_t buf = 0;     // 累计 6-bit 单元的缓冲（最多 24 bit）
+  int bits = 0;         // 当前缓冲里有效 bit 数
+  size_t outBytes = 0;
+  for (size_t i = 0; i < b64.length(); i++) {
+    char c = b64[i];
+    if (c == '=') break;          // padding 表示输入结束
+    int v = base64Index(c);
+    if (v < 0) continue;          // 跳过空白和非字母表字符
+    buf = (buf << 6) | (uint32_t)v;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      uint8_t byte = (uint8_t)((buf >> bits) & 0xFF);
+      Printer.write(byte);
+      outBytes++;
+    }
+  }
+  return outBytes;
+}
+
+// ---- POST /print-raster：form 字段 data=<base64(ESC/POS raster 字节流)> ----
+static void handlePrintRaster() {
+  sendCors();
+  if (!server.hasArg("data")) {
+    server.send(400, "text/html; charset=utf-8",
+                "<!doctype html><meta charset=utf-8><p>缺少 data 字段</p>");
+    return;
+  }
+
+  const String& b64 = server.arg("data");
+  Serial.println();
+  Serial.println("==== 收到位图打印请求 ====");
+  Serial.print("base64 长度: ");
+  Serial.println(b64.length());
+
+  // 初始化打印机（ESC @）
+  Printer.write(0x1B);
+  Printer.write(0x40);
+  delay(50);
+
+  size_t printedBytes = streamBase64ToPrinter(b64);
+
+  // 走纸
+  Printer.write('\n');
+  Printer.write('\n');
+  Printer.write('\n');
+
+  Serial.print("已发字节数: ");
+  Serial.println(printedBytes);
+  Serial.println("=========================");
+
+  // 返回"已打印"HTML（结构沿用 doPrint(returnHtml=true)）
+  String html;
+  html.reserve(512);
+  html += "<!doctype html><html lang=\"zh-CN\"><head>";
+  html += "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">";
+  html += "<title>已打印</title><style>";
+  html += "body{font-family:-apple-system,'PingFang SC',sans-serif;padding:24px;max-width:520px;margin:0 auto;background:#f7f7f7}";
+  html += ".ok{font-size:28px;color:#0a0}h1{margin:8px 0}";
+  html += ".panel{background:#fff;padding:16px;border-radius:8px;margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}";
+  html += ".meta{color:#666;font-size:13px;margin-top:8px}a{display:inline-block;margin-top:18px;color:#06f}";
+  html += "</style></head><body>";
+  html += "<div class=\"ok\">✅ 已打印</div>";
+  html += "<h1>ESP32 已发位图到打印机</h1>";
+  html += "<div class=\"panel\"><div class=\"meta\">base64 字符数：" + String(b64.length()) + "</div>";
+  html += "<div class=\"meta\">解码后字节数：" + String(printedBytes) + "</div></div>";
+  html += "<a href=\"javascript:history.back()\">← 返回浏览器上一页</a>";
+  html += "</body></html>";
+  server.send(200, "text/html; charset=utf-8", html);
+}
+
 void setup() {
   Serial.begin(115200);
   Printer.begin(9600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
