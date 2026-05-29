@@ -878,14 +878,21 @@ async function buildRasterBase64(element: HTMLElement): Promise<string> {
 }
 
 function submitRasterToEsp32(ip: string, base64: string): void {
-  // 顶层 form POST，浏览器会弹一次警告，用户确认后跳转到 ESP32 的"已打印"页
+  // 顶层 form POST，浏览器会弹一次警告，用户确认后跳转到 ESP32 的"已打印"页。
+  //
+  // 注意两个坑（实测踩过）：
+  // 1. 不要用 target="_blank"。HTTPS→HTTP 混合内容场景下，新标签页/webview 接管
+  //    导航时，body 经常被吞，ESP32 端会收到空 POST。
+  // 2. 不要 form.submit() 之后立刻 removeChild(form)。浏览器要弹"提交不安全表单"
+  //    警告，submit 是异步的；form 已从 DOM 移除时 body 也会丢。让它留着，反正
+  //    页面马上就跳走。
+  console.log("[print] 准备提交位图到", `http://${ip}/print-raster`, "base64 长度:", base64.length);
+
   const form = document.createElement("form");
   form.method = "POST";
   form.action = `http://${ip}/print-raster`;
   form.enctype = "application/x-www-form-urlencoded";
   form.acceptCharset = "utf-8";
-  // 用 target=_blank 新标签页打开，避免离开当前相册页（跟原文本路径行为一致）
-  form.target = "_blank";
 
   const input = document.createElement("input");
   input.type = "hidden";
@@ -895,8 +902,7 @@ function submitRasterToEsp32(ip: string, base64: string): void {
 
   document.body.appendChild(form);
   form.submit();
-  // 提交完移除，避免 DOM 污染
-  document.body.removeChild(form);
+  // 故意不 removeChild：页面马上跳走，DOM 会随之销毁；提前移除会丢 body。
 }
 
 async function triggerPrint(): Promise<void> {
