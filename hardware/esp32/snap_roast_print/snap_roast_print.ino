@@ -148,6 +148,14 @@ static int base64Index(char c) {
 }
 
 // 把 base64 串流式解码并立刻发给 Printer，返回真实输出的字节数
+//
+// MY-628 打印机 64KB RAM，DTR 流控引脚没接，buffer 满了会直接丢字节导致缺行。
+// 9600bps UART 名义上比打印速度慢，但实测就是会撑爆。所以按"条带"节流：每发
+// 完一条 GS v 0 strip（前端 STRIP_ROWS=24，1 条 = 8 字节 header + 24*48=1152
+// 像素 = 1160 字节），让 UART TX 真正发完，再 sleep 让打印机消化。
+static const size_t STRIP_BYTES = 8 + 24 * 48;   // 必须与前端 printer.ts 的 STRIP_ROWS 对齐
+static const uint32_t STRIP_PAUSE_MS = 80;       // 每条带打印完留给打印机的喘息
+
 static size_t streamBase64ToPrinter(const String& b64) {
   uint32_t buf = 0;     // 累计 6-bit 单元的缓冲（最多 24 bit）
   int bits = 0;         // 当前缓冲里有效 bit 数
@@ -164,8 +172,13 @@ static size_t streamBase64ToPrinter(const String& b64) {
       uint8_t byte = (uint8_t)((buf >> bits) & 0xFF);
       Printer.write(byte);
       outBytes++;
+      if (outBytes % STRIP_BYTES == 0) {
+        Printer.flush();          // 等 ESP32 UART TX 真正发空
+        delay(STRIP_PAUSE_MS);    // 留时间给打印机机芯消化这条带
+      }
     }
   }
+  Printer.flush();
   return outBytes;
 }
 
@@ -276,6 +289,18 @@ static void handleRasterChunk() {
     Printer.write(0x1B);
     Printer.write(0x40);
     delay(50);
+
+    // ESC 7 n1 n2 n3：调高打印浓度（参考 MY-628 规格书 P53）
+    //   n1=09  最多加热点 80 点（默认）
+    //   n2=A0  加热时间 1600µs（默认 80=800µs 偏淡，规格书示例就是 A0=1600µs）
+    //   n3=02  加热间隔 20µs（默认）
+    // 这条会让黑色实在很多，反白底色填实，开头几行不再发淡。
+    Printer.write(0x1B);
+    Printer.write(0x37);
+    Printer.write(0x09);
+    Printer.write(0xA0);
+    Printer.write(0x02);
+    delay(10);
 
     size_t printedBytes = streamBase64ToPrinter(g_rasterAccum);
 
