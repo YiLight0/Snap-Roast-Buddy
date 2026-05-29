@@ -969,7 +969,8 @@ if (hydratedRecord) resultOriginalImage.src = hydratedRecord.originalImageUrl;
 
 regenerateButton.disabled = !hydratedRecord;
 deleteRecordButton.disabled = !record;
-printButton.disabled = !hasPrintableText(hydratedRecord || record);
+const printableRecord = hydratedRecord ?? record;
+printButton.disabled = !printableRecord || !hasPrintableText(printableRecord);
   fixedPrinterSlot.hidden = false;
   updateResultMeta(hydratedRecord ?? record);
   renderAlbumSlides();
