@@ -29,6 +29,33 @@ const char* password = WIFI_PASSWORD;
 HardwareSerial Printer(1);
 WebServer server(80);
 
+// ---- 打印机 DTR 硬件流控 ----
+// MY-628 规格书 P3：DTR 是打印机输出的"数据终端就绪"信号。打印机 buffer
+// 快满时拉成 BUSY，ESP32 看到就停发；buffer 空了拉成 READY，继续发。
+// 极性按典型 ESC/POS 约定：LOW = READY 可发，HIGH = BUSY 别发。
+// 接线：打印机 RS232/TTL 接口 pin 2 (DTR) → ESP32 GPIO 41。
+const int PRINTER_DTR_PIN = 41;
+const int PRINTER_DTR_BUSY_LEVEL = HIGH;
+const unsigned long PRINTER_DTR_TIMEOUT_MS = 30000;
+
+// 等 DTR 变 READY；超时返回防死锁（接错线/极性反时打印失败而非整机卡死）
+static inline void waitPrinterReady() {
+  unsigned long start = millis();
+  while (digitalRead(PRINTER_DTR_PIN) == PRINTER_DTR_BUSY_LEVEL) {
+    if (millis() - start > PRINTER_DTR_TIMEOUT_MS) {
+      Serial.println("[dtr] WARN: 30s 等不到 READY，可能 DTR 极性反或没接好");
+      return;
+    }
+    delayMicroseconds(50);
+  }
+}
+
+// 包裹 Printer.write：每发一个字节前先确认打印机能收
+static inline void printerWriteFlow(uint8_t b) {
+  waitPrinterReady();
+  Printer.write(b);
+}
+
 static void sendCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -148,14 +175,8 @@ static int base64Index(char c) {
 }
 
 // 把 base64 串流式解码并立刻发给 Printer，返回真实输出的字节数
-//
-// MY-628 打印机 64KB RAM，DTR 流控引脚没接，buffer 满了会直接丢字节导致缺行。
-// 9600bps UART 名义上比打印速度慢，但实测就是会撑爆。所以按"条带"节流：每发
-// 完一条 GS v 0 strip（前端 STRIP_ROWS=24，1 条 = 8 字节 header + 24*48=1152
-// 像素 = 1160 字节），让 UART TX 真正发完，再 sleep 让打印机消化。
-static const size_t STRIP_BYTES = 8 + 24 * 48;   // 必须与前端 printer.ts 的 STRIP_ROWS 对齐
-static const uint32_t STRIP_PAUSE_MS = 80;       // 每条带打印完留给打印机的喘息
-
+// 用 printerWriteFlow 每字节走 DTR 硬件流控，打印机 buffer 满时自动停发，
+// 不再需要前一版盲发的 strip-delay 节流。
 static size_t streamBase64ToPrinter(const String& b64) {
   uint32_t buf = 0;     // 累计 6-bit 单元的缓冲（最多 24 bit）
   int bits = 0;         // 当前缓冲里有效 bit 数
@@ -170,12 +191,8 @@ static size_t streamBase64ToPrinter(const String& b64) {
     if (bits >= 8) {
       bits -= 8;
       uint8_t byte = (uint8_t)((buf >> bits) & 0xFF);
-      Printer.write(byte);
+      printerWriteFlow(byte);
       outBytes++;
-      if (outBytes % STRIP_BYTES == 0) {
-        Printer.flush();          // 等 ESP32 UART TX 真正发空
-        delay(STRIP_PAUSE_MS);    // 留时间给打印机机芯消化这条带
-      }
     }
   }
   Printer.flush();
@@ -286,8 +303,8 @@ static void handleRasterChunk() {
 
     // ESC @ 初始化（放在 final 时做，不在 seq=0 做——避免中途收到错块后
     // 打印机已经初始化、但数据没来，下次连进来又被初始化一次）
-    Printer.write(0x1B);
-    Printer.write(0x40);
+    printerWriteFlow(0x1B);
+    printerWriteFlow(0x40);
     delay(50);
 
     // ESC 7 n1 n2 n3：调高打印浓度（参考 MY-628 规格书 P53）
@@ -295,19 +312,19 @@ static void handleRasterChunk() {
     //   n2=A0  加热时间 1600µs（默认 80=800µs 偏淡，规格书示例就是 A0=1600µs）
     //   n3=02  加热间隔 20µs（默认）
     // 这条会让黑色实在很多，反白底色填实，开头几行不再发淡。
-    Printer.write(0x1B);
-    Printer.write(0x37);
-    Printer.write(0x09);
-    Printer.write(0xA0);
-    Printer.write(0x02);
+    printerWriteFlow(0x1B);
+    printerWriteFlow(0x37);
+    printerWriteFlow(0x09);
+    printerWriteFlow(0xA0);
+    printerWriteFlow(0x02);
     delay(10);
 
     size_t printedBytes = streamBase64ToPrinter(g_rasterAccum);
 
     // 走纸结束
-    Printer.write('\n');
-    Printer.write('\n');
-    Printer.write('\n');
+    printerWriteFlow('\n');
+    printerWriteFlow('\n');
+    printerWriteFlow('\n');
 
     Serial.print("[chunk] 完成，总解码字节: ");
     Serial.println(printedBytes);
@@ -426,6 +443,7 @@ static void handlePrintRaster() {
 void setup() {
   Serial.begin(115200);
   Printer.begin(9600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
+  pinMode(PRINTER_DTR_PIN, INPUT_PULLUP);  // DTR 没接时默认 BUSY（不发），安全
   delay(500);
 
   WiFi.mode(WIFI_STA);
