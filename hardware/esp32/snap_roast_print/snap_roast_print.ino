@@ -193,7 +193,9 @@ static void handlePrintBridge() {
   html += "const b64=decodeURIComponent(raw);";
   html += "s.textContent='发往 ESP32 ('+b64.length+' 字符 base64)…';";
   html += "try{";
-  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(b64)});";
+  // text/plain raw body：避开 ESP32 WebServer 对大 form-urlencoded body 的限制，
+  // 内容直接落 arg('plain')，没有 URL encode 的体积膨胀。
+  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'text/plain'},body:b64});";
   html += "const t=await r.text();";
   html += "document.open();document.write(t);document.close();";
   html += "}catch(e){s.textContent='出错: '+e.message;s.classList.add('err');}";
@@ -204,7 +206,11 @@ static void handlePrintBridge() {
   server.send(200, "text/html; charset=utf-8", html);
 }
 
-// ---- POST /print-raster：form 字段 data=<base64(ESC/POS raster 字节流)> ----
+// ---- POST /print-raster ----
+// body 接受两种格式：
+//   1) Content-Type: text/plain，body 就是 raw base64 → 从 arg("plain") 拿
+//   2) Content-Type: application/x-www-form-urlencoded，body 为 data=<base64> → 从 arg("data") 拿
+// 桥接页用 (1)，curl 测试用 (2)。
 static void handlePrintRaster() {
   sendCors();
 
@@ -224,13 +230,20 @@ static void handlePrintRaster() {
   Serial.print("arg('plain') length: ");
   Serial.println(server.arg("plain").length());
 
-  if (!server.hasArg("data")) {
+  // 优先 form 字段 data；空了再回退到 plain（text/plain 直传 body 的情况）
+  String b64;
+  if (server.hasArg("data") && server.arg("data").length() > 0) {
+    b64 = server.arg("data");
+    Serial.println("body 来源: arg('data')");
+  } else if (server.arg("plain").length() > 0) {
+    b64 = server.arg("plain");
+    Serial.println("body 来源: arg('plain')");
+  } else {
     server.send(400, "text/html; charset=utf-8",
-                "<!doctype html><meta charset=utf-8><p>缺少 data 字段（看串口诊断）</p>");
+                "<!doctype html><meta charset=utf-8><p>body 为空（看串口诊断）</p>");
     return;
   }
 
-  const String& b64 = server.arg("data");
   Serial.println();
   Serial.println("==== 收到位图打印请求 ====");
   Serial.print("base64 长度: ");
