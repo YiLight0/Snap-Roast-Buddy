@@ -193,9 +193,11 @@ static void handlePrintBridge() {
   html += "const b64=decodeURIComponent(raw);";
   html += "s.textContent='发往 ESP32 ('+b64.length+' 字符 base64)…';";
   html += "try{";
-  // text/plain raw body：避开 ESP32 WebServer 对大 form-urlencoded body 的限制，
-  // 内容直接落 arg('plain')，没有 URL encode 的体积膨胀。
-  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'text/plain'},body:b64});";
+  // body 用 Uint8Array 而不是 string：强制浏览器设 Content-Length，不走 chunked
+  // transfer encoding（ESP32 Arduino WebServer 不解析 chunked，会读到 0 字节）。
+  // base64 是纯 ASCII，TextEncoder UTF-8 后字节数 == 字符数。
+  html += "const bytes=new TextEncoder().encode(b64);";
+  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'text/plain'},body:bytes});";
   html += "const t=await r.text();";
   html += "document.open();document.write(t);document.close();";
   html += "}catch(e){s.textContent='出错: '+e.message;s.classList.add('err');}";
@@ -229,6 +231,12 @@ static void handlePrintRaster() {
   Serial.println(server.hasArg("data") ? "yes" : "no");
   Serial.print("arg('plain') length: ");
   Serial.println(server.arg("plain").length());
+  Serial.print("Content-Length header: ");
+  Serial.println(server.header("Content-Length"));
+  Serial.print("Transfer-Encoding header: ");
+  Serial.println(server.header("Transfer-Encoding"));
+  Serial.print("Content-Type header: ");
+  Serial.println(server.header("Content-Type"));
 
   // 优先 form 字段 data；空了再回退到 plain（text/plain 直传 body 的情况）
   String b64;
@@ -311,6 +319,11 @@ void setup() {
   server.on("/print-raster", HTTP_POST,    handlePrintRaster);
   server.on("/print-raster", HTTP_OPTIONS, handleOptions);
   server.on("/print-bridge", HTTP_GET,     handlePrintBridge);
+
+  // 让 server.header("Content-Length") / ("Transfer-Encoding") 在 handler 里可读
+  const char* trackedHeaders[] = { "Content-Length", "Transfer-Encoding", "Content-Type" };
+  server.collectHeaders(trackedHeaders, sizeof(trackedHeaders) / sizeof(trackedHeaders[0]));
+
   server.onNotFound([]() {
     sendCors();
     server.send(404, "text/plain", "Not found");
