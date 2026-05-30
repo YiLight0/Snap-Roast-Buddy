@@ -7867,14 +7867,45 @@ function centerText(text2, width) {
 
 // packages/layout/src/analyzePhotoDescription.ts
 var sceneMap = [
-  { type: "\u670B\u53CB\u805A\u4F1A\u81EA\u62CD", keywords: ["\u670B\u53CB", "\u805A\u4F1A", "\u5408\u7167", "\u81EA\u62CD", "\u56DB\u4E2A\u4EBA", "\u591A\u4EBA"] },
-  { type: "\u65C5\u884C\u6253\u5361", keywords: ["\u666F\u70B9", "\u65C5\u884C", "\u5EFA\u7B51", "\u98CE\u666F", "\u6253\u5361", "\u6E38\u5BA2"] },
-  { type: "\u5BA0\u7269\u7167\u7247", keywords: ["\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u5C0F\u732B", "\u52A8\u7269"] },
-  { type: "\u7F8E\u98DF\u7167\u7247", keywords: ["\u7F8E\u98DF", "\u83DC", "\u9910\u5385", "\u98DF\u7269", "\u5496\u5561", "\u751C\u70B9"] },
-  { type: "\u60C5\u4FA3\u7167", keywords: ["\u60C5\u4FA3", "\u7EA6\u4F1A", "\u6D6A\u6F2B", "\u7275\u624B", "\u62E5\u62B1"] },
-  { type: "\u5BA4\u5185\u751F\u6D3B\u7167", keywords: ["\u5BA4\u5185", "\u623F\u95F4", "\u5BB6\u91CC", "\u684C\u5B50", "\u6742\u7269"] }
+  { type: "\u670B\u53CB\u5408\u7167\u73B0\u573A", keywords: ["\u670B\u53CB\u5408\u7167", "\u591A\u4EBA\u5408\u5F71", "\u805A\u4F1A", "\u805A\u9910", "\u996D\u5C40", "\u6D3E\u5BF9", "KTV", "\u56DB\u4E2A\u4EBA", "\u591A\u4EBA\u81EA\u62CD", "\u5408\u7167"] },
+  { type: "\u5355\u4EBA\u81EA\u62CD\u73B0\u573A", keywords: ["\u81EA\u62CD", "\u5BF9\u955C", "\u955C\u5B50", "\u81EA\u62CD\u6746", "\u524D\u7F6E", "\u534A\u8EAB\u7167", "\u5934\u50CF"] },
+  { type: "\u5BA0\u7269\u8425\u4E1A\u73B0\u573A", keywords: ["\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u5C0F\u732B", "\u52A8\u7269", "\u6BDB\u5B69\u5B50", "\u732B\u732B", "\u72D7\u72D7"] },
+  { type: "\u9910\u996E\u5496\u5561\u73B0\u573A", keywords: ["\u7F8E\u98DF", "\u83DC", "\u9910\u5385", "\u98DF\u7269", "\u5496\u5561", "\u751C\u70B9", "\u5976\u8336", "\u62C9\u9762", "\u706B\u9505", "\u86CB\u7CD5", "\u5916\u5356"] },
+  { type: "\u4FBF\u5229\u5E97\u8D27\u67B6\u73B0\u573A", keywords: ["\u4FBF\u5229\u5E97", "\u8D85\u5E02", "\u8D27\u67B6", "\u6536\u94F6\u53F0", "\u5546\u54C1", "\u5305\u88C5", "\u996E\u6599", "\u96F6\u98DF", "\u8D2D\u7269\u8F66", "\u5546\u573A"] },
+  { type: "\u529E\u516C\u5BA4\u6253\u5DE5\u73B0\u573A", keywords: ["\u529E\u516C\u5BA4", "\u5DE5\u4F4D", "\u7535\u8111", "\u952E\u76D8", "\u4F1A\u8BAE", "\u767D\u677F", "\u6587\u4EF6", "\u6253\u5DE5", "\u5B66\u4E60", "\u4E66\u684C", "\u4F5C\u4E1A"] },
+  { type: "\u5BB6\u5C45\u6742\u7269\u73B0\u573A", keywords: ["\u5BA4\u5185", "\u623F\u95F4", "\u5BB6\u91CC", "\u5367\u5BA4", "\u684C\u5B50", "\u6742\u7269", "\u6C99\u53D1", "\u5E8A", "\u53A8\u623F", "\u51CC\u4E71"] },
+  { type: "\u8857\u666F\u901A\u52E4\u73B0\u573A", keywords: ["\u8857\u9053", "\u8DEF\u8FB9", "\u5730\u94C1", "\u516C\u4EA4", "\u8F66\u7AD9", "\u673A\u573A", "\u901A\u52E4", "\u8F66\u53A2", "\u4EBA\u884C\u9053", "\u591C\u5E02"] },
+  { type: "\u65C5\u884C\u6253\u5361\u73B0\u573A", keywords: ["\u666F\u70B9", "\u65C5\u884C", "\u5EFA\u7B51", "\u98CE\u666F", "\u6253\u5361", "\u6E38\u5BA2", "\u5C71", "\u6D77\u8FB9", "\u516C\u56ED", "\u9152\u5E97"] },
+  { type: "\u8FD0\u52A8\u5065\u8EAB\u73B0\u573A", keywords: ["\u8FD0\u52A8", "\u5065\u8EAB", "\u8DD1\u6B65", "\u7403\u573A", "\u7BEE\u7403", "\u8DB3\u7403", "\u745C\u4F3D", "\u9A91\u884C", "\u6ED1\u96EA"] },
+  { type: "\u5C55\u89C8\u6F14\u51FA\u73B0\u573A", keywords: ["\u5C55\u89C8", "\u535A\u7269\u9986", "\u6F14\u5531\u4F1A", "\u821E\u53F0", "\u706F\u724C", "\u753B\u5C55", "\u97F3\u4E50\u8282", "\u5267\u573A"] },
+  { type: "\u6587\u5B57\u7968\u636E\u73B0\u573A", keywords: ["\u622A\u56FE", "\u5C4F\u5E55", "\u7968\u636E", "\u5C0F\u7968", "\u83DC\u5355", "\u6D77\u62A5", "PPT", "\u6587\u6863", "\u4E8C\u7EF4\u7801", "\u6587\u5B57"] },
+  { type: "\u60C5\u4FA3\u7EA6\u4F1A\u73B0\u573A", keywords: ["\u60C5\u4FA3", "\u7EA6\u4F1A", "\u6D6A\u6F2B", "\u7275\u624B", "\u62E5\u62B1", "\u73AB\u7470", "\u4EB2\u5BC6"] }
 ];
-var subjectKeywords = ["\u670B\u53CB", "\u4EBA", "\u4EBA\u7269", "\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u60C5\u4FA3", "\u80CC\u666F", "\u5EFA\u7B51", "\u98DF\u7269", "\u8138", "\u8868\u60C5"];
+var subjectKeywords = [
+  "\u670B\u53CB",
+  "\u4EBA",
+  "\u4EBA\u7269",
+  "\u5C0F\u72D7",
+  "\u72D7",
+  "\u732B",
+  "\u5BA0\u7269",
+  "\u60C5\u4FA3",
+  "\u80CC\u666F",
+  "\u5EFA\u7B51",
+  "\u98DF\u7269",
+  "\u8138",
+  "\u8868\u60C5",
+  "\u5546\u54C1",
+  "\u7535\u8111",
+  "\u624B\u673A",
+  "\u5C4F\u5E55",
+  "\u684C\u9762",
+  "\u6D77\u62A5",
+  "\u6587\u5B57",
+  "\u8F66\u7AD9",
+  "\u8857\u9053",
+  "\u706F\u5149"
+];
 var flawRules = [
   { flaw: "\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", keywords: ["\u88C1\u6389", "\u534A\u5F20\u8138", "\u5207\u6389", "\u6CA1\u4E86", "\u88AB\u753B\u9762\u5F00\u9664"] },
   { flaw: "\u4E3B\u4F53\u592A\u5C0F", keywords: ["\u4EBA\u7269\u975E\u5E38\u5C0F", "\u4EBA\u5F88\u5C0F", "\u4E3B\u4F53\u592A\u5C0F", "\u51E0\u4E4E\u770B\u4E0D\u6E05", "\u592A\u8FDC"] },
@@ -7882,24 +7913,55 @@ var flawRules = [
   { flaw: "\u753B\u9762\u504F\u7CCA", keywords: ["\u7CCA", "\u6A21\u7CCA", "\u865A\u7126", "\u6296"] },
   { flaw: "\u5149\u7EBF\u504F\u6697", keywords: ["\u592A\u6697", "\u504F\u6697", "\u5149\u7EBF\u5DEE", "\u660F\u6697"] },
   { flaw: "\u80CC\u666F\u62A2\u620F", keywords: ["\u80CC\u666F", "\u6742\u7269", "\u62A2\u955C", "\u4E71"] },
-  { flaw: "\u8868\u60C5\u8FC7\u4E8E\u6709\u620F", keywords: ["\u8868\u60C5\u5938\u5F20", "\u8868\u60C5\u5F88\u5938\u5F20", "\u5446", "\u5C34\u5C2C", "\u653E\u7A7A", "\u59D4\u5C48"] }
+  { flaw: "\u8868\u60C5\u8FC7\u4E8E\u6709\u620F", keywords: ["\u8868\u60C5\u5938\u5F20", "\u8868\u60C5\u5F88\u5938\u5F20", "\u5446", "\u5C34\u5C2C", "\u653E\u7A7A", "\u59D4\u5C48"] },
+  { flaw: "\u4FE1\u606F\u91CF\u8FC7\u8F7D", keywords: ["\u5F88\u591A\u5B57", "\u6587\u5B57\u5F88\u591A", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u4FE1\u606F\u91CF", "\u7968\u636E", "\u622A\u56FE", "\u83DC\u5355", "PPT"] },
+  { flaw: "\u9053\u5177\u62A2\u4E3B\u89D2", keywords: ["\u5546\u54C1", "\u5305\u88C5", "\u676F\u5B50", "\u76D8\u5B50", "\u7535\u8111", "\u624B\u673A", "\u6D77\u62A5", "\u9053\u5177", "\u8D27\u67B6"] },
+  { flaw: "\u89D2\u5EA6\u6709\u70B9\u7384\u5B66", keywords: ["\u6B6A", "\u503E\u659C", "\u4EF0\u62CD", "\u4FEF\u62CD", "\u89D2\u5EA6\u5947\u602A", "\u659C\u7740"] },
+  { flaw: "\u53CD\u5149\u6B63\u5728\u8425\u4E1A", keywords: ["\u53CD\u5149", "\u73BB\u7483", "\u955C\u5B50", "\u5C4F\u5E55\u53CD\u5149", "\u66DD\u5149", "\u8FC7\u66DD"] }
 ];
 function analyzePhotoDescription(description) {
   const text2 = description.trim();
-  const sceneType = sceneMap.find((scene) => includesAny(text2, scene.keywords))?.type ?? "\u751F\u6D3B\u7167\u7247";
+  const sceneType = scoreSceneType(text2);
   const subjects = unique(matchKeywords(text2, subjectKeywords));
   const flaws = flawRules.filter((rule) => includesAny(text2, rule.keywords)).map((rule) => rule.flaw);
   const visualKeywords = unique([
+    sceneType,
     ...subjects,
-    ...matchKeywords(text2, ["\u81EA\u62CD", "\u5408\u7167", "\u666F\u70B9", "\u5EFA\u7B51", "\u6742\u7269", "\u6697", "\u53EF\u7231", "\u59D4\u5C48", "\u5938\u5F20", "\u62E5\u6324", "\u80CC\u666F", "\u98CE\u666F"])
+    ...matchKeywords(text2, [
+      "\u81EA\u62CD",
+      "\u5408\u7167",
+      "\u666F\u70B9",
+      "\u5EFA\u7B51",
+      "\u6742\u7269",
+      "\u6697",
+      "\u53EF\u7231",
+      "\u59D4\u5C48",
+      "\u5938\u5F20",
+      "\u62E5\u6324",
+      "\u80CC\u666F",
+      "\u98CE\u666F",
+      "\u5546\u54C1",
+      "\u5C4F\u5E55",
+      "\u7968\u636E",
+      "\u8D27\u67B6",
+      "\u5DE5\u4F4D",
+      "\u8857\u666F",
+      "\u591C\u666F",
+      "\u53CD\u5149",
+      "\u8FC7\u66DD"
+    ])
   ]);
   const photoQualityIssues = flaws.filter(
-    (flaw) => ["\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", "\u4E3B\u4F53\u592A\u5C0F", "\u955C\u5934\u8DDD\u79BB\u8FC7\u8FD1", "\u753B\u9762\u504F\u7CCA", "\u5149\u7EBF\u504F\u6697", "\u80CC\u666F\u62A2\u620F"].includes(flaw)
+    (flaw) => ["\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", "\u4E3B\u4F53\u592A\u5C0F", "\u955C\u5934\u8DDD\u79BB\u8FC7\u8FD1", "\u753B\u9762\u504F\u7CCA", "\u5149\u7EBF\u504F\u6697", "\u80CC\u666F\u62A2\u620F", "\u89D2\u5EA6\u6709\u70B9\u7384\u5B66", "\u53CD\u5149\u6B63\u5728\u8425\u4E1A"].includes(flaw)
   );
   const funnyPoints = unique([
     ...flaws,
     ...includesAny(text2, ["\u6324", "\u62E5\u6324", "\u56DB\u4E2A\u4EBA"]) ? ["\u5927\u5BB6\u6B63\u5728\u4E89\u593A\u753B\u9762\u751F\u5B58\u6743"] : [],
-    ...includesAny(text2, ["\u8868\u60C5\u5938\u5F20", "\u5446", "\u653E\u7A7A", "\u59D4\u5C48"]) ? ["\u8868\u60C5\u7BA1\u7406\u77ED\u6682\u79BB\u7EBF"] : []
+    ...includesAny(text2, ["\u8868\u60C5\u5938\u5F20", "\u5446", "\u653E\u7A7A", "\u59D4\u5C48"]) ? ["\u8868\u60C5\u7BA1\u7406\u77ED\u6682\u79BB\u7EBF"] : [],
+    ...includesAny(text2, ["\u5546\u54C1", "\u8D27\u67B6", "\u5305\u88C5", "\u6536\u94F6\u53F0"]) ? ["\u5546\u54C1\u9648\u5217\u6BD4\u4E3B\u89D2\u66F4\u61C2\u8425\u4E1A"] : [],
+    ...includesAny(text2, ["\u7535\u8111", "\u5DE5\u4F4D", "\u6587\u4EF6", "\u5B66\u4E60", "\u4F5C\u4E1A"]) ? ["\u6253\u5DE5\u6C14\u606F\u5DF2\u7ECF\u4ECE\u753B\u9762\u8FB9\u7F18\u6EA2\u51FA"] : [],
+    ...includesAny(text2, ["\u5C4F\u5E55", "\u622A\u56FE", "\u7968\u636E", "\u6587\u5B57\u5F88\u591A"]) ? ["\u6587\u5B57\u5BC6\u5EA6\u6B63\u5728\u7533\u8BF7\u5C0F\u7968\u7F16\u5236"] : [],
+    ...includesAny(text2, ["\u8857\u9053", "\u5730\u94C1", "\u8F66\u7AD9", "\u901A\u52E4"]) ? ["\u8DEF\u8FC7\u611F\u5F3A\u5230\u50CF\u4E34\u65F6\u6293\u62CD\u8BC1\u636E"] : []
   ]);
   const cutenessLevel = clamp(
     (includesAny(text2, ["\u53EF\u7231", "\u840C", "\u4E56", "\u5C0F\u72D7", "\u5C0F\u732B", "\u5BA0\u7269"]) ? 70 : 0) + (includesAny(text2, ["\u59D4\u5C48", "\u8DB4", "\u770B\u7740\u955C\u5934"]) ? 20 : 0)
@@ -7907,9 +7969,9 @@ function analyzePhotoDescription(description) {
   const awkwardLevel = clamp(
     (includesAny(text2, ["\u5C34\u5C2C", "\u5446", "\u653E\u7A7A", "\u65E0\u8BED"]) ? 75 : 0) + (includesAny(text2, ["\u88C1\u6389", "\u534A\u5F20\u8138", "\u8868\u60C5\u5938\u5F20"]) ? 20 : 0)
   );
-  const chaosLevel = clamp(flaws.length * 18 + (includesAny(text2, ["\u591A\u4EBA", "\u56DB\u4E2A\u4EBA", "\u6324", "\u6742\u7269", "\u6DF7\u4E71"]) ? 25 : 0));
+  const chaosLevel = clamp(flaws.length * 18 + (includesAny(text2, ["\u591A\u4EBA", "\u56DB\u4E2A\u4EBA", "\u6324", "\u6742\u7269", "\u6DF7\u4E71", "\u8D27\u67B6", "\u5F88\u591A\u5B57", "\u8857\u9053"]) ? 25 : 0));
   const roastPotential = clamp(
-    flaws.length * 20 + funnyPoints.length * 12 + (includesAny(text2, ["\u975E\u5E38\u5C0F", "\u534A\u5F20\u8138", "\u592A\u8FD1", "\u592A\u6697", "\u7CCA", "\u62A2\u955C"]) ? 30 : 0)
+    flaws.length * 20 + funnyPoints.length * 12 + (includesAny(text2, ["\u975E\u5E38\u5C0F", "\u534A\u5F20\u8138", "\u592A\u8FD1", "\u592A\u6697", "\u7CCA", "\u62A2\u955C", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u89D2\u5EA6\u5947\u602A", "\u53CD\u5149"]) ? 30 : 0)
   );
   const strongestPunchline = detectPunchline(text2);
   const mood = detectMood(text2, cutenessLevel, awkwardLevel, chaosLevel);
@@ -7928,6 +7990,17 @@ function analyzePhotoDescription(description) {
     strongestPunchline
   };
 }
+function scoreSceneType(text2) {
+  let best = { type: "\u751F\u6D3B\u5207\u7247\u73B0\u573A", score: 0 };
+  for (const scene of sceneMap) {
+    const score = scene.keywords.reduce((total, keyword) => {
+      if (!text2.includes(keyword)) return total;
+      return total + Math.max(1, Math.min(5, Math.ceil(keyword.length / 2)));
+    }, 0);
+    if (score > best.score) best = { type: scene.type, score };
+  }
+  return best.score > 0 ? best.type : "\u751F\u6D3B\u5207\u7247\u73B0\u573A";
+}
 function detectPunchline(text2) {
   if (includesAny(text2, ["\u4EBA\u7269\u975E\u5E38\u5C0F", "\u4EBA\u5F88\u5C0F", "\u4E3B\u4F53\u592A\u5C0F", "\u51E0\u4E4E\u770B\u4E0D\u6E05"])) return "\u4EBA\u5462\uFF1F";
   if (includesAny(text2, ["\u88C1\u6389\u534A\u5F20\u8138", "\u534A\u5F20\u8138", "\u88C1\u6389"])) return "\u53F3\u8FB9\u90A3\u4F4D\uFF1A\u6211\u4E5F\u662F\u4EBA";
@@ -7935,6 +8008,10 @@ function detectPunchline(text2) {
   if (includesAny(text2, ["\u7CCA", "\u6A21\u7CCA", "\u865A\u7126"])) return "\u753B\u8D28\u6B63\u5728\u9003\u8DD1";
   if (includesAny(text2, ["\u592A\u6697", "\u504F\u6697", "\u5149\u7EBF\u5DEE"])) return "\u706F\u5462\uFF1F";
   if (includesAny(text2, ["\u80CC\u666F\u62A2\u955C", "\u6742\u7269", "\u80CC\u666F\u5F88\u4E71"])) return "\u80CC\u666F\u7533\u8BF7\u5F53\u4E3B\u89D2";
+  if (includesAny(text2, ["\u5546\u54C1", "\u8D27\u67B6", "\u5305\u88C5"])) return "\u5546\u54C1\u6BD4\u4EBA\u66F4\u4F1A\u6446\u62CD";
+  if (includesAny(text2, ["\u7535\u8111", "\u5DE5\u4F4D", "\u6587\u4EF6"])) return "\u6253\u5DE5\u5473\u5DF2\u7ECF\u6EA2\u51FA\u5C4F\u5E55";
+  if (includesAny(text2, ["\u5F88\u591A\u5B57", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u7968\u636E", "\u622A\u56FE"])) return "\u4FE1\u606F\u91CF\u6B63\u5728\u8D85\u8F7D";
+  if (includesAny(text2, ["\u53CD\u5149", "\u73BB\u7483", "\u5C4F\u5E55\u53CD\u5149"])) return "\u53CD\u5149\u4E5F\u60F3\u5165\u955C";
   return void 0;
 }
 function detectMood(text2, cuteness, awkward, chaos) {
@@ -7942,6 +8019,10 @@ function detectMood(text2, cuteness, awkward, chaos) {
   if (includesAny(text2, ["\u6D6A\u6F2B", "\u751C", "\u60C5\u4FA3"])) return "\u6D6A\u6F2B";
   if (awkward >= 75) return "\u5C34\u5C2C";
   if (chaos >= 70) return "\u5931\u63A7";
+  if (includesAny(text2, ["\u529E\u516C\u5BA4", "\u5DE5\u4F4D", "\u4F5C\u4E1A", "\u6587\u4EF6", "\u4F1A\u8BAE"])) return "\u6253\u5DE5\u611F";
+  if (includesAny(text2, ["\u4FBF\u5229\u5E97", "\u8D27\u67B6", "\u5546\u54C1", "\u5305\u88C5"])) return "\u8425\u4E1A\u611F";
+  if (includesAny(text2, ["\u8857\u9053", "\u5730\u94C1", "\u8F66\u7AD9", "\u673A\u573A", "\u901A\u52E4"])) return "\u8DEF\u8FC7\u611F";
+  if (includesAny(text2, ["\u5C55\u89C8", "\u6F14\u5531\u4F1A", "\u821E\u53F0", "\u706F\u724C"])) return "\u73B0\u573A\u611F";
   if (includesAny(text2, ["\u9177", "\u5E05", "\u58A8\u955C"])) return "\u5F88\u9177";
   return "\u8F7B\u5FAE\u60F3\u5410\u69FD";
 }
@@ -8945,16 +9026,16 @@ function generateReceiptContent(analysis, roastLevel2 = "normal", skill, generat
   const motifs = skill?.visualMotifs?.length ? skill.visualMotifs : ["\u4ECA\u65E5\u7167\u7247\u5BA1\u5224\u5C0F\u7968", "\u7167\u7247\u68C0\u6D4B\u5355", "AI \u6210\u7247\u4F53\u68C0\u62A5\u544A"];
   const findings = buildFindings(analysis).slice(0, 4);
   return {
-    title: "SNAP ROAST BUDDY",
+    title: "\u62CD\u7ACB\u603C Snap Roast Buddy",
     subtitle: choose(motifs, analysis.sceneType),
     photoType: analysis.sceneType,
-    atmosphere: analysis.chaosLevel >= 65 ? "\u70ED\u95F9\u4F46\u6709\u70B9\u5931\u63A7" : analysis.mood === "\u53EF\u7231" ? "\u53EF\u7231\u503C\u8D85\u6807" : "\u52AA\u529B\u8425\u4E1A\u4E2D",
-    aiMood: roastLevel2 === "spicy" ? "\u5DF2\u7ECF\u5F00\u59CB\u618B\u5927\u62DB" : analysis.mood === "\u53EF\u7231" ? "\u88AB\u53EF\u7231\u51FB\u4E2D" : "\u6B63\u5728\u618B\u7B11",
+    atmosphere: atmosphereFor(analysis),
+    aiMood: aiMoodFor(analysis, roastLevel2),
     findings,
     scores: [
-      { label: "\u79BB\u8C31\u6307\u6570", value: Math.max(35, analysis.roastPotential) },
-      { label: "\u6784\u56FE\u5B89\u5168", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
-      { label: "\u53EF\u53D1\u7A0B\u5EA6", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
+      { label: "\u69FD\u70B9\u5BC6\u5EA6", value: Math.max(35, analysis.roastPotential) },
+      { label: "\u753B\u9762\u79E9\u5E8F", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
+      { label: "\u5206\u4EAB\u4EF7\u503C", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
     ],
     roast: generatedComment?.trim() || receiptRoast(analysis, roastLevel2),
     advice: adviceFor(analysis),
@@ -8991,8 +9072,10 @@ function buildFindings(analysis) {
     if (point.includes("\u8868\u60C5")) return "\u8868\u60C5\u7BA1\u7406\u5DF2\u8FDB\u5165\u7EFC\u827A\u9891\u9053";
     return point;
   });
+  const sceneFinding = findingForScene(analysis);
+  if (sceneFinding) findings.unshift(sceneFinding);
   if (!findings.length) findings.push("\u753B\u9762\u6574\u4F53\u8FD8\u7B97\u7A33\u5B9A\uFF0C\u4F46\u672C\u673A\u4ECD\u7136\u53D1\u73B0\u4E86\u5410\u69FD\u7A7A\u95F4");
-  return findings;
+  return uniqueStrings(findings);
 }
 function receiptRoast(analysis, roastLevel2) {
   if (hasIssue(analysis, "\u88C1")) {
@@ -9003,6 +9086,18 @@ function receiptRoast(analysis, roastLevel2) {
   }
   if (analysis.cutenessLevel >= 75) {
     return "\u672C\u673A\u539F\u672C\u51C6\u5907\u5410\u69FD\uFF0C\n\u4F46\u53EF\u7231\u7A0B\u5EA6\u5BFC\u81F4\u5BA1\u5224\u6D41\u7A0B\u4E2D\u65AD\u3002";
+  }
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u9910\u996E", "\u5546\u54C1")) {
+    return "\u8FD9\u5F20\u7167\u7247\u7684\u6D88\u8D39\u6C14\u606F\u5F88\u5B8C\u6574\uFF0C\n\u672C\u673A\u5DEE\u70B9\u4EE5\u4E3A\u81EA\u5DF1\u8981\u5F00\u53D1\u7968\u3002";
+  }
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5", "\u5B66\u4E60")) {
+    return "\u753B\u9762\u91CC\u6709\u4E00\u79CD\u719F\u6089\u7684\u52AA\u529B\u611F\uFF0C\n\u50CF\u5468\u4E00\u65E9\u4E0A\u8FD8\u6CA1\u52A0\u8F7D\u5B8C\u7684\u4EBA\u751F\u3002";
+  }
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4", "\u65C5\u884C")) {
+    return "\u8FD9\u5F20\u7167\u7247\u5F88\u6709\u8DEF\u8FC7\u611F\uFF0C\n\u50CF\u751F\u6D3B\u7A81\u7136\u6309\u4E0B\u4E86\u622A\u56FE\u952E\u3002";
+  }
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) {
+    return "\u4FE1\u606F\u91CF\u5DF2\u7ECF\u6392\u961F\u8FDB\u573A\uFF0C\n\u672C\u673A\u8D1F\u8D23\u628A\u5B83\u4EEC\u6253\u5370\u6210\u8BC1\u636E\u3002";
   }
   if (roastLevel2 === "spicy") {
     return "\u8FD9\u5F20\u7167\u7247\u4E0D\u662F\u5931\u8BEF\uFF0C\n\u662F\u5BF9\u6444\u5F71\u89C4\u5219\u7684\u4E00\u6B21\u516C\u5F00\u6311\u6218\u3002";
@@ -9015,6 +9110,9 @@ function oneLineRoastFor(analysis, roastLevel2) {
   if (hasIssue(analysis, "\u592A\u8FD1")) return "\u955C\u5934\u8BF4\uFF1A\u6211\u6709\u70B9\u5BB3\u6015\u3002";
   if (hasIssue(analysis, "\u7CCA")) return "\u8FD9\u4E00\u523B\u5F88\u73CD\u8D35\uFF0C\n\u53EF\u60DC\u753B\u8D28\u5148\u64A4\u9000\u4E86\u3002";
   if (hasIssue(analysis, "\u6697") || hasIssue(analysis, "\u5149\u7EBF")) return "\u6C14\u6C1B\u5230\u4E86\uFF0C\n\u706F\u5149\u8FD8\u5728\u8DEF\u4E0A\u3002";
+  if (sceneIncludes(analysis, "\u5546\u54C1", "\u4FBF\u5229\u5E97")) return "\u5546\u54C1\u9648\u5217\u8D62\u4E86\uFF0C\n\u4E3B\u89D2\u6682\u65F6\u7533\u8BF7\u8865\u4F4D\u3002";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5")) return "\u6253\u5DE5\u5473\u5F88\u6D53\uFF0C\n\u50CF\u7167\u7247\u4E5F\u60F3\u4E0B\u73ED\u3002";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u5B57\u592A\u591A\u4E86\uFF0C\n\u672C\u673A\u5148\u6253\u5370\u4E00\u4EFD\u51B7\u9759\u4E00\u4E0B\u3002";
   return roastLevel2 === "spicy" ? "\u672C\u673A\u77ED\u6682\u6C89\u9ED8\uFF0C\n\u7136\u540E\u9009\u62E9\u6253\u5370\u8BC1\u636E\u3002" : "\u8FD9\u5F20\u5F88\u6709\u8BB0\u5FC6\u70B9\uFF0C\n\u4E3B\u8981\u662F\u56E0\u4E3A\u5B83\u5F88\u96BE\u5FD8\u3002";
 }
 function adviceFor(analysis, tiny = false) {
@@ -9024,10 +9122,17 @@ function adviceFor(analysis, tiny = false) {
   if (hasIssue(analysis, "\u6697") || hasIssue(analysis, "\u5149\u7EBF")) return `${prefix}\u8865\u4E00\u70B9\u5149\uFF0C\u522B\u8BA9\u6C14\u6C1B\u72EC\u81EA\u4E0A\u73ED\u3002`;
   if (hasIssue(analysis, "\u7CCA")) return `${prefix}\u6309\u5FEB\u95E8\u524D\u5148\u7A33\u4F4F\uFF0C\u522B\u8BA9\u56DE\u5FC6\u4EA7\u751F\u91CD\u5F71\u3002`;
   if (hasIssue(analysis, "\u80CC\u666F")) return `${prefix}\u6362\u4E2A\u5E72\u51C0\u80CC\u666F\uFF0C\u8BA9\u4E3B\u89D2\u91CD\u65B0\u593A\u56DE\u4E3B\u573A\u3002`;
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return `${prefix}\u9760\u8FD1\u4E3B\u4F53\u4E00\u70B9\uFF0C\u522B\u8BA9\u8D27\u67B6\u66FF\u4F60\u51FA\u9053\u3002`;
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u5B66\u4E60")) return `${prefix}\u628A\u684C\u9762\u6E05\u51FA\u4E00\u5C0F\u5757\u4E3B\u573A\uFF0C\u6253\u5DE5\u611F\u4F1A\u5C11\u4E09\u5206\u3002`;
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4")) return `${prefix}\u7B49\u8DEF\u4EBA\u548C\u80CC\u666F\u51B7\u9759\u4E00\u79D2\uFF0C\u518D\u6309\u5FEB\u95E8\u3002`;
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return `${prefix}\u4FDD\u7559\u91CD\u70B9\u6587\u5B57\uFF0C\u5176\u4F59\u4FE1\u606F\u4EA4\u7ED9\u5C0F\u7968\u6162\u6162\u5BA1\u3002`;
   return `${prefix}\u4FDD\u7559\u8FD9\u5F20\uFF0C\u4F46\u53EF\u4EE5\u518D\u62CD\u4E00\u5F20\u5F53\u4FDD\u9669\u3002`;
 }
 function verdictFor(analysis, roastLevel2) {
   if (analysis.cutenessLevel >= 75) return "\u4E0D\u8BB8\u5220\uFF0C\u672C\u673A\u6279\u51C6\u6536\u85CF";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u9002\u5408\u5B58\u6863\uFF0C\u8BC1\u636E\u611F\u5F88\u5F3A";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5")) return "\u5EFA\u8BAE\u6536\u85CF\uFF0C\u4E0B\u73ED\u540E\u518D\u5BA1";
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return "\u53EF\u53D1\uFF0C\u50CF\u4E00\u5F20\u6D88\u8D39\u73B0\u573A\u8BC1\u8BCD";
   if (analysis.roastPotential >= 80) return roastLevel2 === "spicy" ? "\u5EFA\u8BAE\u53D1\uFF0C\u4F46\u8BF7\u51C6\u5907\u89E3\u91CA\u6743" : "\u53EF\u53D1\uFF0C\u4F46\u9700\u8981\u914D\u6587\u72E1\u8FA9";
   return "\u53EF\u53D1\uFF0C\u8F7B\u5FAE\u52A0\u5DE5\u540E\u66F4\u7A33";
 }
@@ -9060,7 +9165,11 @@ function moodLabelFor(faceType, analysis) {
     begging_give: "\u62DC\u6258\u518D\u62CD\u4E00\u5F20",
     farewell: "\u6E9C\u4E86\u6E9C\u4E86"
   };
-  return analysis.mood === "\u6D6A\u6F2B" ? "\u751C\u5EA6\u8D85\u6807" : labels[faceType];
+  if (analysis.mood === "\u6D6A\u6F2B") return "\u751C\u5EA6\u8D85\u6807";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u4E0B\u73ED\u5931\u8D25";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u8D27\u67B6\u9707\u60CA";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u8DEF\u8FC7\u6293\u62CD";
+  return labels[faceType];
 }
 function pixelCommentFor(analysis, faceType, roastLevel2) {
   if (faceType === "cute_love") return "\u8FD9\u5F20\u4E0D\u8BB8\u5220\u3002\n\u672C\u673A\u6279\u51C6\u6536\u85CF\u3002";
@@ -9075,6 +9184,38 @@ function pixelCommentFor(analysis, faceType, roastLevel2) {
 }
 function hasIssue(analysis, keyword) {
   return [...analysis.flaws, ...analysis.funnyPoints, ...analysis.photoQualityIssues].some((item) => item.includes(keyword));
+}
+function atmosphereFor(analysis) {
+  if (analysis.chaosLevel >= 65) return "\u70ED\u95F9\u4F46\u6709\u70B9\u5931\u63A7";
+  if (analysis.mood === "\u53EF\u7231") return "\u53EF\u7231\u503C\u8D85\u6807";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u52AA\u529B\u4E0A\u73ED\u4E2D";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u5546\u54C1\u6B63\u5728\u8425\u4E1A";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u4E34\u65F6\u8DEF\u8FC7\u73B0\u573A";
+  if (analysis.mood === "\u73B0\u573A\u611F") return "\u73B0\u573A\u611F\u62C9\u6EE1";
+  return "\u52AA\u529B\u8425\u4E1A\u4E2D";
+}
+function aiMoodFor(analysis, roastLevel2) {
+  if (roastLevel2 === "spicy") return "\u5DF2\u7ECF\u5F00\u59CB\u618B\u5927\u62DB";
+  if (analysis.mood === "\u53EF\u7231") return "\u88AB\u53EF\u7231\u51FB\u4E2D";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u60F3\u66FF\u4F60\u4E0B\u73ED";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u6B63\u5728\u76D8\u70B9\u8D27\u67B6";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u6293\u5230\u8DEF\u8FC7\u8BC1\u636E";
+  return "\u6B63\u5728\u618B\u7B11";
+}
+function findingForScene(analysis) {
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return "\u8D27\u67B6\u548C\u5546\u54C1\u6B63\u5728\u52AA\u529B\u62A2\u8D70\u955C\u5934\u7EE9\u6548";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5", "\u5B66\u4E60")) return "\u684C\u9762\u4FE1\u606F\u900F\u9732\u51FA\u4E00\u79CD\u4E0D\u60F3\u4E0A\u73ED\u7684\u8BDA\u5B9E";
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4")) return "\u80CC\u666F\u6D41\u52A8\u611F\u5F88\u5F3A\uFF0C\u50CF\u73B0\u573A\u521A\u88AB\u4E34\u65F6\u622A\u80E1";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u6587\u5B57\u5BC6\u5EA6\u5F88\u9AD8\uFF0C\u9002\u5408\u8FDB\u5165\u8BC1\u636E\u4FDD\u5B58\u6D41\u7A0B";
+  if (sceneIncludes(analysis, "\u9910\u996E", "\u5496\u5561")) return "\u98DF\u7269\u5F88\u52AA\u529B\uFF0C\u62CD\u6444\u65F6\u673A\u4E5F\u5F88\u52AA\u529B";
+  return void 0;
+}
+function sceneIncludes(analysis, ...keywords2) {
+  const haystack = [analysis.sceneType, analysis.mood, ...analysis.visualKeywords].join(" ");
+  return keywords2.some((keyword) => haystack.includes(keyword));
+}
+function uniqueStrings(values) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 // packages/layout/src/renderSvgPreview.ts
@@ -95257,7 +95398,9 @@ Promise.all([waitForDocumentReady(), waitingForTranslator]).then(_globalInit);
 // frontend/src/p5ReceiptRenderer.ts
 var receiptWidth = 384;
 var rendererMap = /* @__PURE__ */ new WeakMap();
-var fontStack = "PingFang SC, Microsoft YaHei, Noto Sans SC, SimHei, sans-serif";
+var fontStack = "HarmonyOS Sans SC, Alibaba PuHuiTi, Source Han Sans SC, PingFang SC, Microsoft YaHei, Noto Sans SC, sans-serif";
+var jitterSeed = 1;
+var jitterCursor = 0;
 function initP5ReceiptRenderer(container) {
   container.classList.add("p5-receipt-host");
 }
@@ -95306,10 +95449,11 @@ function getReceiptHeight(mode2, roastLevel2, data3 = normalizeReceiptData({})) 
   const intensity = getRoastIntensity(roastLevel2);
   if (mode2 === "simple") {
     const textLoad = data3.findings.join("").length + data3.roast.length + data3.advice.length + data3.verdict.length;
-    return Math.round(500 + intensity * 430 + Math.min(260, textLoad * (0.9 + intensity * 0.6)));
+    const itemCount = Math.min(8, 4 + data3.findings.length + Math.round(intensity * 3));
+    return Math.round(900 + itemCount * 24 + intensity * 520 + Math.min(360, textLoad * (0.75 + intensity * 0.8)));
   }
-  if (mode2 === "bigText") return Math.round(500 + intensity * 210);
-  return Math.round(520 + intensity * 240);
+  if (mode2 === "bigText") return Math.round(830 + intensity * 420 + Math.min(180, data3.oneLineRoast.length * 4));
+  return Math.round(870 + intensity * 380 + Math.min(160, data3.shortComment.length * 3));
 }
 function wrapChineseText(p2, text2, maxWidth) {
   const lines = [];
@@ -95402,13 +95546,13 @@ function drawTextDensityBlock(p2, phrases, x, y, width, height, intensity) {
   p2.textStyle(p2.BOLD);
   p2.fill(0);
   p2.noStroke();
-  const rows = Math.round(20 + intensity * 42);
+  const rows = Math.round(10 + intensity * 24);
   for (let i = 0; i < rows; i += 1) {
     const progress = i / Math.max(1, rows - 1);
     p2.textSize(11 + progress * 4);
     const phrase = phrases[i % phrases.length] || "\u68C0\u6D4B\u5F02\u5E38";
     const yy = y + progress * height + Math.sin(i * 1.7) * 4;
-    const repeats = Math.round(2 + progress * 7);
+    const repeats = Math.round(1 + progress * 4);
     for (let j = 0; j < repeats; j += 1) {
       p2.push();
       p2.translate(x + (i * 29 + j * 43) % width, yy + j * (3 - progress * 2));
@@ -95419,7 +95563,375 @@ function drawTextDensityBlock(p2, phrases, x, y, width, height, intensity) {
   }
   p2.pop();
 }
+function drawLogoText(p2, text2, x, y, intensity) {
+  p2.push();
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  const clean = text2.toUpperCase().replace(/\s+/g, " ");
+  if (intensity >= 0.75) {
+    for (let i = 0; i < 4; i += 1) {
+      p2.fill(0, 34);
+      p2.text(clean, x + jitter(7, intensity), y + jitter(5, intensity));
+    }
+  }
+  p2.fill(0);
+  p2.text(clean, x, y);
+  p2.stroke(255, 170);
+  p2.strokeWeight(1);
+  if (intensity >= 0.55) {
+    for (let yy = y + 4; yy < y + 34; yy += 6) p2.line(x - 128, yy + jitter(2, intensity), x + 128, yy + jitter(2, intensity));
+  }
+  p2.pop();
+}
+function drawPseudoQr(p2, x, y, size, intensity) {
+  p2.push();
+  p2.noStroke();
+  p2.fill(0);
+  const cell = size / 9;
+  for (let row = 0; row < 9; row += 1) {
+    for (let col = 0; col < 9; col += 1) {
+      const finder = row < 3 && col < 3 || row < 3 && col > 5 || row > 5 && col < 3;
+      const on = finder || (row * 7 + col * 11 + Math.round(intensity * 5)) % 4 === 0;
+      if (on) p2.rect(x + col * cell, y + row * cell, Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+  p2.pop();
+}
+function drawDoubleRule(p2, x1, y, x2, intensity) {
+  p2.push();
+  p2.stroke(0);
+  p2.strokeWeight(1.5 + intensity * 0.5);
+  p2.line(x1, y, x2, y + jitter(2, intensity * 0.35));
+  p2.strokeWeight(0.8);
+  p2.line(x1, y + 4, x2, y + 4 + jitter(2, intensity * 0.35));
+  p2.pop();
+}
+function drawFineRule(p2, x1, y, x2, intensity) {
+  p2.push();
+  p2.stroke(0, 180);
+  p2.strokeWeight(1);
+  if (intensity > 0.72) {
+    for (let x = x1; x < x2; x += 8) p2.line(x, y + jitter(3, intensity), Math.min(x + 4, x2), y + jitter(3, intensity));
+  } else {
+    p2.line(x1, y, x2, y);
+  }
+  p2.pop();
+}
+function drawReceiptText(p2, text2, x, y, chaos) {
+  const value = String(text2 || "");
+  if (chaos <= 0.08) {
+    p2.text(value, x, y);
+    return;
+  }
+  p2.push();
+  p2.translate(x, y);
+  p2.rotate(jitter(0.035, chaos));
+  if (chaos >= 0.5 && value.length <= 18 && !/[¥\d,]/.test(value)) {
+    let cursor = 0;
+    for (const char of [...value]) {
+      p2.push();
+      p2.translate(cursor, jitter(5, chaos));
+      p2.rotate(jitter(0.08, chaos));
+      p2.text(char, 0, 0);
+      p2.pop();
+      cursor += p2.textWidth(char) + jitter(1.5, chaos);
+    }
+  } else {
+    p2.text(value, 0, 0);
+  }
+  p2.pop();
+}
+function receiptNumber(seed, length) {
+  let value = 0;
+  for (let i = 0; i < seed.length; i += 1) value = (value * 31 + seed.charCodeAt(i)) % 1000000007;
+  return String(value).padStart(length, "0").slice(-length);
+}
+function receiptPrice(text2, index, intensity) {
+  const base2 = 90 + text2.length % 8 * 30 + index * 42;
+  return Math.round(base2 + intensity * 120);
+}
+function scoreBar(value) {
+  const filled = Math.max(1, Math.min(8, Math.round(value / 12.5)));
+  return `${"\u25A0".repeat(filled)}${"\u25A1".repeat(8 - filled)} ${Math.round(value)}`;
+}
+function clipText(text2, maxLength) {
+  const value = String(text2 || "");
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}\u2026` : value;
+}
+function formatAmount(value) {
+  return Math.round(value).toLocaleString("ja-JP");
+}
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+function buildMachineMeta(data3, mode2, roastLevel2) {
+  const now = /* @__PURE__ */ new Date();
+  const modeMap = {
+    receipt: { label: "\u4FE1\u606F\u5C0F\u7968", code: "RECEIPT" },
+    bigText: { label: "\u7206\u5B57\u7ED3\u8BBA", code: "BIG TYPE" },
+    face: { label: "\u989C\u6587\u5B57\u53CD\u5E94", code: "KAOMOJI" }
+  };
+  const roastMap = {
+    gentle: { label: "\u6E29\u67D4", code: "GENTLE" },
+    normal: { label: "\u6B63\u5E38", code: "NORMAL" },
+    spicy: { label: "\u8F9B\u8FA3", code: "SPICY" },
+    execution: { label: "\u5904\u5211", code: "EXECUTION" },
+    public_execution: { label: "\u5904\u5211", code: "PUBLIC" }
+  };
+  const modeInfo = modeMap[mode2];
+  const roastInfo = roastMap[roastLevel2] ?? roastMap.normal;
+  const seed = `${data3.photoType}|${data3.moodLabel}|${data3.roast}|${data3.verdict}|${mode2}|${roastLevel2}`;
+  return {
+    title: "\u62CD\u7ACB\u603C",
+    modeLabel: modeInfo.label,
+    modeCode: modeInfo.code,
+    roastLabel: roastInfo.label,
+    roastCode: roastInfo.code,
+    issuedAt: `${now.getFullYear()}/${pad2(now.getMonth() + 1)}/${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+    scene: data3.photoType || "\u751F\u6D3B\u5207\u7247",
+    mood: data3.aiMood || data3.moodLabel || data3.atmosphere || "\u6B63\u5728\u5206\u6790",
+    evidenceNo: `SRB-${receiptNumber(seed, 6)}`
+  };
+}
+function metricNote(value) {
+  if (value >= 82) return "\u9AD8\u4FE1\u53F7";
+  if (value >= 66) return "\u504F\u9AD8";
+  if (value >= 45) return "\u4E2D\u7B49";
+  return "\u4F4E\u98CE\u9669";
+}
+function buildMachineInsight(data3, mode2) {
+  const metrics = data3.scores.filter((score) => Number.isFinite(score.value)).slice(0, 3).map((score) => ({
+    label: score.label,
+    value: Math.max(0, Math.min(100, score.value)),
+    note: metricNote(score.value)
+  }));
+  const fallbackMetrics = [
+    { label: "\u5410\u69FD\u6D53\u5EA6", value: 68, note: "\u504F\u9AD8" },
+    { label: "\u53EF\u53D1\u7A0B\u5EA6", value: 58, note: "\u4E2D\u7B49" },
+    { label: "\u8BC1\u636E\u5BC6\u5EA6", value: 74, note: "\u504F\u9AD8" }
+  ];
+  while (metrics.length < 3) metrics.push(fallbackMetrics[metrics.length]);
+  const keywordPool = [
+    data3.photoType,
+    data3.atmosphere,
+    data3.aiMood,
+    data3.moodLabel,
+    ...data3.keywords,
+    ...data3.findings.flatMap((finding) => finding.split(/[，。！？、\s]+/))
+  ];
+  const keywords2 = Array.from(new Set(keywordPool.map((item) => item.trim()).filter((item) => item.length >= 2))).slice(0, 5);
+  const outputPurpose = {
+    receipt: "\u9002\u5408\u6536\u85CF\u590D\u76D8\uFF1A\u628A\u69FD\u70B9\u3001\u8BC1\u636E\u548C\u5EFA\u8BAE\u7559\u6210\u5B9E\u4F53\u7EB8\u6761\u3002",
+    bigText: "\u9002\u5408\u56F4\u89C2\u4F20\u64AD\uFF1A\u628A\u6700\u5F3A\u7ED3\u8BBA\u653E\u5927\u6210\u4E00\u773C\u80FD\u61C2\u7684\u6897\u3002",
+    face: "\u9002\u5408\u8868\u8FBE\u60C5\u7EEA\uFF1A\u7528\u989C\u6587\u5B57\u8BB0\u5F55\u673A\u5668\u88AB\u7167\u7247\u523A\u6FC0\u5230\u7684\u53CD\u5E94\u3002"
+  };
+  return {
+    primaryFinding: data3.findings[0] || data3.roast || "\u673A\u5668\u8FD8\u5728\u5BFB\u627E\u7B2C\u4E00\u5904\u8BC1\u636E",
+    actionHint: data3.advice || data3.tinyAdvice || "\u5148\u770B\u8BC1\u636E\uFF0C\u518D\u51B3\u5B9A\u8981\u4E0D\u8981\u91CD\u62CD\u3002",
+    verdict: data3.verdict || data3.oneLineRoast || "\u53EF\u4FDD\u5B58\uFF0C\u5F85\u590D\u67E5",
+    outputPurpose: outputPurpose[mode2],
+    readPath: "\u5148\u770B\u4E3B\u8BC1\u636E\uFF0C\u518D\u770B\u8BFB\u6570\uFF0C\u6700\u540E\u6309\u5EFA\u8BAE\u51B3\u5B9A\u6536\u85CF/\u5206\u4EAB/\u8865\u62CD\u3002",
+    keywords: keywords2,
+    metrics
+  };
+}
+function drawMetricBar(p2, metric, x, y, width, intensity) {
+  const value = Math.max(0, Math.min(100, metric.value));
+  const barY = y + 14;
+  const labelWidth = 66;
+  const barX = x + labelWidth;
+  const barWidth = width - labelWidth - 44;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9.5);
+  p2.text(clipText(metric.label, 6), x, y);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8);
+  p2.text(metric.note, x, y + 11);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9);
+  p2.text(`${Math.round(value)}`, x + width, y + 5);
+  p2.noFill();
+  p2.stroke(0);
+  p2.strokeWeight(1);
+  p2.rect(barX, barY, barWidth, 6);
+  p2.noStroke();
+  p2.fill(0);
+  p2.rect(barX, barY, barWidth * value / 100, 6);
+  if (intensity >= 0.72) {
+    p2.stroke(0, 120);
+    p2.strokeWeight(0.8);
+    p2.line(barX + barWidth * value / 100, barY - 3, barX + barWidth * value / 100 + jitter(9, intensity), barY + 10);
+  }
+  return y + 28;
+}
+function drawInsightDashboard(p2, data3, mode2, margin2, y, width, intensity) {
+  const insight = buildMachineInsight(data3, mode2);
+  const chaos = Math.max(0, intensity - 0.55);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9);
+  p2.text("PHOTO ANALYSIS / \u6709\u6548\u4FE1\u606F", margin2, y);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.text("READ FIRST", margin2 + width, y);
+  y += 17;
+  const flow = ["\u62CD\u7167", "\u7406\u89E3", "\u7EB8\u6761", "\u56F4\u89C2"];
+  const flowGap = 7;
+  const flowWidth = (width - flowGap * (flow.length - 1)) / flow.length;
+  flow.forEach((label, index) => {
+    const x = margin2 + index * (flowWidth + flowGap);
+    p2.stroke(0);
+    p2.strokeWeight(1);
+    p2.fill(index === 2 ? 0 : 255);
+    p2.rect(x, y, flowWidth, 18);
+    p2.noStroke();
+    p2.fill(index === 2 ? 255 : 0);
+    p2.textAlign(p2.CENTER, p2.TOP);
+    p2.textStyle(p2.BOLD);
+    p2.textSize(8.5);
+    p2.text(label, x + flowWidth / 2, y + 4);
+    if (index < flow.length - 1) {
+      p2.stroke(0);
+      p2.strokeWeight(1);
+      p2.line(x + flowWidth + 1, y + 9, x + flowWidth + flowGap - 2, y + 9);
+    }
+  });
+  y += 28;
+  p2.stroke(0);
+  p2.strokeWeight(1.2);
+  p2.noFill();
+  p2.rect(margin2, y, width, 46);
+  p2.noStroke();
+  p2.fill(0);
+  p2.rect(margin2, y, 52, 46);
+  p2.fill(255);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(10);
+  p2.text("\u4E3B\u8BC1\u636E", margin2 + 26, y + 8);
+  p2.textSize(8);
+  p2.text("EVID.", margin2 + 26, y + 25);
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(11);
+  drawReceiptText(p2, clipText(insight.primaryFinding, 29), margin2 + 62, y + 7, chaos * 0.28);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8.5);
+  drawReceiptText(p2, `\u7ED3\u8BBA\uFF1A${clipText(insight.verdict, 24)}`, margin2 + 62, y + 27, chaos * 0.18);
+  y += 58;
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9);
+  p2.text("\u4E09\u9879\u8BFB\u6570 / SIGNALS", margin2, y);
+  y += 14;
+  insight.metrics.forEach((metric) => {
+    y = drawMetricBar(p2, metric, margin2, y, width, intensity);
+  });
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9);
+  p2.text("\u884C\u52A8\u5EFA\u8BAE", margin2, y + 1);
+  p2.textStyle(p2.NORMAL);
+  drawReceiptText(p2, clipText(insight.actionHint, 34), margin2 + 58, y + 1, chaos * 0.16);
+  y += 20;
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9);
+  p2.text("\u8F93\u51FA\u7528\u9014", margin2, y + 1);
+  p2.textStyle(p2.NORMAL);
+  drawReceiptText(p2, clipText(insight.outputPurpose, 34), margin2 + 58, y + 1, chaos * 0.14);
+  y += 20;
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(8.2);
+  p2.text("\u9605\u8BFB\u987A\u5E8F", margin2, y + 1);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8.2);
+  drawReceiptText(p2, clipText(insight.readPath, 36), margin2 + 58, y + 1, chaos * 0.1);
+  y += 19;
+  let chipX = margin2;
+  const chipY = y;
+  insight.keywords.forEach((keyword) => {
+    const chipWidth = Math.min(74, Math.max(36, p2.textWidth(keyword) + 13));
+    if (chipX + chipWidth > margin2 + width) return;
+    p2.noFill();
+    p2.stroke(0);
+    p2.strokeWeight(1);
+    p2.rect(chipX, chipY, chipWidth, 16);
+    p2.noStroke();
+    p2.fill(0);
+    p2.textAlign(p2.CENTER, p2.TOP);
+    p2.textStyle(p2.BOLD);
+    p2.textSize(8);
+    p2.text(clipText(keyword, 6), chipX + chipWidth / 2, chipY + 3);
+    chipX += chipWidth + 6;
+  });
+  return y + 28;
+}
+function drawMachineHeader(p2, data3, mode2, roastLevel2, margin2, y, intensity, variant) {
+  const meta3 = buildMachineMeta(data3, mode2, roastLevel2);
+  const width = receiptWidth - margin2 * 2;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textFont(fontStack);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(8.5);
+  p2.text("SNAP ROAST BUDDY", margin2, y);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.text(meta3.evidenceNo, receiptWidth - margin2, y);
+  y += 16;
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(28);
+  p2.text(meta3.title, margin2, y);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.textSize(8.5);
+  p2.text("\u624B\u673A\u62CD\u7167\u7EC4\u5408\u5916\u8BBE", receiptWidth - margin2, y + 1);
+  p2.text("\u7167\u7247\u7406\u89E3 -> \u7EB8\u6761\u8F93\u51FA", receiptWidth - margin2, y + 15);
+  p2.text("\u5410\u69FD / \u70B9\u8BC4 / \u8868\u60C5", receiptWidth - margin2, y + 29);
+  y += 46;
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 12;
+  const primary = variant === "poster" ? "\u6392\u7248\u6A21\u5F0F" : variant === "mood" ? "\u60C5\u7EEA\u6A21\u5F0F" : "\u68C0\u6D4B\u6A21\u5F0F";
+  const rows = [
+    [primary, `${meta3.modeLabel} / ${meta3.modeCode}`],
+    ["\u5410\u69FD\u5F3A\u5EA6", `${meta3.roastLabel} / ${meta3.roastCode}`],
+    ["\u751F\u6210\u65F6\u95F4", meta3.issuedAt],
+    ["\u573A\u666F/\u60C5\u7EEA", `${meta3.scene} / ${meta3.mood}`]
+  ];
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(9.5);
+  rows.forEach(([label, value], index) => {
+    const rowY = y + index * 15;
+    p2.text(label, margin2, rowY);
+    p2.textStyle(p2.NORMAL);
+    p2.text(clipText(value, 22), margin2 + 72, rowY);
+    p2.textStyle(p2.BOLD);
+    if (index < rows.length - 1) {
+      p2.stroke(0, 35);
+      p2.strokeWeight(1);
+      p2.line(margin2, rowY + 12, margin2 + width, rowY + 12);
+      p2.noStroke();
+    }
+  });
+  y += rows.length * 15 + 10;
+  y = drawInsightDashboard(p2, data3, mode2, margin2, y, width, intensity);
+  y += 4;
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  return y + 14;
+}
 function drawReceipt(p2, data3, mode2, roastLevel2, intensity, baseHeight, options2, mangaImage) {
+  resetJitterSeed(`${mode2}:${roastLevel2}:${data3.title}:${data3.roast}:${data3.verdict}`);
   p2.background(255);
   p2.textFont(fontStack);
   p2.noStroke();
@@ -95439,170 +95951,769 @@ function drawReceipt(p2, data3, mode2, roastLevel2, intensity, baseHeight, optio
   if (options2.mangaImageUrl && options2.mangaMode === "bottom") drawMangaBlock(p2, mangaImage, baseHeight, options2.mangaImageUrl);
 }
 function renderSimpleReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
-  const margin2 = 18;
+  const margin2 = 22;
   const width = receiptWidth - margin2 * 2;
-  let y = 25;
-  p2.textAlign(p2.CENTER, p2.TOP);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(22 + intensity * 7);
-  p2.text(data3.title, receiptWidth / 2 + jitter(1, intensity), y);
-  y += 34;
-  drawDashedLine(p2, margin2, y, receiptWidth - margin2);
+  let y = drawReceiptStoreHeader(p2, data3, margin2, intensity, roastLevel2);
+  y = drawReceiptMetaBlock(p2, data3, margin2, y, width, intensity);
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
   y += 15;
-  p2.textSize(13);
-  p2.text(data3.subtitle, receiptWidth / 2, y);
-  y += 26;
-  drawTag(p2, data3.photoType, margin2, y + 12, intensity > 0.7, -0.03 * intensity);
-  drawTag(p2, data3.aiMood, 178, y + 12, false, 0.045 * intensity);
-  y += 42;
-  const scores = data3.scores.slice(0, intensity >= 0.75 ? 3 : 2);
-  for (const score of scores) {
-    p2.textAlign(p2.LEFT, p2.TOP);
-    p2.textStyle(p2.BOLD);
-    p2.textSize(13);
-    p2.text(score.label, margin2, y);
-    p2.stroke(0);
-    p2.strokeWeight(2);
-    p2.noFill();
-    p2.rect(margin2 + 94, y + 3, 170, 10);
-    p2.fill(0);
-    p2.noStroke();
-    p2.rect(margin2 + 94, y + 3, Math.max(12, 170 * score.value / 100), 10);
-    p2.textAlign(p2.RIGHT, p2.TOP);
-    p2.text(`${Math.round(score.value)}`, receiptWidth - margin2, y - 2);
-    y += 24 - intensity * 3;
-  }
-  y += 8;
-  drawSectionLabel(p2, "AI FINDINGS", margin2, y, intensity);
-  y += 24;
-  const findingCount = roastLevel2 === "gentle" ? 2 : roastLevel2 === "normal" ? 3 : data3.findings.length;
-  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.noStroke();
+  p2.fill(0);
   p2.textStyle(p2.BOLD);
-  p2.textSize(14);
-  for (const finding of data3.findings.slice(0, findingCount)) {
-    y = drawWrappedLine(p2, `- ${finding}`, margin2 + jitter(3, intensity), y, width, 14, 20 - intensity * 4);
-    y += 4 - intensity * 2;
+  p2.textSize(11);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.text("\u54C1\u540D / \u68C0\u6D4B\u9879\u76EE", margin2, y);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.text("\u70B9\u6570", receiptWidth - 118, y);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.text("\u91D1\u989D", receiptWidth - margin2, y);
+  y += 19;
+  drawFineRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 12;
+  const lineItems = buildReceiptLineItems(data3, intensity, roastLevel2);
+  for (const [index, item] of lineItems.entries()) {
+    y = drawReceiptItemRow(p2, item, margin2, y, width, intensity, index);
   }
-  y += 8;
-  drawDashedLine(p2, margin2, y, receiptWidth - margin2, 7, 5);
-  y += 18;
-  const paragraphs = [data3.roast, data3.advice, data3.verdict];
-  for (const [index, paragraph] of paragraphs.entries()) {
-    const density = roastLevel2 === "execution" || roastLevel2 === "public_execution" ? y / height : 0;
-    const size = 16 + intensity * 3 + density * 3;
-    const leading = Math.max(9, 24 - density * 17);
-    p2.textStyle(index === 0 ? p2.BOLD : p2.NORMAL);
-    p2.textSize(size);
-    y = drawWrappedLine(p2, paragraph, margin2 + jitter(7, intensity * density), y, width, size, leading, density * intensity * 0.2);
-    y += Math.max(4, 22 - density * 20);
-  }
-  if (intensity >= 0.7) {
-    drawStamp(p2, intensity >= 1 ? "\u4E8B\u6545\u5B58\u6863" : "\u91CD\u70B9\u89C2\u5BDF", 278, 214 + intensity * 44, 82 + intensity * 16, -0.18);
-    drawSpeedLines(p2, 244, 84, 94, Math.round(4 + intensity * 7));
-  }
+  y += 4;
+  drawFineRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y = drawReceiptTotalBlock(p2, data3, margin2, y + 12, width, intensity);
+  y += 14;
+  y = drawReceiptCommentBlock(p2, [data3.roast, data3.advice, data3.verdict], margin2, y, width, height, intensity);
   const tags = extractShortWords(data3);
-  for (let i = 0; i < Math.round(intensity * 9); i += 1) {
-    drawTag(p2, tags[i % tags.length] || "\u5F02\u5E38", 18 + i * 73 % 260, y + 8 + i * 21, i % 3 === 0, (i % 2 ? -1 : 1) * 0.08 * intensity);
+  if (intensity >= 0.68) {
+    drawStamp(p2, intensity >= 1 ? "\u4E8B\u6545\u5B58\u6863" : "\u91CD\u70B9\u89C2\u5BDF", 272 + jitter(10, intensity), 202 + intensity * 72, 84 + intensity * 18, -0.2);
+    drawReceiptChaosNotes(p2, tags, y, height, intensity);
   }
   if (intensity >= 1) {
-    const blockY = height * 0.72;
-    drawTextDensityBlock(p2, [data3.roast, data3.verdict, ...tags], margin2 - 4, blockY, width + 8, height - blockY - 18, intensity);
-  } else {
-    drawBarcode(p2, margin2, height - 56, width, 34, intensity);
+    const blockY = Math.max(y + 34, height - 300);
+    drawTextDensityBlock(p2, [data3.roast, data3.verdict, ...tags], margin2 - 4, blockY, width + 8, Math.max(120, height - blockY - 86), 0.38);
+  }
+  drawReceiptFooter(p2, data3, margin2, height, width, intensity, "receipt", roastLevel2);
+}
+function drawReceiptStoreHeader(p2, data3, margin2, intensity, roastLevel2) {
+  let y = drawMachineHeader(p2, data3, "receipt", roastLevel2, margin2, 20, intensity, "receipt");
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.noStroke();
+  p2.fill(0);
+  const title = data3.title.toUpperCase().replace(/\s*BUDDY$/i, "");
+  p2.textStyle(p2.BOLD);
+  p2.textSize(24 + intensity * 3);
+  drawLogoText(p2, title, receiptWidth / 2, y, intensity);
+  drawPseudoQr(p2, receiptWidth - margin2 - 40, y + 4, 36, intensity);
+  y += 36;
+  p2.textSize(13);
+  p2.textStyle(p2.BOLD);
+  p2.text("PHOTO RECEIPT / \u9886 \u6536 \u8BC1", receiptWidth / 2, y);
+  y += 19;
+  p2.textSize(12);
+  p2.textStyle(p2.NORMAL);
+  p2.text(data3.subtitle, receiptWidth / 2, y);
+  y += 16;
+  p2.text(`TEL 010-${receiptNumber(data3.title, 4)}-${receiptNumber(data3.roast, 4)}`, receiptWidth / 2, y);
+  y += 18;
+  return y;
+}
+function drawReceiptMetaBlock(p2, data3, margin2, y, width, intensity) {
+  const receiptNo = receiptNumber(`${data3.roast}${data3.verdict}`, 6);
+  const registerNo = receiptNumber(`${data3.photoType}${data3.aiMood}`, 13);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(12);
+  drawReceiptText(p2, `\u767B\u8BB0\u7F16\u53F7 T${registerNo}`, margin2, y, intensity * 0.2);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  drawReceiptText(p2, `\u30EC\u30B8 ${receiptNo.slice(0, 4)}`, margin2 + width, y, intensity * 0.2);
+  y += 18;
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  drawReceiptText(p2, "\u7528\u6237\u8981\u627E\u7684\u4FE1\u606F\uFF1A\u69FD\u70B9 / \u8BC1\u636E / \u5EFA\u8BAE", margin2, y, intensity * 0.18);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  drawReceiptText(p2, `\u7A7A\u6C14: ${data3.atmosphere}`, margin2 + width, y, intensity * 0.18);
+  y += 24;
+  return y;
+}
+function buildReceiptLineItems(data3, intensity, roastLevel2) {
+  const findings = data3.findings.slice(0, intensity < 0.35 ? 2 : intensity < 0.7 ? 3 : 5);
+  const rows = [
+    { name: data3.photoType, detail: data3.atmosphere, qty: "1\u70B9", amount: 108, emphasis: true },
+    ...findings.map((finding, index) => ({
+      name: finding,
+      detail: index % 2 === 0 ? data3.aiMood : void 0,
+      qty: `${index + 1}\u70B9`,
+      amount: receiptPrice(finding, index, intensity)
+    })),
+    ...data3.scores.slice(0, intensity >= 0.7 ? 3 : 2).map((score, index) => ({
+      name: score.label,
+      detail: scoreBar(score.value),
+      qty: "\u5BFE\u8C61",
+      amount: Math.round(score.value) + 100 + index * 40
+    }))
+  ];
+  if (intensity >= 0.7) {
+    rows.push({ name: data3.verdict, detail: "\u91CD\u70B9\u89C2\u5BDF", qty: "1\u70B9", amount: 777, emphasis: true });
+  }
+  if (roastLevel2 === "execution" || roastLevel2 === "public_execution") {
+    rows.push({ name: "\u516C\u5F00\u5904\u5211\u8FFD\u52A0\u8D39", detail: data3.oneLineRoast.slice(0, 18), qty: "\u708E\u4E0A", amount: 999, emphasis: true });
+  }
+  return rows.slice(0, 6 + Math.round(intensity * 5));
+}
+function drawReceiptItemRow(p2, item, x, y, width, intensity, index) {
+  const chaos = Math.max(0, intensity - 0.48);
+  const overlap = Math.max(0, intensity - 0.72);
+  const rowHeight = item.detail ? 38 - overlap * 12 : 25 - overlap * 8;
+  const angle = index % 2 === 0 ? -0.012 * chaos : 0.014 * chaos;
+  p2.push();
+  p2.translate(jitter(5, chaos), jitter(5, chaos));
+  p2.rotate(angle);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(item.emphasis ? p2.BOLD : p2.NORMAL);
+  p2.textSize(item.emphasis ? 14 : 12);
+  drawReceiptText(p2, clipText(item.name, intensity >= 0.75 ? 24 : 21), x, y, chaos);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(12);
+  drawReceiptText(p2, item.qty, receiptWidth - 118, y + 1, chaos);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.textStyle(item.emphasis ? p2.BOLD : p2.NORMAL);
+  p2.textSize(item.emphasis ? 14 : 12);
+  drawReceiptText(p2, `\xA5${formatAmount(item.amount)}`, x + width, y, chaos);
+  if (item.detail) {
+    p2.textAlign(p2.LEFT, p2.TOP);
+    p2.textStyle(p2.NORMAL);
+    p2.textSize(10);
+    drawReceiptText(p2, `  * ${clipText(item.detail, 26)}`, x + 8, y + 18 - overlap * 5, chaos);
+  }
+  p2.pop();
+  if (intensity >= 0.88 && index % 3 === 1) {
+    p2.stroke(0, 120);
+    p2.strokeWeight(1.2);
+    p2.line(x + jitter(22, intensity), y + 8, x + width - jitter(22, intensity), y + 14 + jitter(10, intensity));
+  }
+  return y + Math.max(18, rowHeight);
+}
+function drawReceiptTotalBlock(p2, data3, margin2, y, width, intensity) {
+  const base2 = data3.scores.reduce((sum, score) => sum + Math.round(score.value), 0);
+  const total = Math.max(311, base2 + data3.findings.length * 180 + Math.round(intensity * 460));
+  const tax = Math.round(total * 0.1);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(17 + intensity * 4);
+  drawReceiptText(p2, "\u5408 \u8BA1", margin2, y, intensity * 0.25);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.textSize(20 + intensity * 8);
+  drawReceiptText(p2, `\xA5${formatAmount(total)}`, margin2 + width, y - 4, intensity * 0.35);
+  y += 30 - intensity * 6;
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(12);
+  const taxRows = [
+    [`(10%\u7A0E \u5BF9\u8C61)`, `\xA5${formatAmount(total)}`],
+    [`(\u5185\u6D88\u8D39\u7A0E\u7B49)`, `\xA5${formatAmount(tax)}`],
+    [`\u652F\u4ED8\u65B9\u5F0F`, intensity > 0.65 ? "AIpay Plus" : "AIpay"]
+  ];
+  for (const [label, value] of taxRows) {
+    p2.textAlign(p2.LEFT, p2.TOP);
+    drawReceiptText(p2, label, margin2 + 8, y, intensity * 0.16);
+    p2.textAlign(p2.RIGHT, p2.TOP);
+    drawReceiptText(p2, value, margin2 + width, y, intensity * 0.16);
+    y += 17 - Math.max(0, intensity - 0.7) * 5;
+  }
+  return y;
+}
+function drawReceiptCommentBlock(p2, paragraphs, margin2, y, width, height, intensity) {
+  const chaos = Math.max(0, intensity - 0.45);
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 16;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(12);
+  drawReceiptText(p2, "\u5546\u54C1\u306E\u8FD4\u54C1\u30FB\u4EA4\u63DB\u306F7\u65E5\u4EE5\u5185\u3067\u3059", margin2, y, chaos * 0.4);
+  y += 18;
+  for (const [index, paragraph] of paragraphs.entries()) {
+    const density = y / height;
+    const size = index === 0 ? 15 + intensity * 3 + density * 3 : 12 + intensity * 2;
+    const leading = Math.max(11, 21 - chaos * 9 - density * intensity * 4);
+    p2.textStyle(index === 0 ? p2.BOLD : p2.NORMAL);
+    p2.textSize(size);
+    y = drawWrappedLine(p2, paragraph, margin2 + jitter(9, chaos), y, width, size, leading, chaos * (0.35 + density));
+    y += Math.max(4, 16 - chaos * 13);
+  }
+  return y;
+}
+function drawReceiptFooter(p2, data3, margin2, height, width, intensity, mode2 = "receipt", roastLevel2 = "normal") {
+  const meta3 = buildMachineMeta(data3, mode2, roastLevel2);
+  const y = height - 76;
+  drawFineRule(p2, margin2, y - 16, receiptWidth - margin2, intensity);
+  drawBarcode(p2, margin2 + 6, y, width - 12, 34 + intensity * 4, intensity);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textSize(8);
+  p2.textStyle(p2.BOLD);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.text("\u62CD\u7ACB\u603C\u628A\u7167\u7247\u4ECE\u5C4F\u5E55\u8BB0\u5F55\u53D8\u6210\u53EF\u6536\u85CF\u3001\u53EF\u5206\u4EAB\u3001\u53EF\u56F4\u89C2\u7684\u5B9E\u4F53\u4E92\u52A8\u3002", receiptWidth / 2, y - 34);
+  p2.textSize(10);
+  p2.textStyle(p2.NORMAL);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.text(`${meta3.modeCode} No.${receiptNumber(data3.roast, 4)}`, margin2, height - 30);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.text(meta3.evidenceNo, margin2 + width, height - 30);
+}
+function drawReceiptChaosNotes(p2, tags, startY, height, intensity) {
+  const count = Math.round(3 + intensity * 10);
+  const maxY = Math.max(startY + 24, height - 118);
+  for (let i = 0; i < count; i += 1) {
+    const x = 18 + i * 79 % 288;
+    const y = Math.min(maxY, startY + 12 + i * (19 - Math.max(0, intensity - 0.75) * 7));
+    drawTag(p2, tags[i % tags.length] || "\u5F02\u5E38", x, y, i % 3 === 0, (i % 2 ? -1 : 1) * 0.08 * intensity);
   }
 }
 function renderBigTextReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
   const phrase = cleanBigPhrase(data3.oneLineRoast || data3.headline || data3.roast);
-  const chunks = splitBigPhrase(phrase);
-  p2.fill(0);
-  p2.noStroke();
-  drawSpeedLines(p2, 18, 32, 160 + intensity * 150, Math.round(5 + intensity * 12), -0.4);
-  drawTag(p2, data3.topLabel || "SNAP VERDICT", 18, 36, intensity > 0.6, -0.06);
-  let y = 92;
-  chunks.slice(0, intensity >= 1 ? 5 : 4).forEach((chunk, index) => {
-    const targetWidth = receiptWidth * (index === 0 ? 1.02 : 0.88 + intensity * 0.12);
-    const size = fitTextSize(p2, chunk, targetWidth, receiptWidth * (0.45 + intensity * 0.45), 34, 132 + intensity * 34);
-    p2.push();
-    p2.translate(receiptWidth / 2 + jitter(16, intensity), y + size * 0.52);
-    p2.rotate((index % 2 ? 1 : -1) * (0.04 + intensity * 0.13));
-    p2.textAlign(p2.CENTER, p2.CENTER);
-    p2.textStyle(p2.BOLD);
-    p2.textSize(size);
-    for (let ghost = 0; ghost < Math.round(intensity * 4); ghost += 1) {
-      p2.fill(0, 45 + ghost * 22);
-      p2.text(chunk, -ghost * 4, ghost * 5);
-    }
-    p2.fill(0);
-    p2.text(chunk, 0, 0);
-    p2.pop();
-    if (index === 1 && intensity > 0.55) {
-      p2.fill(0);
-      p2.rect(0, y + size * 0.28, receiptWidth, 18 + intensity * 18);
-    }
-    y += size * (0.76 - intensity * 0.1);
-  });
-  const notes = [data3.subHeadline, data3.tinyAdvice, data3.verdict, ...extractShortWords(data3)].filter(Boolean);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(11 + intensity * 3);
-  for (let i = 0; i < Math.round(5 + intensity * 13); i += 1) {
-    const x = 16 + i * 61 % 300;
-    const yy = Math.min(height - 32, 88 + i * 47 % Math.max(140, height - 132));
-    drawTag(p2, String(notes[i % notes.length] || "\u8865\u5200"), x, yy, i % 4 === 0, (i % 2 ? 1 : -1) * 0.13 * intensity);
+  const margin2 = 22;
+  const chaos = Math.max(0, intensity - 0.38);
+  const notes = [data3.topLabel, data3.subHeadline, data3.tinyAdvice, data3.verdict, ...extractShortWords(data3)].filter(Boolean);
+  const title = cleanBigPhrase(data3.headline || phrase).slice(0, 10);
+  const subtitle = cleanSmallPhrase(data3.oneLineRoast || data3.roast || data3.verdict);
+  const roman = romanizePosterLabel(data3.photoType || data3.topLabel || "SNAP ROAST");
+  let y = drawBigPosterHeader(p2, data3, title, roman, margin2, intensity, roastLevel2);
+  if (intensity < 0.68) {
+    y = drawCalmBigTextPoster(p2, title, subtitle, notes, margin2, y, height, intensity);
+  } else {
+    y = drawWildBigTextPoster(p2, title, subtitle, notes, margin2, y, height, intensity, roastLevel2);
   }
-  if (roastLevel2 === "execution" || roastLevel2 === "public_execution") {
-    p2.textAlign(p2.CENTER, p2.CENTER);
+  y = drawBigTextFootnotes(p2, notes, margin2, Math.min(y + 12, height - 178), height, intensity);
+  if (intensity >= 0.72) drawBigTextLooseLabels(p2, notes, title, height, intensity);
+  drawBigPosterFooter(p2, data3, phrase, margin2, height, intensity, roastLevel2);
+}
+function drawBigPosterHeader(p2, data3, title, roman, margin2, intensity, roastLevel2) {
+  const chaos = Math.max(0, intensity - 0.45);
+  let y = drawMachineHeader(p2, data3, "bigText", roastLevel2, margin2, 20, intensity, "poster");
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(10);
+  p2.text("FOR DISPLAY ONLY, PLEASE DON'T STEAL IT", margin2, y);
+  y += 16;
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textSize(11);
+  p2.text("SNAP ROAST TYPOGRAPHIC RECEIPT", receiptWidth / 2, y);
+  y += 28;
+  if (intensity >= 0.6) {
+    drawTitleBand(p2, title, y, 48 + intensity * 10, true, jitter(0.05, chaos), intensity, roman);
+    return y + 66 + intensity * 10;
+  }
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 14;
+  p2.textStyle(p2.BOLD);
+  p2.textSize(13);
+  p2.text(data3.topLabel || "CUO WEI JIE JU", receiptWidth / 2, y);
+  y += 20;
+  p2.textSize(8);
+  p2.text(roman, receiptWidth / 2, y);
+  return y + 24;
+}
+function drawCalmBigTextPoster(p2, title, subtitle, notes, margin2, startY, height, intensity) {
+  const frameTop = startY;
+  const frameHeight = Math.min(420, height - startY - 210);
+  const centerX = receiptWidth / 2;
+  p2.push();
+  p2.noFill();
+  p2.stroke(0);
+  p2.strokeWeight(1.5);
+  p2.rect(margin2, frameTop, receiptWidth - margin2 * 2, frameHeight);
+  p2.line(margin2 + 70, frameTop, margin2 + 70, frameTop + frameHeight);
+  p2.line(receiptWidth - margin2 - 64, frameTop, receiptWidth - margin2 - 64, frameTop + frameHeight);
+  p2.pop();
+  drawVerticalPosterText(p2, title, centerX + 10, frameTop + 30, frameHeight - 70, 74, 0);
+  drawRotatedMicroText(p2, subtitle, margin2 + 34, frameTop + frameHeight - 34, frameHeight - 70, -Math.PI / 2, 11, 0);
+  drawRotatedMicroText(p2, "SNAP ROAST / BIG TYPE / GUIDE SERIES", receiptWidth - margin2 - 30, frameTop + 34, frameHeight - 68, Math.PI / 2, 9, 0);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(13);
+  p2.text("\u9519 \u4F4D \u7ED3 \u5C40", margin2 + 18, frameTop + 28);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(10);
+  drawWrappedLine(p2, notes[0] || "\u73B0\u573A\u5224\u5B9A", margin2 + 18, frameTop + frameHeight - 88, 74, 10, 15, 0);
+  const bandY = frameTop + frameHeight + 18;
+  drawTitleBand(p2, splitPosterTitle(title).join(" "), bandY, 54, false, 0, intensity, "CUO WEI JIE JU");
+  drawBigPosterMicroColumns(p2, notes, margin2, bandY + 78, 128, intensity);
+  return bandY + 240;
+}
+function drawWildBigTextPoster(p2, title, subtitle, notes, margin2, startY, height, intensity, roastLevel2) {
+  const chaos = Math.max(0, intensity - 0.45);
+  const safeBottom = height - 170;
+  let y = startY;
+  const parts = splitPosterTitle(title);
+  drawTitleBand(p2, parts[0] || title, y, 70 + intensity * 22, true, -0.025 - chaos * 0.08, intensity, "CUO WEI JIE JU");
+  y += 88 - chaos * 18;
+  drawTitleBand(p2, parts.slice(1).join("") || subtitle.slice(0, 8), y, 84 + intensity * 28, false, 0.035 + chaos * 0.11, intensity, "ROAST WITH THE DAWN");
+  y += 104 - chaos * 26;
+  p2.push();
+  p2.translate(receiptWidth / 2 + jitter(18, chaos), y + 128);
+  p2.rotate(-0.08 - chaos * 0.18);
+  drawVerticalPosterText(p2, title, 0, -126, 270 + intensity * 86, 82 + intensity * 28, chaos);
+  p2.pop();
+  drawRotatedMicroText(p2, subtitle, margin2 + 20, y + 298, 250, -Math.PI / 2 + chaos * 0.16, 11 + intensity * 2, chaos);
+  drawRotatedMicroText(p2, "UNAUTHORIZED REPRINTING OF THIS ROAST IS ENCOURAGED", receiptWidth - margin2 - 18, y + 32, 260, Math.PI / 2 - chaos * 0.18, 8, chaos);
+  const midBand = Math.min(y + 292, safeBottom - 250);
+  drawTitleBand(p2, `${parts[0] || title} | ${parts[1] || "\u5171\u821E"}`, midBand, 64 + intensity * 14, true, 0.02 + chaos * 0.16, intensity, "DISPLAY ONLY");
+  drawWaveTextLine(p2, subtitle, margin2, midBand + 100, receiptWidth - margin2 * 2, 18 + intensity * 4, intensity);
+  drawBigPosterMicroColumns(p2, notes, margin2, midBand + 132, 150 + intensity * 80, intensity);
+  if (intensity >= 0.85 || roastLevel2 === "execution" || roastLevel2 === "public_execution") {
+    const finalY = Math.min(safeBottom - 136, midBand + 270);
+    drawTitleBand(p2, title, finalY, 84, false, -0.035 - chaos * 0.2, intensity, "PUBLIC EXECUTION EDITION");
+    drawOverprintTitle(p2, title, receiptWidth / 2, finalY + 148, 68 + intensity * 20, intensity);
+    return finalY + 228;
+  }
+  return midBand + 250;
+}
+function drawTitleBand(p2, text2, y, bandHeight, inverted, angle, intensity, sideText = "") {
+  const chaos = Math.max(0, intensity - 0.45);
+  p2.push();
+  p2.translate(receiptWidth / 2, y + bandHeight / 2);
+  p2.rotate(angle);
+  p2.rectMode(p2.CENTER);
+  p2.noStroke();
+  p2.fill(inverted ? 0 : 255);
+  p2.rect(0, 0, receiptWidth + 24, bandHeight);
+  p2.stroke(0);
+  p2.strokeWeight(inverted ? 0 : 2);
+  if (!inverted) p2.rect(0, 0, receiptWidth - 44, bandHeight - 8);
+  p2.noStroke();
+  p2.fill(inverted ? 255 : 0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  const label = clipText(cleanBigPhrase(text2), 10);
+  const size = fitTextSize(p2, label, receiptWidth - 114, bandHeight * 0.92, 28, bandHeight * 0.9);
+  p2.textSize(size);
+  if (intensity >= 0.72) {
+    for (let i = 0; i < Math.round(intensity * 4); i += 1) {
+      p2.fill(inverted ? 255 : 0, 34 + i * 22);
+      p2.text(label, jitter(8, chaos), jitter(8, chaos));
+    }
+    p2.fill(inverted ? 255 : 0);
+  }
+  p2.text(label, 0, 0);
+  if (sideText) {
     p2.textStyle(p2.BOLD);
-    p2.textSize(18);
-    for (let yy = height - 124; yy < height - 20; yy += 21) p2.text(`/// ${phrase} ///`, receiptWidth / 2, yy);
+    p2.textSize(9 + intensity * 2);
+    p2.textAlign(p2.LEFT, p2.CENTER);
+    p2.text(clipText(sideText.toUpperCase(), 25), -receiptWidth / 2 + 28, bandHeight / 2 - 12);
+    p2.textAlign(p2.RIGHT, p2.CENTER);
+    p2.text("2026", receiptWidth / 2 - 28, -bandHeight / 2 + 12);
+  }
+  p2.pop();
+}
+function drawVerticalPosterText(p2, text2, x, y, maxHeight, maxSize, chaos) {
+  const chars = [...cleanBigPhrase(text2).slice(0, 8)];
+  if (!chars.length) return;
+  const size = Math.min(maxSize, Math.max(34, maxHeight / chars.length * 0.9));
+  const step = Math.min(size * 0.92, maxHeight / chars.length);
+  p2.push();
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(size);
+  chars.forEach((char, index) => {
+    p2.push();
+    p2.translate(x + jitter(12, chaos), y + index * step + step / 2 + jitter(12, chaos));
+    p2.rotate(jitter(0.08, chaos));
+    if (chaos >= 0.35) {
+      p2.fill(0, 46);
+      p2.text(char, -5, 5);
+      p2.fill(0);
+    }
+    p2.text(char, 0, 0);
+    p2.pop();
+  });
+  p2.pop();
+}
+function drawRotatedMicroText(p2, text2, x, y, maxWidth, angle, size, chaos) {
+  p2.push();
+  p2.translate(x, y);
+  p2.rotate(angle + jitter(0.05, chaos));
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(size);
+  const lines = wrapChineseText(p2, text2, maxWidth);
+  lines.slice(0, 5).forEach((line, index) => p2.text(line, jitter(5, chaos), index * (size + 4) + jitter(4, chaos)));
+  p2.pop();
+}
+function drawBigPosterMicroColumns(p2, notes, x, y, height, intensity) {
+  const chaos = Math.max(0, intensity - 0.55);
+  const columns = intensity < 0.55 ? 2 : 3;
+  const colWidth = (receiptWidth - x * 2) / columns;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8 + intensity * 1.5);
+  for (let col = 0; col < columns; col += 1) {
+    const note = String(notes[col % notes.length] || "\u73B0\u573A\u5224\u5B9A");
+    const lines = wrapChineseText(p2, note.repeat(intensity >= 0.75 ? 2 : 1), colWidth - 10);
+    p2.textAlign(p2.LEFT, p2.TOP);
+    lines.slice(0, Math.max(3, Math.floor(height / 13))).forEach((line, index) => {
+      p2.text(line, x + col * colWidth + jitter(4, chaos), y + index * 13 + jitter(4, chaos));
+    });
+  }
+}
+function drawWaveTextLine(p2, text2, x, y, width, size, intensity) {
+  const chars = [...cleanBigPhrase(text2).slice(0, 22)];
+  if (!chars.length) return;
+  p2.push();
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(size);
+  chars.forEach((char, index) => {
+    const progress = chars.length === 1 ? 0.5 : index / (chars.length - 1);
+    const xx = x + progress * width;
+    const yy = y + Math.sin(progress * Math.PI * 2) * 12 * intensity;
+    p2.push();
+    p2.translate(xx, yy);
+    p2.rotate(Math.cos(progress * Math.PI * 2) * 0.18 * intensity);
+    p2.text(char, 0, 0);
+    p2.pop();
+  });
+  p2.pop();
+}
+function drawOverprintTitle(p2, text2, x, y, size, intensity) {
+  const label = cleanBigPhrase(text2).slice(0, 8);
+  p2.push();
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(size);
+  for (let i = 0; i < 5 + intensity * 4; i += 1) {
+    p2.fill(0, 42);
+    p2.text(label, x + jitter(36, intensity), y + jitter(28, intensity));
+  }
+  p2.fill(0);
+  p2.text(label, x, y);
+  p2.pop();
+}
+function drawBigTextFootnotes(p2, notes, margin2, y, height, intensity) {
+  const chaos = Math.max(0, intensity - 0.55);
+  const bottomLimit = height - 112;
+  drawFineRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 14;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(10);
+  p2.text("TYPOGRAPHIC EVIDENCE / DISPLAY COPY", margin2, y);
+  y += 16;
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(9 + intensity * 2);
+  for (let i = 0; i < Math.min(notes.length, 4 + Math.round(intensity * 3)) && y < bottomLimit; i += 1) {
+    const label = `> ${clipText(String(notes[i]), intensity >= 0.75 ? 24 : 18)}`;
+    drawReceiptText(p2, label, margin2, y, chaos);
+    p2.textAlign(p2.RIGHT, p2.TOP);
+    drawReceiptText(p2, `NO.${receiptNumber(label, 3)}`, receiptWidth - margin2, y, chaos);
+    p2.textAlign(p2.LEFT, p2.TOP);
+    y += 16 - chaos * 4;
+  }
+  return y;
+}
+function drawBigTextLooseLabels(p2, notes, title, height, intensity) {
+  const labels = [title, ...notes].filter(Boolean);
+  const count = Math.round(4 + intensity * 9);
+  for (let i = 0; i < count; i += 1) {
+    const x = 18 + i * 71 % 292;
+    const y = 154 + i * 59 % Math.max(220, height - 360);
+    drawTag(p2, String(labels[i % labels.length] || "\u9519\u4F4D"), x, y, i % 3 === 0, (i % 2 ? 1 : -1) * 0.09 * intensity);
+  }
+}
+function drawBigPosterFooter(p2, data3, phrase, margin2, height, intensity, roastLevel2) {
+  const meta3 = buildMachineMeta(data3, "bigText", roastLevel2);
+  const y = height - 88;
+  if (intensity >= 0.75) drawSpeedLines(p2, margin2, y - 54, receiptWidth - margin2 * 2, Math.round(5 + intensity * 8), -0.12);
+  drawFineRule(p2, margin2, y - 12, receiptWidth - margin2, intensity);
+  drawBarcode(p2, margin2 + 4, y + 4, receiptWidth - margin2 * 2 - 8, 30 + intensity * 6, intensity);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(16 + intensity * 4);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.text("2026", margin2, height - 34);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8);
+  p2.textAlign(p2.RIGHT, p2.TOP);
+  p2.text(`${meta3.evidenceNo} / ${receiptNumber(phrase + data3.verdict, 6)}`, receiptWidth - margin2, height - 30);
+}
+function selectKaomojiMood(pattern, roastLevel2, data3) {
+  const text2 = `${pattern} ${data3.moodLabel} ${data3.shortComment} ${data3.oneLineRoast} ${data3.verdict}`;
+  const pools = {
+    cute: ["(\uFF61\uFF65\u03C9\uFF65\uFF61)", "( \xB4 \u25BD ` )\uFF89", "(\u0E51\u02C3\u1D17\u02C2)\uFEED", "(\u3065\uFFE3 \xB3\uFFE3)\u3065", "(*\xB4\u2200`)~\u2665"],
+    awkward: ["(\u30FB_\u30FB;)", "(\uFFE3\u25BD\uFFE3;)", "(\uFF1B\u4E00_\u4E00)", "(\xAC_\xAC)", "(\u3002_\u3002)"],
+    shocked: ["(\u2299_\u2299)", "(\uFF9F\u0414\uFF9F;)", "\u03A3(\xB0\u25B3\xB0|||)", "(\xB0\u30ED\xB0) !", "\u30FD(\uFF9F\u0414\uFF9F)\uFF89"],
+    angry: ["(\u256F\xB0\u25A1\xB0)\u256F", "(\u0CA0_\u0CA0)", "(#`\u0414\xB4)", "\u30FD(\uFF40\u2312\xB4\u30E1)\u30CE", "(\u0E07'\u0300-'\u0301)\u0E07"],
+    sad: ["(T_T)", "(\uFF1B\u2032\u2312`)", "(\uFF61\u2022\u0301\uFE3F\u2022\u0300\uFF61)", "(\u3064\uFE4F\u2282)", "(\xB4\uFF1B\u03C9\uFF1B`)"],
+    speechless: ["(\xAC_\xAC)", "(-_-;)", "(\uB208_\uB208)", "(\uFFE3\u30FC\uFFE3)", "( \u0361\xB0 \u035C\u0296 \u0361\xB0)"],
+    judgement: ["(\u0CA0_\u0CA0)", "(\xAC\uFF64\xAC)", "(\uB208_\uB208)", "(\uFFE2_\uFFE2)", "(\uFFE3\u30D8\uFFE3)"],
+    breakdown: ["(\u256F\xB0\u25A1\xB0)\u256F\uFE35 \u253B\u2501\u253B", "\uFF3C(\xBA \u25A1 \xBA l|l)/", "\u03A3(\xB0\u30ED\xB0)", "(#\uFF9F\u0414\uFF9F)", "\u30FD(\uFF40\u0414\xB4)\uFF89"]
+  };
+  let key = "speechless";
+  if (text2.includes("\u65E0\u8BED") || text2.includes("\u52A0\u8F7D") || text2.includes("\u5931\u8D25") || text2.includes("\u7075\u9B42")) key = "speechless";
+  else if (pattern === "smile" || text2.includes("\u53EF\u7231") || text2.includes("\u751C")) key = "cute";
+  else if (pattern === "angry" || text2.includes("\u6012")) key = "angry";
+  else if (pattern === "breakdown" || roastLevel2 === "execution" || roastLevel2 === "public_execution") key = "breakdown";
+  else if (pattern === "judgement" || text2.includes("\u5BA1") || text2.includes("\u5224")) key = "judgement";
+  else if (pattern === "disgust" || pattern === "speechless" || text2.includes("\u65E0\u8BED")) key = "speechless";
+  else if (pattern === "confused" || text2.includes("\u9707\u60CA") || text2.includes("\uFF1F")) key = "shocked";
+  else if (text2.includes("\u54ED") || text2.includes("\u59D4\u5C48")) key = "sad";
+  else if (text2.includes("\u5C34\u5C2C")) key = "awkward";
+  return {
+    key,
+    label: {
+      cute: "KAWAII APPROVED",
+      awkward: "LOADING AWKWARD",
+      shocked: "SYSTEM SHOCK",
+      angry: "ROAST ALERT",
+      sad: "CLEARNESS LOST",
+      speechless: "SPEECHLESS",
+      judgement: "JUDGEMENT",
+      breakdown: "PUBLIC MELTDOWN"
+    }[key],
+    main: pools[key][0],
+    pool: pools[key]
+  };
+}
+function drawKaomojiHeader(p2, data3, mood, margin2, intensity, roastLevel2) {
+  let y = drawMachineHeader(p2, data3, "face", roastLevel2, margin2, 20, intensity, "mood");
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(10);
+  p2.text("KAOMOJI MOOD RECEIPT / \u9854\u6587\u5B57\u5224\u5B9A", receiptWidth / 2, y);
+  drawPseudoQr(p2, receiptWidth - margin2 - 38, y - 4, 36, intensity);
+  y += 28;
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 14;
+  p2.textSize(13);
+  p2.text(data3.moodLabel || "BUDDY FACE", receiptWidth / 2, y);
+  y += 18;
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(8);
+  p2.text(mood.label, receiptWidth / 2, y);
+  return y + 26;
+}
+function drawCalmKaomojiReceipt(p2, data3, mood, words, margin2, startY, height, intensity) {
+  const frameHeight = Math.min(360, height - startY - 210);
+  const frameWidth = receiptWidth - margin2 * 2;
+  const centerX = receiptWidth / 2;
+  p2.push();
+  p2.noFill();
+  p2.stroke(0);
+  p2.strokeWeight(1.6);
+  p2.rect(margin2, startY, frameWidth, frameHeight);
+  p2.line(margin2, startY + 42, receiptWidth - margin2, startY + 42);
+  p2.line(margin2 + 78, startY + 42, margin2 + 78, startY + frameHeight);
+  p2.line(receiptWidth - margin2 - 78, startY + 42, receiptWidth - margin2 - 78, startY + frameHeight);
+  p2.pop();
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(11);
+  p2.text("MOOD SAMPLE / DO NOT MISREAD", centerX, startY + 21);
+  drawGiantKaomoji(p2, mood.main, centerX, startY + frameHeight * 0.44, frameWidth - 142, 104, 0, 0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(11);
+  p2.text("\u60C5\u7EEA\u6807\u7B7E", margin2 + 14, startY + 62);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(10);
+  drawWrappedLine(p2, data3.moodLabel || mood.label, margin2 + 14, startY + 84, 60, 10, 15, 0);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(10);
+  p2.text("\u989C\u6587\u5B57\u6837\u672C", receiptWidth - margin2 - 39, startY + 62);
+  mood.pool.slice(1, 4).forEach((face, index) => {
+    p2.textSize(14);
+    p2.text(face, receiptWidth - margin2 - 39, startY + 88 + index * 38);
+  });
+  const chipY = startY + frameHeight + 18;
+  drawKaomojiStrip(p2, mood.pool, margin2, chipY, receiptWidth - margin2 * 2, 44, false, intensity);
+  drawBigPosterMicroColumns(p2, [data3.shortComment, data3.verdict, ...words], margin2, chipY + 66, 88, intensity);
+  return chipY + 172;
+}
+function drawWildKaomojiReceipt(p2, data3, mood, words, margin2, startY, height, intensity) {
+  const chaos = Math.max(0, intensity - 0.45);
+  const cx = receiptWidth / 2;
+  const heroY = startY + 132 + intensity * 34;
+  drawKaomojiStrip(p2, mood.pool, margin2, startY, receiptWidth - margin2 * 2, 58 + intensity * 18, true, intensity);
+  drawKaomojiOrbit(p2, mood.pool, cx, heroY + 22, 132 + intensity * 32, 118 + intensity * 54, 14 + Math.round(intensity * 15), 13 + intensity * 7, intensity);
+  drawGiantKaomoji(p2, mood.main, cx + jitter(16, chaos), heroY, receiptWidth - 34, 150 + intensity * 72, -0.03 + jitter(0.12, chaos), chaos);
+  const phrase = cleanSmallPhrase(data3.shortComment || data3.oneLineRoast);
+  drawWaveKaomojiText(p2, phrase, margin2, heroY + 140 + intensity * 26, receiptWidth - margin2 * 2, 18 + intensity * 5, intensity);
+  drawKaomojiFillPanel(p2, mood.pool, words, margin2, heroY + 188, receiptWidth - margin2 * 2, 116 + intensity * 92, intensity);
+  if (intensity >= 0.9) {
+    drawGiantKaomoji(p2, mood.pool[1] || mood.main, cx + jitter(22, intensity), Math.min(height - 300, heroY + 382), receiptWidth - 62, 112, 0.1 + jitter(0.2, intensity), intensity);
+  }
+  return heroY + 350 + intensity * 180;
+}
+function drawGiantKaomoji(p2, face, x, y, maxWidth, maxHeight, angle, chaos) {
+  p2.push();
+  p2.translate(x, y);
+  p2.rotate(angle);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  const size = fitTextSize(p2, face, maxWidth, maxHeight, 22, maxHeight);
+  p2.textSize(size);
+  if (chaos >= 0.18) {
+    for (let i = 0; i < 2 + Math.round(chaos * 5); i += 1) {
+      p2.fill(0, 38);
+      p2.text(face, jitter(24, chaos), jitter(18, chaos));
+    }
+  }
+  p2.fill(0);
+  p2.text(face, 0, 0);
+  p2.pop();
+}
+function drawKaomojiStrip(p2, pool, x, y, width, height, inverted, intensity) {
+  p2.push();
+  p2.noStroke();
+  p2.fill(inverted ? 0 : 255);
+  p2.rect(x, y, width, height);
+  p2.stroke(0);
+  p2.strokeWeight(inverted ? 0 : 2);
+  if (!inverted) p2.rect(x, y, width, height);
+  p2.noStroke();
+  p2.fill(inverted ? 255 : 0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(14 + intensity * 7);
+  const count = Math.max(3, Math.floor(width / 92));
+  for (let i = 0; i < count; i += 1) {
+    const face = pool[i % pool.length];
+    p2.text(face, x + width * ((i + 0.5) / count) + jitter(8, Math.max(0, intensity - 0.55)), y + height / 2 + jitter(6, Math.max(0, intensity - 0.55)));
+  }
+  p2.pop();
+}
+function drawKaomojiOrbit(p2, pool, cx, cy, rx, ry, count, size, intensity) {
+  p2.push();
+  p2.noStroke();
+  p2.fill(0);
+  p2.textStyle(p2.BOLD);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textSize(size);
+  for (let i = 0; i < count; i += 1) {
+    const t = i / count * Math.PI * 2 + intensity * 0.3;
+    p2.push();
+    p2.translate(cx + Math.cos(t) * rx + jitter(16, intensity), cy + Math.sin(t) * ry + jitter(18, intensity));
+    p2.rotate(t + Math.PI / 2 + jitter(0.18, intensity));
+    p2.text(pool[i % pool.length], 0, 0);
+    p2.pop();
+  }
+  p2.pop();
+}
+function drawWaveKaomojiText(p2, text2, x, y, width, size, intensity) {
+  const chars = [...text2.slice(0, 28)];
+  if (!chars.length) return;
+  p2.push();
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(size);
+  chars.forEach((char, index) => {
+    const progress = chars.length === 1 ? 0.5 : index / (chars.length - 1);
+    p2.push();
+    p2.translate(x + progress * width, y + Math.sin(progress * Math.PI * 2.2) * 16 * intensity);
+    p2.rotate(Math.cos(progress * Math.PI * 2.2) * 0.24 * intensity);
+    p2.text(char, 0, 0);
+    p2.pop();
+  });
+  p2.pop();
+}
+function drawKaomojiFillPanel(p2, pool, words, x, y, width, height, intensity) {
+  p2.push();
+  p2.noFill();
+  p2.stroke(0);
+  p2.strokeWeight(1.5);
+  p2.rect(x, y, width, height);
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  const rowGap = Math.max(15, 24 - intensity * 7);
+  const rows = Math.floor(height / rowGap);
+  for (let row = 0; row < rows; row += 1) {
+    p2.textSize(row % 2 === 0 ? 12 + intensity * 4 : 9 + intensity * 3);
+    const face = pool[row % pool.length];
+    const word = words[row % Math.max(1, words.length)] || "\u68C0\u6D4B";
+    const line = `${face} ${word} ${face} ${word}`;
+    p2.push();
+    p2.translate(x + 8 + jitter(16, intensity), y + 8 + row * rowGap + jitter(10, intensity));
+    p2.rotate((row % 2 ? -1 : 1) * 0.025 * intensity);
+    p2.text(line, 0, 0);
+    p2.pop();
+  }
+  p2.pop();
+}
+function drawKaomojiCommentBlock(p2, data3, mood, margin2, y, height, intensity) {
+  const chaos = Math.max(0, intensity - 0.52);
+  const bottomLimit = height - 108;
+  drawDoubleRule(p2, margin2, y, receiptWidth - margin2, intensity);
+  y += 18;
+  p2.noStroke();
+  p2.fill(0);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(12);
+  p2.text(`\u5224\u5B9A\u9854\u6587\u5B57: ${mood.main}`, margin2, y);
+  y += 20;
+  p2.textSize(13 + intensity * 2);
+  y = drawWrappedLine(p2, data3.shortComment || data3.verdict, margin2, y, receiptWidth - margin2 * 2, 13 + intensity * 2, 20 - chaos * 5, chaos);
+  y += 8;
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(10 + intensity * 2);
+  if (y < bottomLimit) y = drawWrappedLine(p2, data3.verdict, margin2, y, receiptWidth - margin2 * 2, 10 + intensity * 2, 16 - chaos * 4, chaos);
+  return y;
+}
+function drawKaomojiLooseField(p2, pool, words, margin2, startY, endY, intensity) {
+  const count = Math.round(5 + intensity * 12);
+  for (let i = 0; i < count; i += 1) {
+    const face = pool[i % pool.length];
+    const label = i % 2 === 0 ? face : words[i % Math.max(1, words.length)] || face;
+    const x = margin2 + i * 67 % (receiptWidth - margin2 * 2 - 58);
+    const y = Math.min(endY - 24, startY + i * (22 - Math.max(0, intensity - 0.75) * 8));
+    drawTag(p2, label, x, y, i % 3 === 0, (i % 2 ? -1 : 1) * 0.1 * intensity);
   }
 }
 function renderFaceReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
   const words = extractShortWords(data3);
   const pattern = facePatternType(roastLevel2, data3);
-  p2.textAlign(p2.CENTER, p2.CENTER);
-  p2.textStyle(p2.BOLD);
-  p2.fill(0);
-  drawTag(p2, `${data3.moodLabel || "BUDDY FACE"} / ${pattern}`, 18, 36, intensity > 0.75, 0);
-  const cx = receiptWidth / 2;
-  const cy = height * 0.47;
-  const faceW = 270 + intensity * 34;
-  const faceH = 300 + intensity * 80;
-  drawTextArc(p2, words, cx, cy, faceW / 2, faceH / 2, 0.18, Math.PI * 1.82, 12 + intensity * 7);
-  const eyeWord = words[0] || "\u55EF\uFF1F";
-  const browWord = words[1] || "\u884C\u5427";
-  const mouthWord = words[2] || data3.shortComment.slice(0, 4) || "\u79BB\u8C31";
-  const angry = pattern === "angry" || pattern === "breakdown" || pattern === "judgement";
-  const disgust = pattern === "disgust" || pattern === "speechless";
-  drawFaceFeature(p2, browWord, cx - 76, cy - 100, 58, angry ? -0.38 : -0.12, intensity);
-  drawFaceFeature(p2, browWord, cx + 76, cy - 100, 58, angry ? 0.38 : 0.12, intensity);
-  drawFaceFeature(p2, eyeWord, cx - 70, cy - 58, 42 + intensity * 18, disgust ? 0.18 : 0, intensity);
-  drawFaceFeature(p2, eyeWord, cx + 70, cy - 58, 42 + intensity * 18, disgust ? -0.18 : 0, intensity);
-  if (pattern === "smile" || pattern === "confused") {
-    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 70, 86, 46, 0.12, Math.PI - 0.12, 13 + intensity * 5);
-  } else if (pattern === "breakdown") {
-    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 82, 118, 84, 0.04, Math.PI * 1.96, 16 + intensity * 8);
-    p2.stroke(0);
-    p2.strokeWeight(8);
-    p2.noFill();
-    p2.rect(cx - 72, cy + 36, 144, 112);
+  const mood = selectKaomojiMood(pattern, roastLevel2, data3);
+  const margin2 = 22;
+  const chaos = Math.max(0, intensity - 0.42);
+  let y = drawKaomojiHeader(p2, data3, mood, margin2, intensity, roastLevel2);
+  if (intensity < 0.52) {
+    y = drawCalmKaomojiReceipt(p2, data3, mood, words, margin2, y, height, intensity);
   } else {
-    drawFaceFeature(p2, mouthWord.repeat(2), cx, cy + 78, 70 + intensity * 36, disgust ? -0.16 : 0.08, intensity);
+    y = drawWildKaomojiReceipt(p2, data3, mood, words, margin2, y, height, intensity);
   }
-  const labelCount = Math.round(5 + intensity * 16);
-  for (let i = 0; i < labelCount; i += 1) {
-    const angle = i / labelCount * Math.PI * 2;
-    const radius = 120 + i * 31 % 54 + intensity * 20;
-    drawTag(
-      p2,
-      words[i % words.length] || "\u68C0\u6D4B",
-      cx + Math.cos(angle) * radius - 24,
-      cy + Math.sin(angle) * radius,
-      intensity > 0.7 && i % 3 === 0,
-      angle * 0.18
-    );
+  y = drawKaomojiCommentBlock(p2, data3, mood, margin2, Math.min(y + 10, height - 188), height, intensity);
+  if (intensity >= 0.76) {
+    drawKaomojiLooseField(p2, mood.pool, words, margin2, y + 24, height - 118, intensity);
+    drawSpeedLines(p2, 18, height - 132, 326, Math.round(6 + intensity * 10), -0.18);
   }
-  if (intensity >= 0.75) drawSpeedLines(p2, 20, height - 116, 320, Math.round(8 + intensity * 10), -0.25);
-  if (intensity >= 1) drawTextDensityBlock(p2, [data3.shortComment, ...words], 20, height - 150, 344, 120, 0.7);
+  drawReceiptFooter(p2, data3, margin2, height, receiptWidth - margin2 * 2, intensity, "face", roastLevel2);
 }
 function normalizeReceiptData(data3) {
   const value = data3 && typeof data3 === "object" ? data3 : {};
@@ -95618,8 +96729,8 @@ function normalizeReceiptData(data3) {
   ];
   const roast = firstString(value.roast, value.oneLineRoast, value.shortComment, value.caption, value.aiComment, value.generatedComment, "\u8FD9\u5F20\u7167\u7247\u5F88\u52AA\u529B\uFF0C\u52AA\u529B\u5230\u673A\u5668\u90FD\u60F3\u9012\u4E00\u5F20\u8865\u62CD\u7533\u8BF7\u3002");
   return {
-    title: firstString(value.title, "SNAP ROAST BUDDY"),
-    subtitle: firstString(value.subtitle, value.topLabel, "AI \u7167\u7247\u68C0\u6D4B\u5C0F\u7968"),
+    title: firstString(value.title, "\u62CD\u7ACB\u603C Snap Roast Buddy"),
+    subtitle: firstString(value.subtitle, value.topLabel, "AI \u7167\u7247\u5410\u69FD\u7EB8\u6761"),
     photoType: firstString(value.photoType, value.sceneType, keywords2[0], "\u751F\u6D3B\u5207\u7247"),
     atmosphere: firstString(value.atmosphere, value.mood, "\u52AA\u529B\u8425\u4E1A\u4E2D"),
     aiMood: firstString(value.aiMood, value.moodLabel, "\u6B63\u5728\u618B\u7B11"),
@@ -95645,11 +96756,24 @@ function normalizeReceiptMode(mode2) {
 }
 function drawThermalTexture(p2, height, intensity) {
   p2.push();
-  p2.stroke(0, 16);
+  p2.noStroke();
+  p2.fill(0, 7 + intensity * 5);
+  for (let y = 4; y < height; y += 18) p2.rect(0, y, receiptWidth, 1);
+  p2.fill(0, 10);
+  for (let i = 0; i < 180 + intensity * 150; i += 1) {
+    const x = i * 47 % receiptWidth;
+    const y = i * 83 % height;
+    p2.rect(x, y, 1, 1);
+  }
+  p2.stroke(0, 14);
   p2.strokeWeight(1);
-  for (let y = 0; y < height; y += 9) p2.line(0, y, receiptWidth, y);
-  p2.stroke(0, 18 + intensity * 12);
+  for (let y = 0; y < height; y += 9) p2.line(0, y, receiptWidth, y + jitter(1.4, intensity));
+  p2.stroke(0, 22 + intensity * 12);
   for (let x = 10; x < receiptWidth; x += 31) p2.point(x, x * 17 % height);
+  p2.stroke(0, 45);
+  p2.strokeWeight(0.8);
+  p2.line(8, 0, 8 + jitter(3, intensity), height);
+  p2.line(receiptWidth - 8, 0, receiptWidth - 8 + jitter(3, intensity), height);
   p2.pop();
 }
 function drawMangaBlock(p2, image4, y, imageUrl) {
@@ -95680,17 +96804,6 @@ function drawMangaBlock(p2, image4, y, imageUrl) {
   drawDashedLine(p2, 18, y + 278, receiptWidth - 18, y + 278);
   p2.pop();
 }
-function drawSectionLabel(p2, text2, x, y, intensity) {
-  p2.push();
-  p2.fill(0);
-  p2.rect(x, y - 2, 112 + intensity * 30, 20);
-  p2.fill(255);
-  p2.textAlign(p2.LEFT, p2.TOP);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(12);
-  p2.text(text2, x + 8, y + 2);
-  p2.pop();
-}
 function drawWrappedLine(p2, text2, x, y, width, size, leading, overlap = 0) {
   const lines = wrapChineseText(p2, text2, width);
   for (const [index, line] of lines.entries()) {
@@ -95717,10 +96830,20 @@ function drawBarcode(p2, x, y, width, height, intensity) {
 function cleanBigPhrase(text2) {
   return String(text2 || "").replace(/\n+/g, " ").replace(/\s+/g, "").slice(0, 24) || "\u79BB\u8C31";
 }
-function splitBigPhrase(text2) {
-  if (text2.length <= 4) return [...text2];
-  if (text2.length <= 9) return text2.match(/.{1,3}/g) ?? [text2];
-  return text2.match(/.{1,4}/g) ?? [text2];
+function cleanSmallPhrase(text2) {
+  return String(text2 || "").replace(/\n+/g, " ").replace(/\s+/g, " ").trim().slice(0, 56) || "\u73B0\u573A\u5224\u5B9A";
+}
+function splitPosterTitle(text2) {
+  const clean = cleanBigPhrase(text2);
+  if (clean.length <= 4) return [clean];
+  if (clean.length <= 8) return [clean.slice(0, Math.ceil(clean.length / 2)), clean.slice(Math.ceil(clean.length / 2))];
+  return [clean.slice(0, 4), clean.slice(4, 8), clean.slice(8, 12)].filter(Boolean);
+}
+function romanizePosterLabel(text2) {
+  const words = String(text2 || "").replace(/[^\w\s-]/g, " ").split(/\s+/).filter(Boolean);
+  if (words.length) return words.join(" ").toUpperCase().slice(0, 36);
+  const fallback = ["TYPOGRAPHIC", "ROAST", "GUIDE", "SERIES", "DISPLAY", "COPY"];
+  return fallback.slice(0, 3 + text2.length % 3).join(" ");
 }
 function fitTextSize(p2, text2, maxWidth, targetHeight, min, max) {
   let size = max;
@@ -95738,35 +96861,6 @@ function facePatternType(roastLevel2, data3) {
   if (roastLevel2 === "spicy") return data3.shortComment.includes("\u6012") ? "angry" : "disgust";
   return data3.shortComment.includes("\u5BA1") ? "judgement" : "breakdown";
 }
-function drawTextArc(p2, words, cx, cy, rx, ry, start, end, size) {
-  const count = Math.max(10, Math.round((end - start) * 8));
-  p2.textStyle(p2.BOLD);
-  p2.textSize(size);
-  for (let i = 0; i < count; i += 1) {
-    const t = start + (end - start) * (i / Math.max(1, count - 1));
-    const word = words[i % words.length] || "\u68C0\u6D4B";
-    p2.push();
-    p2.translate(cx + Math.cos(t) * rx, cy + Math.sin(t) * ry);
-    p2.rotate(t + Math.PI / 2);
-    p2.text(word, 0, 0);
-    p2.pop();
-  }
-}
-function drawFaceFeature(p2, text2, x, y, size, angle, intensity) {
-  p2.push();
-  p2.translate(x, y);
-  p2.rotate(angle);
-  p2.textAlign(p2.CENTER, p2.CENTER);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(size);
-  for (let i = 0; i < Math.round(intensity * 3); i += 1) {
-    p2.fill(0, 56);
-    p2.text(text2, -i * 3, i * 3);
-  }
-  p2.fill(0);
-  p2.text(text2, 0, 0);
-  p2.pop();
-}
 function firstString(...values) {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -95779,7 +96873,16 @@ function arrayOfStrings(value) {
   return [];
 }
 function jitter(range2, intensity) {
-  return (Math.random() - 0.5) * range2 * intensity;
+  jitterCursor += 1;
+  const raw = Math.sin(jitterSeed + jitterCursor * 12.9898) * 43758.5453;
+  return (raw - Math.floor(raw) - 0.5) * range2 * intensity;
+}
+function resetJitterSeed(seedText) {
+  jitterSeed = 1;
+  jitterCursor = 0;
+  for (let i = 0; i < seedText.length; i += 1) {
+    jitterSeed = (jitterSeed * 33 + seedText.charCodeAt(i)) % 1000003;
+  }
 }
 
 // frontend/src/lib/printer.ts

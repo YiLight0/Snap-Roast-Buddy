@@ -34,16 +34,16 @@ export function generateReceiptContent(
   const findings = buildFindings(analysis).slice(0, 4);
 
   return {
-    title: "SNAP ROAST BUDDY",
+    title: "拍立怼 Snap Roast Buddy",
     subtitle: choose(motifs, analysis.sceneType),
     photoType: analysis.sceneType,
-    atmosphere: analysis.chaosLevel >= 65 ? "热闹但有点失控" : analysis.mood === "可爱" ? "可爱值超标" : "努力营业中",
-    aiMood: roastLevel === "spicy" ? "已经开始憋大招" : analysis.mood === "可爱" ? "被可爱击中" : "正在憋笑",
+    atmosphere: atmosphereFor(analysis),
+    aiMood: aiMoodFor(analysis, roastLevel),
     findings,
     scores: [
-      { label: "离谱指数", value: Math.max(35, analysis.roastPotential) },
-      { label: "构图安全", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
-      { label: "可发程度", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
+      { label: "槽点密度", value: Math.max(35, analysis.roastPotential) },
+      { label: "画面秩序", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
+      { label: "分享价值", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
     ],
     roast: generatedComment?.trim() || receiptRoast(analysis, roastLevel),
     advice: adviceFor(analysis),
@@ -97,8 +97,10 @@ function buildFindings(analysis: PhotoAnalysis): string[] {
     return point;
   });
 
+  const sceneFinding = findingForScene(analysis);
+  if (sceneFinding) findings.unshift(sceneFinding);
   if (!findings.length) findings.push("画面整体还算稳定，但本机仍然发现了吐槽空间");
-  return findings;
+  return uniqueStrings(findings);
 }
 
 function receiptRoast(analysis: PhotoAnalysis, roastLevel: RoastLevel): string {
@@ -110,6 +112,18 @@ function receiptRoast(analysis: PhotoAnalysis, roastLevel: RoastLevel): string {
   }
   if (analysis.cutenessLevel >= 75) {
     return "本机原本准备吐槽，\n但可爱程度导致审判流程中断。";
+  }
+  if (sceneIncludes(analysis, "便利店", "餐饮", "商品")) {
+    return "这张照片的消费气息很完整，\n本机差点以为自己要开发票。";
+  }
+  if (sceneIncludes(analysis, "办公室", "打工", "学习")) {
+    return "画面里有一种熟悉的努力感，\n像周一早上还没加载完的人生。";
+  }
+  if (sceneIncludes(analysis, "街景", "通勤", "旅行")) {
+    return "这张照片很有路过感，\n像生活突然按下了截图键。";
+  }
+  if (sceneIncludes(analysis, "文字", "票据", "截图")) {
+    return "信息量已经排队进场，\n本机负责把它们打印成证据。";
   }
   if (roastLevel === "spicy") {
     return "这张照片不是失误，\n是对摄影规则的一次公开挑战。";
@@ -123,6 +137,9 @@ function oneLineRoastFor(analysis: PhotoAnalysis, roastLevel: RoastLevel): strin
   if (hasIssue(analysis, "太近")) return "镜头说：我有点害怕。";
   if (hasIssue(analysis, "糊")) return "这一刻很珍贵，\n可惜画质先撤退了。";
   if (hasIssue(analysis, "暗") || hasIssue(analysis, "光线")) return "气氛到了，\n灯光还在路上。";
+  if (sceneIncludes(analysis, "商品", "便利店")) return "商品陈列赢了，\n主角暂时申请补位。";
+  if (sceneIncludes(analysis, "办公室", "打工")) return "打工味很浓，\n像照片也想下班。";
+  if (sceneIncludes(analysis, "文字", "票据", "截图")) return "字太多了，\n本机先打印一份冷静一下。";
   return roastLevel === "spicy" ? "本机短暂沉默，\n然后选择打印证据。" : "这张很有记忆点，\n主要是因为它很难忘。";
 }
 
@@ -133,11 +150,18 @@ function adviceFor(analysis: PhotoAnalysis, tiny = false): string {
   if (hasIssue(analysis, "暗") || hasIssue(analysis, "光线")) return `${prefix}补一点光，别让气氛独自上班。`;
   if (hasIssue(analysis, "糊")) return `${prefix}按快门前先稳住，别让回忆产生重影。`;
   if (hasIssue(analysis, "背景")) return `${prefix}换个干净背景，让主角重新夺回主场。`;
+  if (sceneIncludes(analysis, "便利店", "商品")) return `${prefix}靠近主体一点，别让货架替你出道。`;
+  if (sceneIncludes(analysis, "办公室", "学习")) return `${prefix}把桌面清出一小块主场，打工感会少三分。`;
+  if (sceneIncludes(analysis, "街景", "通勤")) return `${prefix}等路人和背景冷静一秒，再按快门。`;
+  if (sceneIncludes(analysis, "文字", "票据", "截图")) return `${prefix}保留重点文字，其余信息交给小票慢慢审。`;
   return `${prefix}保留这张，但可以再拍一张当保险。`;
 }
 
 function verdictFor(analysis: PhotoAnalysis, roastLevel: RoastLevel): string {
   if (analysis.cutenessLevel >= 75) return "不许删，本机批准收藏";
+  if (sceneIncludes(analysis, "文字", "票据", "截图")) return "适合存档，证据感很强";
+  if (sceneIncludes(analysis, "办公室", "打工")) return "建议收藏，下班后再审";
+  if (sceneIncludes(analysis, "便利店", "商品")) return "可发，像一张消费现场证词";
   if (analysis.roastPotential >= 80) return roastLevel === "spicy" ? "建议发，但请准备解释权" : "可发，但需要配文狡辩";
   return "可发，轻微加工后更稳";
 }
@@ -173,7 +197,11 @@ function moodLabelFor(faceType: PixelFaceType, analysis: PhotoAnalysis): string 
     begging_give: "拜托再拍一张",
     farewell: "溜了溜了"
   };
-  return analysis.mood === "浪漫" ? "甜度超标" : labels[faceType];
+  if (analysis.mood === "浪漫") return "甜度超标";
+  if (analysis.mood === "打工感") return "下班失败";
+  if (analysis.mood === "营业感") return "货架震惊";
+  if (analysis.mood === "路过感") return "路过抓拍";
+  return labels[faceType];
 }
 
 function pixelCommentFor(analysis: PhotoAnalysis, faceType: PixelFaceType, roastLevel: RoastLevel): string {
@@ -190,6 +218,43 @@ function pixelCommentFor(analysis: PhotoAnalysis, faceType: PixelFaceType, roast
 
 function hasIssue(analysis: PhotoAnalysis, keyword: string): boolean {
   return [...analysis.flaws, ...analysis.funnyPoints, ...analysis.photoQualityIssues].some((item) => item.includes(keyword));
+}
+
+function atmosphereFor(analysis: PhotoAnalysis): string {
+  if (analysis.chaosLevel >= 65) return "热闹但有点失控";
+  if (analysis.mood === "可爱") return "可爱值超标";
+  if (analysis.mood === "打工感") return "努力上班中";
+  if (analysis.mood === "营业感") return "商品正在营业";
+  if (analysis.mood === "路过感") return "临时路过现场";
+  if (analysis.mood === "现场感") return "现场感拉满";
+  return "努力营业中";
+}
+
+function aiMoodFor(analysis: PhotoAnalysis, roastLevel: RoastLevel): string {
+  if (roastLevel === "spicy") return "已经开始憋大招";
+  if (analysis.mood === "可爱") return "被可爱击中";
+  if (analysis.mood === "打工感") return "想替你下班";
+  if (analysis.mood === "营业感") return "正在盘点货架";
+  if (analysis.mood === "路过感") return "抓到路过证据";
+  return "正在憋笑";
+}
+
+function findingForScene(analysis: PhotoAnalysis): string | undefined {
+  if (sceneIncludes(analysis, "便利店", "商品")) return "货架和商品正在努力抢走镜头绩效";
+  if (sceneIncludes(analysis, "办公室", "打工", "学习")) return "桌面信息透露出一种不想上班的诚实";
+  if (sceneIncludes(analysis, "街景", "通勤")) return "背景流动感很强，像现场刚被临时截胡";
+  if (sceneIncludes(analysis, "文字", "票据", "截图")) return "文字密度很高，适合进入证据保存流程";
+  if (sceneIncludes(analysis, "餐饮", "咖啡")) return "食物很努力，拍摄时机也很努力";
+  return undefined;
+}
+
+function sceneIncludes(analysis: PhotoAnalysis, ...keywords: string[]): boolean {
+  const haystack = [analysis.sceneType, analysis.mood, ...analysis.visualKeywords].join(" ");
+  return keywords.some((keyword) => haystack.includes(keyword));
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 export { bar, stars };
