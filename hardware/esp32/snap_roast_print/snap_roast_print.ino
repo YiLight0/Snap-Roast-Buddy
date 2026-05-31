@@ -1,3 +1,4 @@
+
 // Snap Roast Buddy - WiFi 打印验证 sketch
 //
 // 在你已经跑通的 WiFi 连接 + Printer.println("Hello") 基础上扩展：
