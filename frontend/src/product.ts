@@ -6,6 +6,9 @@ import { bytesToBase64, canvasToEscPosRaster, elementToCanvas } from "./lib/prin
 import {
   buildCurrentRoastPrompt,
   buildCurrentDoodlePrompt,
+  buildBalancedClassificationPrompt,
+  classificationTool,
+  parseClassificationPayload,
   parseModelPayload,
   extractGeneratedImage,
   downloadImageAsDataUrl
@@ -809,9 +812,18 @@ async function resolveLayoutType(
   if (productSettings.generationMode === "expression") return "pixel_expression";
 
   startGenerationPhase("classify", "正在选择排版……", "正在决定该开小票、爆大字，还是摆表情。");
-  const payload = await postJson<ClassificationResponse>("/api/classify-layout", { photoDescription: description });
+  const data = await chatCompletion({
+    messages: [
+      { role: "system", content: buildBalancedClassificationPrompt() },
+      { role: "user", content: `照片描述：${description}` }
+    ],
+    tools: [classificationTool],
+    toolChoice: "auto",
+    temperature: 0.2
+  });
+  const result = parseClassificationPayload(data);
   await completeGenerationPhase("classify");
-  return payload.layoutType && payload.layoutType !== "pixel_doodle" ? payload.layoutType : "receipt";
+  return result.layoutType;
 }
 
 async function generateRoast(description: string, layoutType: RoastMode, roastLevel: ProductRoastLevel): Promise<RoastApiResponse> {

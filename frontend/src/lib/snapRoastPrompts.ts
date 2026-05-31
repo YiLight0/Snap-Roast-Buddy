@@ -1,8 +1,96 @@
 export type RoastMode = "auto" | "receipt" | "big_text" | "pixel_expression";
 export type RoastLevel = "gentle" | "normal" | "spicy";
 
+const textLayoutTypes: ReadonlyArray<"receipt" | "big_text" | "pixel_expression"> = ["receipt", "big_text", "pixel_expression"];
+
 export function cleanText(value: unknown): string {
   return String(value ?? "").trim();
+}
+
+export function buildBalancedClassificationPrompt(): string {
+  return [
+    "你是 Snap Roast Buddy 的文字排版分类器。",
+    "你只需要把照片描述分类到三种文字排版之一：receipt、big_text、pixel_expression。",
+    "不要返回 pixel_doodle；pixel_doodle 是图片到图片的独立漫画/简笔画编辑模式，不参与照片描述文字分类。",
+    "分类目标要尽量均衡，不要把大多数普通照片都分到 big_text 或 pixel_expression。三类在长期样本中的比例应尽量接近。",
+    "1. receipt：默认优先项。照片内容丰富、有多个观察点或点评点，适合照片审判小票。多人、自拍、旅行、美食、宠物、室内生活照、背景/光线/构图都有信息时，优先选 receipt。",
+    "2. big_text：只有当照片存在一个非常强、非常单一、能一句话概括的爆点时才选择。例如主体几乎消失、脸被明显裁掉、极端过近、极糊、极暗、背景压过主体。普通构图问题不要轻易选 big_text。",
+    "3. pixel_expression：只有当照片的情绪非常明确且表情化更有趣时选择。例如明显可爱、尴尬、无语、震惊、浪漫、委屈、呆住。普通可爱或普通尴尬仍可归 receipt。",
+    "如果同时满足多个条件，按这个顺序判断：强单点爆梗才 big_text；强情绪才 pixel_expression；其余优先 receipt。",
+    "只通过工具 select_roast_layout 返回分类结果。"
+  ].join("\n");
+}
+
+export const classificationTool = {
+  type: "function" as const,
+  function: {
+    name: "select_roast_layout",
+    description: "Select the most suitable text layout type for Snap Roast Buddy.",
+    parameters: {
+      type: "object",
+      properties: {
+        layoutType: {
+          type: "string",
+          enum: textLayoutTypes,
+          description: "The selected text layout type."
+        },
+        reason: {
+          type: "string",
+          description: "A short Chinese reason explaining the choice."
+        },
+        confidence: {
+          type: "number",
+          description: "Confidence from 0 to 1."
+        }
+      },
+      required: ["layoutType", "reason"]
+    }
+  }
+};
+
+export interface ClassificationResult {
+  layoutType: "receipt" | "big_text" | "pixel_expression";
+  reason: string;
+  confidence?: number;
+}
+
+function normalizeClassification(value: any): ClassificationResult {
+  const allowed = new Set<string>(textLayoutTypes);
+  const layoutType = allowed.has(value?.layoutType) ? value.layoutType : "receipt";
+  return {
+    layoutType,
+    reason: cleanText(value?.reason) || "已根据照片描述选择输出类型。",
+    confidence: typeof value?.confidence === "number" ? value.confidence : undefined
+  };
+}
+
+export function parseClassificationPayload(data: any): ClassificationResult {
+  const message = data?.choices?.[0]?.message;
+  const args = message?.tool_calls?.[0]?.function?.arguments;
+
+  if (args) {
+    try {
+      return normalizeClassification(JSON.parse(args));
+    } catch {
+      // Fall through.
+    }
+  }
+
+  const rawContent = cleanText(message?.content);
+  const jsonText = rawContent.match(/\{[\s\S]*\}/)?.[0] ?? "";
+  if (jsonText) {
+    try {
+      return normalizeClassification(JSON.parse(jsonText));
+    } catch {
+      // Fall through.
+    }
+  }
+
+  return {
+    layoutType: "receipt",
+    reason: "模型未返回有效分类，回退到小票式。",
+    confidence: 0
+  };
 }
 
 export function buildCurrentRoastPrompt(mode: string, roastLevel: string): string {

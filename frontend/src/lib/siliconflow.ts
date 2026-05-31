@@ -76,15 +76,20 @@ export interface ChatMessage {
 export interface ChatCompletionOptions {
   messages: ChatMessage[];
   temperature?: number;
+  tools?: unknown[];
+  toolChoice?: "auto" | "required" | "none";
 }
 
 export async function chatCompletion(options: ChatCompletionOptions): Promise<any> {
   const config = await fetchSiliconFlowConfig();
-  return postSiliconFlow("chat/completions", {
+  const body: Record<string, unknown> = {
     model: config.models.chat,
     messages: options.messages,
     temperature: options.temperature ?? 0.78
-  });
+  };
+  if (options.tools) body.tools = options.tools;
+  if (options.toolChoice) body.tool_choice = options.toolChoice;
+  return postSiliconFlow("chat/completions", body);
 }
 
 export interface ImageEditOptions {
