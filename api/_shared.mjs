@@ -4,6 +4,9 @@ import { join, resolve } from "node:path";
 const siliconFlowApiKey = process.env.SILICONFLOW_API_KEY ?? process.env.OPENAI_API_KEY;
 const siliconFlowBaseUrl = process.env.SILICONFLOW_BASE_URL ?? "https://api.siliconflow.cn/v1";
 const siliconFlowModel = process.env.SILICONFLOW_MODEL ?? "Pro/zai-org/GLM-4.7";
+// classify 单走一个轻量模型：tool_calls + GLM-4.7 在 Vercel 60s 内基本必 504，
+// Air 版 12B activated 对"三选一"任务足够，几秒内能回。可用 SILICONFLOW_CLASSIFY_MODEL 覆盖。
+const siliconFlowClassifyModel = process.env.SILICONFLOW_CLASSIFY_MODEL ?? "Pro/zai-org/GLM-4.5-Air";
 const siliconFlowVisionModel = process.env.SILICONFLOW_VISION_MODEL ?? "Pro/moonshotai/Kimi-K2.6";
 const siliconFlowImageEditModel = process.env.SILICONFLOW_IMAGE_EDIT_MODEL ?? "Qwen/Qwen-Image-Edit-2509";
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -61,7 +64,7 @@ export async function handleClassifyLayout(req, res) {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
-        model: siliconFlowModel,
+        model: siliconFlowClassifyModel,
         messages: [
           { role: "system", content: buildBalancedClassificationPrompt() },
           { role: "user", content: `照片描述：${photoDescription}` }
