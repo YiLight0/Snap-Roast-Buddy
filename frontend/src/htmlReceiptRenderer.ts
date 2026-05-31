@@ -86,8 +86,8 @@ function renderSimple(data: ReceiptData, level: string) {
       </div>
       <p class="receipt-total"><b>合计评价：</b>${escape(data.verdict)}</p>`, "receipt-section--charges"),
     section("AI 建议", `<p class="receipt-advice">→ ${escape(data.advice || data.tinyAdvice)}</p>`),
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 
@@ -106,8 +106,8 @@ function renderBigText(data: ReceiptData, level: string) {
       <div class="receipt-chips">${tags.slice(0, level === "gentle" ? 2 : 4).map((tag) => `<span>${escape(tag)}</span>`).join("")}</div>
     </section>`,
     level === "spicy" || level === "execution" ? `<div class="receipt-side-comments">${tags.slice(0, 4).map((tag) => `<span>! ${escape(tag)}</span>`).join("")}</div>` : "",
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 
@@ -126,8 +126,8 @@ function renderFace(data: ReceiptData, level: string) {
       <p><b>小句补刀：</b>${escape(data.tinyAdvice || data.verdict)}</p>
       <div class="receipt-chips">${tags.slice(0, level === "gentle" ? 2 : 4).map((tag) => `<span>${escape(tag)}</span>`).join("")}</div>
     </section>`,
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 
@@ -142,7 +142,8 @@ function footer(tags: string[], verdict: string) {
   return `<footer class="receipt-footer">
     <p class="receipt-footer__tags"><b>今日标签：</b><span>${tags.slice(0, 4).map((tag) => `#${escape(tag.replace(/^#+/, ""))}`).join(" ")}</span></p>
     <p><b>本次结论：</b>${escape(verdict)}</p>
-    <div>-- 拍立怼 已出单 --</div>
+    <div class="receipt-footer__status">-- 拍立怼 已出单 --</div>
+    ${barcode()}
   </footer>`;
 }
 
@@ -207,11 +208,37 @@ function compositionMap(level: string) {
   </div><p class="receipt-caption">● 主体观察区 &nbsp; ! 干扰区域 &nbsp; + 构图轴线</p>`;
 }
 
-function noise(tags: string[], level: string) {
-  if (level === "gentle" || level === "normal") return "";
-  const words = tags.length ? tags : ["背景", "抢戏", "构图"];
-  const rows = level === "execution" ? 5 : 2;
-  return `<div class="receipt-noise">${Array.from({ length: rows }, (_, index) => `<div>${Array.from({ length: 7 }, (__, wordIndex) => escape(words[(index + wordIndex) % words.length])).join(" ")}</div>`).join("")}</div>`;
+function lostControlTail(data: ReceiptData, level: string) {
+  if (level === "gentle") return "";
+  const tags = shortWords(data);
+  const title = escape(trim(data.headline || data.verdict || data.oneLineRoast, 7));
+  const secondary = escape(trim(data.oneLineRoast || data.roast, 12));
+  const labels = (tags.length ? tags : ["主体失踪", "构图掉线", "建议重拍"]).slice(0, 4);
+  const bandCount = level === "normal" ? 1 : level === "spicy" ? 3 : 5;
+  const bands = Array.from({ length: bandCount }, (_, index) => {
+    const dark = index % 2 === 0;
+    const text = index === 2 && level === "execution" ? secondary : title;
+    return `<div class="receipt-chaos-band ${dark ? "receipt-chaos-band--dark" : "receipt-chaos-band--light"}" style="--chaos-index:${index}">
+      <span>${text}</span><small>${index % 2 ? "PUBLIC EXECUTION EDITION" : "TYPOGRAPHIC RECEIPT / DISPLAY ONLY"}</small>
+    </div>`;
+  }).join("");
+  const stickers = level === "normal" ? "" : labels.map((tag, index) => `<b class="receipt-chaos-sticker" style="--sticker-index:${index}">${escape(tag)}</b>`).join("");
+  const overprint = level === "execution"
+    ? `<div class="receipt-chaos-overprint">${Array.from({ length: 3 }, (_, index) => `<span style="--overprint-index:${index}">${title}</span>`).join("")}</div>`
+    : "";
+  return `<section class="receipt-chaos receipt-chaos--${level}">
+    <div class="receipt-chaos-kicker">ROAST WITH THE DAWN / ${level.toUpperCase()}</div>
+    ${bands}${stickers}${overprint}
+  </section>`;
+}
+
+function barcode() {
+  const widths = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 4, 1, 1, 3, 2, 1, 3, 1, 2, 4, 1, 1, 2, 3, 1, 2, 1, 4, 2, 1, 3, 1, 2, 2, 1, 4, 1, 3, 1, 2, 1, 3, 2, 1, 4, 1, 2, 1, 3, 1, 2, 4, 1, 1, 3, 2, 1, 2, 1, 4, 2, 1, 3, 1, 2, 3, 1, 4];
+  const bars = widths.map((width, index) => `<i style="--bar-width:${width}" class="${index % 13 === 0 || index % 17 === 0 ? "receipt-barcode__guard" : ""}"></i>`).join("");
+  return `<div class="receipt-barcode" aria-label="购物小票条形码">
+    <div class="receipt-barcode__bars">${bars}</div>
+    <div class="receipt-barcode__digits"><b>2026</b><span>SRB 314195 / 151857</span></div>
+  </div>`;
 }
 
 function mangaBlock(url?: string) {

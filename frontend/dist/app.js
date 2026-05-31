@@ -1832,8 +1832,8 @@ function renderSimple(data, level) {
       </div>
       <p class="receipt-total"><b>\u5408\u8BA1\u8BC4\u4EF7\uFF1A</b>${escape(data.verdict)}</p>`, "receipt-section--charges"),
     section("AI \u5EFA\u8BAE", `<p class="receipt-advice">\u2192 ${escape(data.advice || data.tinyAdvice)}</p>`),
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 function renderBigText(data, level) {
@@ -1851,8 +1851,8 @@ function renderBigText(data, level) {
       <div class="receipt-chips">${tags.slice(0, level === "gentle" ? 2 : 4).map((tag) => `<span>${escape(tag)}</span>`).join("")}</div>
     </section>`,
     level === "spicy" || level === "execution" ? `<div class="receipt-side-comments">${tags.slice(0, 4).map((tag) => `<span>! ${escape(tag)}</span>`).join("")}</div>` : "",
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 function renderFace(data, level) {
@@ -1870,8 +1870,8 @@ function renderFace(data, level) {
       <p><b>\u5C0F\u53E5\u8865\u5200\uFF1A</b>${escape(data.tinyAdvice || data.verdict)}</p>
       <div class="receipt-chips">${tags.slice(0, level === "gentle" ? 2 : 4).map((tag) => `<span>${escape(tag)}</span>`).join("")}</div>
     </section>`,
-    footer(tags, data.verdict),
-    noise(tags, level)
+    lostControlTail(data, level),
+    footer(tags, data.verdict)
   ].join("");
 }
 function header(mode2, chinese) {
@@ -1884,7 +1884,8 @@ function footer(tags, verdict) {
   return `<footer class="receipt-footer">
     <p class="receipt-footer__tags"><b>\u4ECA\u65E5\u6807\u7B7E\uFF1A</b><span>${tags.slice(0, 4).map((tag) => `#${escape(tag.replace(/^#+/, ""))}`).join(" ")}</span></p>
     <p><b>\u672C\u6B21\u7ED3\u8BBA\uFF1A</b>${escape(verdict)}</p>
-    <div>-- \u62CD\u7ACB\u603C \u5DF2\u51FA\u5355 --</div>
+    <div class="receipt-footer__status">-- \u62CD\u7ACB\u603C \u5DF2\u51FA\u5355 --</div>
+    ${barcode()}
   </footer>`;
 }
 function barrage(tags, level) {
@@ -1942,11 +1943,34 @@ function compositionMap(level) {
     </dl>
   </div><p class="receipt-caption">\u25CF \u4E3B\u4F53\u89C2\u5BDF\u533A &nbsp; ! \u5E72\u6270\u533A\u57DF &nbsp; + \u6784\u56FE\u8F74\u7EBF</p>`;
 }
-function noise(tags, level) {
-  if (level === "gentle" || level === "normal") return "";
-  const words = tags.length ? tags : ["\u80CC\u666F", "\u62A2\u620F", "\u6784\u56FE"];
-  const rows = level === "execution" ? 5 : 2;
-  return `<div class="receipt-noise">${Array.from({ length: rows }, (_, index) => `<div>${Array.from({ length: 7 }, (__, wordIndex) => escape(words[(index + wordIndex) % words.length])).join(" ")}</div>`).join("")}</div>`;
+function lostControlTail(data, level) {
+  if (level === "gentle") return "";
+  const tags = shortWords(data);
+  const title = escape(trim(data.headline || data.verdict || data.oneLineRoast, 7));
+  const secondary = escape(trim(data.oneLineRoast || data.roast, 12));
+  const labels = (tags.length ? tags : ["\u4E3B\u4F53\u5931\u8E2A", "\u6784\u56FE\u6389\u7EBF", "\u5EFA\u8BAE\u91CD\u62CD"]).slice(0, 4);
+  const bandCount = level === "normal" ? 1 : level === "spicy" ? 3 : 5;
+  const bands = Array.from({ length: bandCount }, (_, index) => {
+    const dark = index % 2 === 0;
+    const text = index === 2 && level === "execution" ? secondary : title;
+    return `<div class="receipt-chaos-band ${dark ? "receipt-chaos-band--dark" : "receipt-chaos-band--light"}" style="--chaos-index:${index}">
+      <span>${text}</span><small>${index % 2 ? "PUBLIC EXECUTION EDITION" : "TYPOGRAPHIC RECEIPT / DISPLAY ONLY"}</small>
+    </div>`;
+  }).join("");
+  const stickers = level === "normal" ? "" : labels.map((tag, index) => `<b class="receipt-chaos-sticker" style="--sticker-index:${index}">${escape(tag)}</b>`).join("");
+  const overprint = level === "execution" ? `<div class="receipt-chaos-overprint">${Array.from({ length: 3 }, (_, index) => `<span style="--overprint-index:${index}">${title}</span>`).join("")}</div>` : "";
+  return `<section class="receipt-chaos receipt-chaos--${level}">
+    <div class="receipt-chaos-kicker">ROAST WITH THE DAWN / ${level.toUpperCase()}</div>
+    ${bands}${stickers}${overprint}
+  </section>`;
+}
+function barcode() {
+  const widths = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 4, 1, 1, 3, 2, 1, 3, 1, 2, 4, 1, 1, 2, 3, 1, 2, 1, 4, 2, 1, 3, 1, 2, 2, 1, 4, 1, 3, 1, 2, 1, 3, 2, 1, 4, 1, 2, 1, 3, 1, 2, 4, 1, 1, 3, 2, 1, 2, 1, 4, 2, 1, 3, 1, 2, 3, 1, 4];
+  const bars = widths.map((width, index) => `<i style="--bar-width:${width}" class="${index % 13 === 0 || index % 17 === 0 ? "receipt-barcode__guard" : ""}"></i>`).join("");
+  return `<div class="receipt-barcode" aria-label="\u8D2D\u7269\u5C0F\u7968\u6761\u5F62\u7801">
+    <div class="receipt-barcode__bars">${bars}</div>
+    <div class="receipt-barcode__digits"><b>2026</b><span>SRB 314195 / 151857</span></div>
+  </div>`;
 }
 function mangaBlock(url) {
   if (!url) return "";
