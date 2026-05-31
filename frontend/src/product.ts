@@ -3,6 +3,14 @@ import type { LayoutType, RoastLevel, RoastMode } from "../../packages/layout/sr
 import { createStandaloneMangaTicket, createTicketHtmlWithManga, layoutSkills as sharedLayoutSkills } from "./sharedProductFlow.js";
 import { destroyReceiptPreviews, updateReceiptPreview } from "./p5ReceiptRenderer.js";
 import { bytesToBase64, canvasToEscPosRaster, elementToCanvas } from "./lib/printer.js";
+import {
+  buildCurrentRoastPrompt,
+  buildCurrentDoodlePrompt,
+  parseModelPayload,
+  extractGeneratedImage,
+  downloadImageAsDataUrl
+} from "./lib/snapRoastPrompts.js";
+import { chatCompletion, imageEdit, fetchSiliconFlowConfig } from "./lib/siliconflow.js";
 
 type ProductLayoutType = "receipt" | "big_text" | "expression" | "sketch";
 type TriggerMode = "auto" | "manual";
@@ -806,19 +814,36 @@ async function resolveLayoutType(
   return payload.layoutType && payload.layoutType !== "pixel_doodle" ? payload.layoutType : "receipt";
 }
 
-async function generateRoast(description: string, layoutType: RoastMode, roastLevel: ProductRoastLevel) {
-  return postJson<RoastApiResponse>("/api/roast", {
-    photoDescription: description,
-    mode: layoutType,
-    roastLevel: mapRoastLevel(roastLevel)
+async function generateRoast(description: string, layoutType: RoastMode, roastLevel: ProductRoastLevel): Promise<RoastApiResponse> {
+  const mappedLevel = mapRoastLevel(roastLevel);
+  const data = await chatCompletion({
+    messages: [
+      { role: "system", content: buildCurrentRoastPrompt(layoutType, mappedLevel) },
+      { role: "user", content: `照片描述：${description}` }
+    ],
+    temperature: mappedLevel === "spicy" ? 0.92 : mappedLevel === "gentle" ? 0.58 : 0.78
   });
+  const rawContent = String(data?.choices?.[0]?.message?.content ?? "");
+  const parsed = parseModelPayload(rawContent);
+  return {
+    aiComment: parsed.aiComment,
+    enhancedDescription: parsed.enhancedDescription || description
+  };
 }
 
 async function generateSketch(imageUrl: string): Promise<string> {
-  const payload = await postJson<DoodleResponse>("/api/generate-doodle", { imageDataUrl: imageUrl });
-  const result = payload.imageDataUrl || payload.imageUrl || (payload.imageBase64 ? `data:image/png;base64,${payload.imageBase64}` : "");
-  if (!result) throw new Error("漫画模型没有返回图片。");
-  return result;
+  const data = await imageEdit({
+    prompt: buildCurrentDoodlePrompt(),
+    imageDataUrl: imageUrl
+  });
+  const extracted = extractGeneratedImage(data);
+  if (extracted.base64) return `data:image/png;base64,${extracted.base64}`;
+  if (extracted.url) {
+    const dataUrl = await downloadImageAsDataUrl(extracted.url);
+    if (dataUrl) return dataUrl;
+    return extracted.url;
+  }
+  throw new Error("漫画模型没有返回图片。");
 }
 
 // === ESP32 WiFi 打印（位图路径）======================================
@@ -1684,7 +1709,14 @@ async function postJson<T extends { error?: string; detail?: string }>(url: stri
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body)
   });
-  const payload = (await response.json()) as T;
+  const rawText = await response.text();
+  let payload: T;
+  try {
+    payload = (rawText ? JSON.parse(rawText) : {}) as T;
+  } catch {
+    const snippet = rawText.trim().slice(0, 240) || `HTTP ${response.status}`;
+    throw new Error(response.ok ? `响应不是有效 JSON：${snippet}` : `服务器错误（HTTP ${response.status}）：${snippet}`);
+  }
   if (!response.ok || payload.error) throw new Error(formatApiError(payload, "生成失败。"));
   return payload;
 }
@@ -1763,4 +1795,7 @@ showCamera();
 window.setTimeout(centerSelectedCameraMode, 80);
 window.setTimeout(centerSelectedCameraZoom, 80);
 productRecordsLoadPromise = loadProductRecords();
+void fetchSiliconFlowConfig().catch((err) => {
+  console.warn("[siliconflow] 配置预拉取失败，首次生成时会重试:", err);
+});
 window.addEventListener("resize", syncOrientationState);
