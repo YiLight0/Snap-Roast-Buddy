@@ -5,7 +5,11 @@ export interface SiliconFlowConfig {
 }
 
 let configPromise: Promise<SiliconFlowConfig> | undefined;
-let useProxyFallback = false;
+// 走同源 Edge runtime proxy（/api/sf-proxy）。
+// 优点：绕开浏览器对 api.siliconflow.cn 的 CORS preflight；同时 Edge runtime 不受
+// 普通 Vercel Node serverless 函数 60s 上限，长推理也不会被 kill。
+// 若以后探测确认 SiliconFlow 直连可用，把这里改 false 即可切回直连。
+let useProxyFallback = true;
 
 export function fetchSiliconFlowConfig(): Promise<SiliconFlowConfig> {
   if (!configPromise) {
