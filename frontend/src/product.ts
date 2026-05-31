@@ -1427,18 +1427,12 @@ async function loadProductRecords() {
     const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=0&limit=${productRecordsPageSize}&view=summary`);
     if (requestVersion !== recordListVersion) return;
     const remoteRecords = [...(payload.records ?? [])].filter((record) => !deletedRecordIds.has(record.id)).sort((a, b) => recordTimestamp(b) - recordTimestamp(a));
-    const localRecords = await readCachedProductRecords();
+    await clearCachedProductRecords();
     if (requestVersion !== recordListVersion) return;
-    usingLocalRecordStore = remoteRecords.length === 0 && localRecords.length > 0;
-    if (usingLocalRecordStore) {
-      const nextLocalRecords = localRecords.filter((record) => !deletedRecordIds.has(record.id));
-      productRecordsTotal = nextLocalRecords.length;
-      records = [...nextLocalRecords];
-    } else {
-      productRecordsTotal = Math.max(payload.total ?? 0, remoteRecords.length);
-      records = createRecordSlots(productRecordsTotal);
-      placeLoadedRecords(0, remoteRecords, productRecordsTotal);
-    }
+    usingLocalRecordStore = false;
+    productRecordsTotal = Math.max(payload.total ?? 0, remoteRecords.length);
+    records = createRecordSlots(productRecordsTotal);
+    placeLoadedRecords(0, remoteRecords, productRecordsTotal);
     clampCurrentRecordIndex();
     renderLatestThumb();
     void loadProductRecordAtIndex(0);
@@ -1546,21 +1540,15 @@ async function ensureProductRecordsLoaded() {
 }
 
 async function saveProductRecord(record: PhotoRecord): Promise<PhotoRecord> {
-  try {
-    const payload = await postJson<ProductRecordsResponse>("/api/product-records", { record });
-    const savedRecord = payload.record ?? record;
-    await upsertCachedProductRecord(savedRecord);
-    return savedRecord;
-  } catch {
-    usingLocalRecordStore = true;
-    await upsertCachedProductRecord(record);
-    return record;
-  }
+  const payload = await postJson<ProductRecordsResponse>("/api/product-records", { record });
+  const savedRecord = payload.record ?? record;
+  await upsertCachedProductRecord(savedRecord);
+  return savedRecord;
 }
 
 async function deleteProductRecord(id: string): Promise<void> {
-  await removeCachedProductRecord(id);
   const response = await fetch(`/api/product-records/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (response.ok) await removeCachedProductRecord(id);
   if (!response.ok) throw new Error("删除记录失败。");
 }
 
@@ -1589,6 +1577,26 @@ async function upsertCachedProductRecord(record: PhotoRecord) {
 
 async function removeCachedProductRecord(id: string) {
   await writeCachedProductRecords((await readCachedProductRecords()).filter((record) => record.id !== id));
+}
+
+async function clearCachedProductRecords() {
+  try {
+    const database = await openProductRecordsDatabase();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(productRecordsStoreName, "readwrite");
+      transaction.objectStore(productRecordsStoreName).clear();
+      transaction.addEventListener("complete", () => resolve());
+      transaction.addEventListener("error", () => reject(transaction.error ?? new Error("IndexedDB clear failed.")));
+      transaction.addEventListener("abort", () => reject(transaction.error ?? new Error("IndexedDB clear aborted.")));
+    });
+  } catch {
+    // Continue with the authoritative remote records if browser storage is unavailable.
+  }
+  try {
+    window.localStorage.removeItem(localProductRecordsKey);
+  } catch {
+    // Continue with the authoritative remote records if browser storage is unavailable.
+  }
 }
 
 async function readIndexedProductRecords(): Promise<PhotoRecord[]> {
