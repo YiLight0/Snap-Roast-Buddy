@@ -25,8 +25,32 @@
 const char* ssid     = "iPhone on the beach";
 const char* password = "Qwer123321";
 
+// 打印机 DTR 接 ESP32 GPIO 41（硬件流控）
+// MY-628 DTR：打印机输出，告诉主机自己是否能接收数据
+// 约定（最常见 ESC/POS）：LOW = READY（可接收），HIGH = BUSY（缓冲将满）
+// 若实测发现极性反了（一直卡在 BUSY 或所有字节都不等就发），把 DTR_BUSY_LEVEL 改成 LOW
+#define DTR_PIN              41
+#define DTR_BUSY_LEVEL       HIGH
+#define DTR_WAIT_TIMEOUT_MS  500
+
+static uint32_t dtrTimeoutCount = 0;
+
 HardwareSerial Printer(1);
 WebServer server(80);
+
+// 检查 DTR 是否 READY，否则忙等到 READY 或超时降级。
+// 超时降级：避免 DTR 接错/极性反时整个 HTTP handler 卡死。
+static inline void waitPrinterReady() {
+  if (digitalRead(DTR_PIN) != DTR_BUSY_LEVEL) return;
+  uint32_t start = millis();
+  while (digitalRead(DTR_PIN) == DTR_BUSY_LEVEL) {
+    if (millis() - start > DTR_WAIT_TIMEOUT_MS) {
+      dtrTimeoutCount++;
+      return;
+    }
+    delayMicroseconds(50);
+  }
+}
 
 static void sendCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -161,6 +185,7 @@ static size_t streamBase64ToPrinter(const String& b64) {
     if (bits >= 8) {
       bits -= 8;
       uint8_t byte = (uint8_t)((buf >> bits) & 0xFF);
+      waitPrinterReady();
       Printer.write(byte);
       outBytes++;
     }
@@ -190,9 +215,12 @@ static void handlePrintBridge() {
   html += "const raw=location.hash.slice(1);";
   html += "if(!raw){s.textContent='错误：URL 没有 hash 数据';s.classList.add('err');return;}";
   html += "const b64=decodeURIComponent(raw);";
-  html += "s.textContent='发往 ESP32 ('+b64.length+' 字符 base64)…';";
+  // 把 hash 原始长度 + 解码后 b64 长度都暴露在页面上，方便诊断 Safari 是否截了 URL hash
+  html += "s.textContent='hash='+raw.length+' b64='+b64.length+'，发送中…';";
   html += "try{";
-  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(b64)});";
+  // 改用 text/plain 把 base64 当原始 body 发：绕开 ESP32 WebServer form 解析器
+  // 的 ~8KB 上限。ESP32 端用 server.arg('plain') 取整段 body。
+  html += "const r=await fetch('/print-raster',{method:'POST',headers:{'Content-Type':'text/plain'},body:b64});";
   html += "const t=await r.text();";
   html += "document.open();document.write(t);document.close();";
   html += "}catch(e){s.textContent='出错: '+e.message;s.classList.add('err');}";
@@ -223,32 +251,43 @@ static void handlePrintRaster() {
   Serial.print("arg('plain') length: ");
   Serial.println(server.arg("plain").length());
 
-  if (!server.hasArg("data")) {
+  // 优先用 'plain'（text/plain 原始 body，bridge 页现在走这条路径，
+  // 绕开 form 解析器的 ~8KB body 上限）；兼容老路径 'data' 字段。
+  String b64;
+  if (server.arg("plain").length() > 0) {
+    b64 = server.arg("plain");
+  } else if (server.hasArg("data")) {
+    b64 = server.arg("data");
+  } else {
     server.send(400, "text/html; charset=utf-8",
-                "<!doctype html><meta charset=utf-8><p>缺少 data 字段（看串口诊断）</p>");
+                "<!doctype html><meta charset=utf-8><p>缺少 body 或 data 字段（看串口诊断）</p>");
     return;
   }
-
-  const String& b64 = server.arg("data");
   Serial.println();
   Serial.println("==== 收到位图打印请求 ====");
   Serial.print("base64 长度: ");
   Serial.println(b64.length());
+  Serial.print("DTR 初始状态: ");
+  Serial.println(digitalRead(DTR_PIN) == DTR_BUSY_LEVEL ? "BUSY" : "READY");
+
+  dtrTimeoutCount = 0;
 
   // 初始化打印机（ESC @）
-  Printer.write(0x1B);
-  Printer.write(0x40);
+  waitPrinterReady(); Printer.write(0x1B);
+  waitPrinterReady(); Printer.write(0x40);
   delay(50);
 
   size_t printedBytes = streamBase64ToPrinter(b64);
 
   // 走纸
-  Printer.write('\n');
-  Printer.write('\n');
-  Printer.write('\n');
+  waitPrinterReady(); Printer.write('\n');
+  waitPrinterReady(); Printer.write('\n');
+  waitPrinterReady(); Printer.write('\n');
 
   Serial.print("已发字节数: ");
   Serial.println(printedBytes);
+  Serial.print("DTR 超时次数: ");
+  Serial.println(dtrTimeoutCount);
   Serial.println("=========================");
 
   // 返回"已打印"HTML（结构沿用 doPrint(returnHtml=true)）
@@ -273,6 +312,7 @@ static void handlePrintRaster() {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(DTR_PIN, INPUT_PULLUP);
   Printer.begin(57600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
   delay(500);
 
