@@ -31,7 +31,7 @@ export function generateReceiptContent(
   generatedComment?: string
 ): ReceiptContent {
   const motifs = skill?.visualMotifs?.length ? skill.visualMotifs : ["今日照片审判小票", "照片检测单", "AI 成片体检报告"];
-  const findings = buildFindings(analysis).slice(0, 4);
+  const findings = buildFindings(analysis).slice(0, 6);
 
   return {
     title: "拍立怼 Snap Roast Buddy",
@@ -43,7 +43,9 @@ export function generateReceiptContent(
     scores: [
       { label: "槽点密度", value: Math.max(35, analysis.roastPotential) },
       { label: "画面秩序", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
-      { label: "分享价值", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
+      { label: "分享价值", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) },
+      { label: "光线友好", value: Math.max(24, 88 - (analysis.photoQualityIssues.some((issue) => issue.includes("光线") || issue.includes("暗")) ? 42 : 8)) },
+      { label: "主体稳定", value: Math.max(22, 86 - analysis.flaws.length * 9 - analysis.chaosLevel / 4) }
     ],
     roast: generatedComment?.trim() || receiptRoast(analysis, roastLevel),
     advice: adviceFor(analysis),

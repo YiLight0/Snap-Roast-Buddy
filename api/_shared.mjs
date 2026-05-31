@@ -35,7 +35,7 @@ export async function handleAnalyzeImage(req, res) {
             ]
           }
         ],
-        max_tokens: 500
+        max_tokens: 900
       })
     });
 
@@ -336,6 +336,7 @@ export async function handleDeleteProductRecord(req, res) {
 
 function buildVisionPrompt() {
   return [
+    ...buildReceiptVisionRequirements(),
     "请用中文描述这张图片，供“拍立怼 Snap Roast Buddy”生成热敏纸小票。",
     "先判断最具体的场景，不要泛泛写“生活照”。只有明确有多人社交、餐桌/派对/KTV/合影互动时，才写“聚会/朋友合照”；不要因为画面里有人或室内就默认成聚会。",
     "可选场景方向要尽量广：单人自拍、朋友合照、宠物、餐饮/咖啡、便利店/商场/货架、办公室/学习桌、卧室/家居、街景/通勤/车站、旅行景点、运动健身、展览演出、夜景、屏幕截图、商品/手作/杂物、证件/票据/文字照片等。",
@@ -344,6 +345,16 @@ function buildVisionPrompt() {
     "不要评价真实长相、身材、种族、性别、年龄、残障等敏感属性。",
     "输出一段自然语言描述，80 到 160 字，信息密度高一点。"
   ].join("\n");
+}
+
+function buildReceiptVisionRequirements() {
+  return [
+    "为了生成照片审判小票，请尽量提供可核对的具体信息，不要只写笼统印象。",
+    "描述中请自然包含：画面主角、具体场景、整体氛围、背景或道具、构图、光线、清晰度、一个隐藏剧情式观察。",
+    "至少列出 5 个彼此不同的照片诊断线索，例如主体清晰度、背景干扰度、光线友好度、构图稳定度、分享可信度。",
+    "至少列出 5 个可用于消费明细的具体观察点，例如背景抢戏、构图随缘、光线将就、主体努力营业、道具存在感过强。",
+    "只描述画面中确实存在的事实或可合理判断的摄影问题，不要凭空添加物体、人物关系或场景。"
+  ];
 }
 
 function buildBalancedClassificationPrompt() {
@@ -402,6 +413,7 @@ function buildCurrentRoastPrompt(mode, roastLevel) {
   };
 
   return [
+    "enhancedDescription 要保留并补全识别结果：画面主角、具体场景、氛围、背景道具、构图、光线、清晰度、隐藏剧情，以及至少 5 个不同维度的照片诊断或消费明细线索。",
     "你是“拍立怼 Snap Roast Buddy”，一个有性格但不恶意的 AI 拍照搭子。",
     "用户会给你一段照片描述，你要输出有趣评价，用于 58mm 热敏纸小票排版。",
     tone,
