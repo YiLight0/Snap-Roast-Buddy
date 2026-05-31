@@ -67,14 +67,45 @@ function centerText(text, width) {
 
 // packages/layout/src/analyzePhotoDescription.ts
 var sceneMap = [
-  { type: "\u670B\u53CB\u805A\u4F1A\u81EA\u62CD", keywords: ["\u670B\u53CB", "\u805A\u4F1A", "\u5408\u7167", "\u81EA\u62CD", "\u56DB\u4E2A\u4EBA", "\u591A\u4EBA"] },
-  { type: "\u65C5\u884C\u6253\u5361", keywords: ["\u666F\u70B9", "\u65C5\u884C", "\u5EFA\u7B51", "\u98CE\u666F", "\u6253\u5361", "\u6E38\u5BA2"] },
-  { type: "\u5BA0\u7269\u7167\u7247", keywords: ["\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u5C0F\u732B", "\u52A8\u7269"] },
-  { type: "\u7F8E\u98DF\u7167\u7247", keywords: ["\u7F8E\u98DF", "\u83DC", "\u9910\u5385", "\u98DF\u7269", "\u5496\u5561", "\u751C\u70B9"] },
-  { type: "\u60C5\u4FA3\u7167", keywords: ["\u60C5\u4FA3", "\u7EA6\u4F1A", "\u6D6A\u6F2B", "\u7275\u624B", "\u62E5\u62B1"] },
-  { type: "\u5BA4\u5185\u751F\u6D3B\u7167", keywords: ["\u5BA4\u5185", "\u623F\u95F4", "\u5BB6\u91CC", "\u684C\u5B50", "\u6742\u7269"] }
+  { type: "\u670B\u53CB\u5408\u7167\u73B0\u573A", keywords: ["\u670B\u53CB\u5408\u7167", "\u591A\u4EBA\u5408\u5F71", "\u805A\u4F1A", "\u805A\u9910", "\u996D\u5C40", "\u6D3E\u5BF9", "KTV", "\u56DB\u4E2A\u4EBA", "\u591A\u4EBA\u81EA\u62CD", "\u5408\u7167"] },
+  { type: "\u5355\u4EBA\u81EA\u62CD\u73B0\u573A", keywords: ["\u81EA\u62CD", "\u5BF9\u955C", "\u955C\u5B50", "\u81EA\u62CD\u6746", "\u524D\u7F6E", "\u534A\u8EAB\u7167", "\u5934\u50CF"] },
+  { type: "\u5BA0\u7269\u8425\u4E1A\u73B0\u573A", keywords: ["\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u5C0F\u732B", "\u52A8\u7269", "\u6BDB\u5B69\u5B50", "\u732B\u732B", "\u72D7\u72D7"] },
+  { type: "\u9910\u996E\u5496\u5561\u73B0\u573A", keywords: ["\u7F8E\u98DF", "\u83DC", "\u9910\u5385", "\u98DF\u7269", "\u5496\u5561", "\u751C\u70B9", "\u5976\u8336", "\u62C9\u9762", "\u706B\u9505", "\u86CB\u7CD5", "\u5916\u5356"] },
+  { type: "\u4FBF\u5229\u5E97\u8D27\u67B6\u73B0\u573A", keywords: ["\u4FBF\u5229\u5E97", "\u8D85\u5E02", "\u8D27\u67B6", "\u6536\u94F6\u53F0", "\u5546\u54C1", "\u5305\u88C5", "\u996E\u6599", "\u96F6\u98DF", "\u8D2D\u7269\u8F66", "\u5546\u573A"] },
+  { type: "\u529E\u516C\u5BA4\u6253\u5DE5\u73B0\u573A", keywords: ["\u529E\u516C\u5BA4", "\u5DE5\u4F4D", "\u7535\u8111", "\u952E\u76D8", "\u4F1A\u8BAE", "\u767D\u677F", "\u6587\u4EF6", "\u6253\u5DE5", "\u5B66\u4E60", "\u4E66\u684C", "\u4F5C\u4E1A"] },
+  { type: "\u5BB6\u5C45\u6742\u7269\u73B0\u573A", keywords: ["\u5BA4\u5185", "\u623F\u95F4", "\u5BB6\u91CC", "\u5367\u5BA4", "\u684C\u5B50", "\u6742\u7269", "\u6C99\u53D1", "\u5E8A", "\u53A8\u623F", "\u51CC\u4E71"] },
+  { type: "\u8857\u666F\u901A\u52E4\u73B0\u573A", keywords: ["\u8857\u9053", "\u8DEF\u8FB9", "\u5730\u94C1", "\u516C\u4EA4", "\u8F66\u7AD9", "\u673A\u573A", "\u901A\u52E4", "\u8F66\u53A2", "\u4EBA\u884C\u9053", "\u591C\u5E02"] },
+  { type: "\u65C5\u884C\u6253\u5361\u73B0\u573A", keywords: ["\u666F\u70B9", "\u65C5\u884C", "\u5EFA\u7B51", "\u98CE\u666F", "\u6253\u5361", "\u6E38\u5BA2", "\u5C71", "\u6D77\u8FB9", "\u516C\u56ED", "\u9152\u5E97"] },
+  { type: "\u8FD0\u52A8\u5065\u8EAB\u73B0\u573A", keywords: ["\u8FD0\u52A8", "\u5065\u8EAB", "\u8DD1\u6B65", "\u7403\u573A", "\u7BEE\u7403", "\u8DB3\u7403", "\u745C\u4F3D", "\u9A91\u884C", "\u6ED1\u96EA"] },
+  { type: "\u5C55\u89C8\u6F14\u51FA\u73B0\u573A", keywords: ["\u5C55\u89C8", "\u535A\u7269\u9986", "\u6F14\u5531\u4F1A", "\u821E\u53F0", "\u706F\u724C", "\u753B\u5C55", "\u97F3\u4E50\u8282", "\u5267\u573A"] },
+  { type: "\u6587\u5B57\u7968\u636E\u73B0\u573A", keywords: ["\u622A\u56FE", "\u5C4F\u5E55", "\u7968\u636E", "\u5C0F\u7968", "\u83DC\u5355", "\u6D77\u62A5", "PPT", "\u6587\u6863", "\u4E8C\u7EF4\u7801", "\u6587\u5B57"] },
+  { type: "\u60C5\u4FA3\u7EA6\u4F1A\u73B0\u573A", keywords: ["\u60C5\u4FA3", "\u7EA6\u4F1A", "\u6D6A\u6F2B", "\u7275\u624B", "\u62E5\u62B1", "\u73AB\u7470", "\u4EB2\u5BC6"] }
 ];
-var subjectKeywords = ["\u670B\u53CB", "\u4EBA", "\u4EBA\u7269", "\u5C0F\u72D7", "\u72D7", "\u732B", "\u5BA0\u7269", "\u60C5\u4FA3", "\u80CC\u666F", "\u5EFA\u7B51", "\u98DF\u7269", "\u8138", "\u8868\u60C5"];
+var subjectKeywords = [
+  "\u670B\u53CB",
+  "\u4EBA",
+  "\u4EBA\u7269",
+  "\u5C0F\u72D7",
+  "\u72D7",
+  "\u732B",
+  "\u5BA0\u7269",
+  "\u60C5\u4FA3",
+  "\u80CC\u666F",
+  "\u5EFA\u7B51",
+  "\u98DF\u7269",
+  "\u8138",
+  "\u8868\u60C5",
+  "\u5546\u54C1",
+  "\u7535\u8111",
+  "\u624B\u673A",
+  "\u5C4F\u5E55",
+  "\u684C\u9762",
+  "\u6D77\u62A5",
+  "\u6587\u5B57",
+  "\u8F66\u7AD9",
+  "\u8857\u9053",
+  "\u706F\u5149"
+];
 var flawRules = [
   { flaw: "\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", keywords: ["\u88C1\u6389", "\u534A\u5F20\u8138", "\u5207\u6389", "\u6CA1\u4E86", "\u88AB\u753B\u9762\u5F00\u9664"] },
   { flaw: "\u4E3B\u4F53\u592A\u5C0F", keywords: ["\u4EBA\u7269\u975E\u5E38\u5C0F", "\u4EBA\u5F88\u5C0F", "\u4E3B\u4F53\u592A\u5C0F", "\u51E0\u4E4E\u770B\u4E0D\u6E05", "\u592A\u8FDC"] },
@@ -82,24 +113,55 @@ var flawRules = [
   { flaw: "\u753B\u9762\u504F\u7CCA", keywords: ["\u7CCA", "\u6A21\u7CCA", "\u865A\u7126", "\u6296"] },
   { flaw: "\u5149\u7EBF\u504F\u6697", keywords: ["\u592A\u6697", "\u504F\u6697", "\u5149\u7EBF\u5DEE", "\u660F\u6697"] },
   { flaw: "\u80CC\u666F\u62A2\u620F", keywords: ["\u80CC\u666F", "\u6742\u7269", "\u62A2\u955C", "\u4E71"] },
-  { flaw: "\u8868\u60C5\u8FC7\u4E8E\u6709\u620F", keywords: ["\u8868\u60C5\u5938\u5F20", "\u8868\u60C5\u5F88\u5938\u5F20", "\u5446", "\u5C34\u5C2C", "\u653E\u7A7A", "\u59D4\u5C48"] }
+  { flaw: "\u8868\u60C5\u8FC7\u4E8E\u6709\u620F", keywords: ["\u8868\u60C5\u5938\u5F20", "\u8868\u60C5\u5F88\u5938\u5F20", "\u5446", "\u5C34\u5C2C", "\u653E\u7A7A", "\u59D4\u5C48"] },
+  { flaw: "\u4FE1\u606F\u91CF\u8FC7\u8F7D", keywords: ["\u5F88\u591A\u5B57", "\u6587\u5B57\u5F88\u591A", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u4FE1\u606F\u91CF", "\u7968\u636E", "\u622A\u56FE", "\u83DC\u5355", "PPT"] },
+  { flaw: "\u9053\u5177\u62A2\u4E3B\u89D2", keywords: ["\u5546\u54C1", "\u5305\u88C5", "\u676F\u5B50", "\u76D8\u5B50", "\u7535\u8111", "\u624B\u673A", "\u6D77\u62A5", "\u9053\u5177", "\u8D27\u67B6"] },
+  { flaw: "\u89D2\u5EA6\u6709\u70B9\u7384\u5B66", keywords: ["\u6B6A", "\u503E\u659C", "\u4EF0\u62CD", "\u4FEF\u62CD", "\u89D2\u5EA6\u5947\u602A", "\u659C\u7740"] },
+  { flaw: "\u53CD\u5149\u6B63\u5728\u8425\u4E1A", keywords: ["\u53CD\u5149", "\u73BB\u7483", "\u955C\u5B50", "\u5C4F\u5E55\u53CD\u5149", "\u66DD\u5149", "\u8FC7\u66DD"] }
 ];
 function analyzePhotoDescription(description) {
   const text = description.trim();
-  const sceneType = sceneMap.find((scene) => includesAny(text, scene.keywords))?.type ?? "\u751F\u6D3B\u7167\u7247";
+  const sceneType = scoreSceneType(text);
   const subjects = unique(matchKeywords(text, subjectKeywords));
   const flaws = flawRules.filter((rule) => includesAny(text, rule.keywords)).map((rule) => rule.flaw);
   const visualKeywords = unique([
+    sceneType,
     ...subjects,
-    ...matchKeywords(text, ["\u81EA\u62CD", "\u5408\u7167", "\u666F\u70B9", "\u5EFA\u7B51", "\u6742\u7269", "\u6697", "\u53EF\u7231", "\u59D4\u5C48", "\u5938\u5F20", "\u62E5\u6324", "\u80CC\u666F", "\u98CE\u666F"])
+    ...matchKeywords(text, [
+      "\u81EA\u62CD",
+      "\u5408\u7167",
+      "\u666F\u70B9",
+      "\u5EFA\u7B51",
+      "\u6742\u7269",
+      "\u6697",
+      "\u53EF\u7231",
+      "\u59D4\u5C48",
+      "\u5938\u5F20",
+      "\u62E5\u6324",
+      "\u80CC\u666F",
+      "\u98CE\u666F",
+      "\u5546\u54C1",
+      "\u5C4F\u5E55",
+      "\u7968\u636E",
+      "\u8D27\u67B6",
+      "\u5DE5\u4F4D",
+      "\u8857\u666F",
+      "\u591C\u666F",
+      "\u53CD\u5149",
+      "\u8FC7\u66DD"
+    ])
   ]);
   const photoQualityIssues = flaws.filter(
-    (flaw) => ["\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", "\u4E3B\u4F53\u592A\u5C0F", "\u955C\u5934\u8DDD\u79BB\u8FC7\u8FD1", "\u753B\u9762\u504F\u7CCA", "\u5149\u7EBF\u504F\u6697", "\u80CC\u666F\u62A2\u620F"].includes(flaw)
+    (flaw) => ["\u6709\u4EBA\u88AB\u88C1\u51FA\u753B\u9762", "\u4E3B\u4F53\u592A\u5C0F", "\u955C\u5934\u8DDD\u79BB\u8FC7\u8FD1", "\u753B\u9762\u504F\u7CCA", "\u5149\u7EBF\u504F\u6697", "\u80CC\u666F\u62A2\u620F", "\u89D2\u5EA6\u6709\u70B9\u7384\u5B66", "\u53CD\u5149\u6B63\u5728\u8425\u4E1A"].includes(flaw)
   );
   const funnyPoints = unique([
     ...flaws,
     ...includesAny(text, ["\u6324", "\u62E5\u6324", "\u56DB\u4E2A\u4EBA"]) ? ["\u5927\u5BB6\u6B63\u5728\u4E89\u593A\u753B\u9762\u751F\u5B58\u6743"] : [],
-    ...includesAny(text, ["\u8868\u60C5\u5938\u5F20", "\u5446", "\u653E\u7A7A", "\u59D4\u5C48"]) ? ["\u8868\u60C5\u7BA1\u7406\u77ED\u6682\u79BB\u7EBF"] : []
+    ...includesAny(text, ["\u8868\u60C5\u5938\u5F20", "\u5446", "\u653E\u7A7A", "\u59D4\u5C48"]) ? ["\u8868\u60C5\u7BA1\u7406\u77ED\u6682\u79BB\u7EBF"] : [],
+    ...includesAny(text, ["\u5546\u54C1", "\u8D27\u67B6", "\u5305\u88C5", "\u6536\u94F6\u53F0"]) ? ["\u5546\u54C1\u9648\u5217\u6BD4\u4E3B\u89D2\u66F4\u61C2\u8425\u4E1A"] : [],
+    ...includesAny(text, ["\u7535\u8111", "\u5DE5\u4F4D", "\u6587\u4EF6", "\u5B66\u4E60", "\u4F5C\u4E1A"]) ? ["\u6253\u5DE5\u6C14\u606F\u5DF2\u7ECF\u4ECE\u753B\u9762\u8FB9\u7F18\u6EA2\u51FA"] : [],
+    ...includesAny(text, ["\u5C4F\u5E55", "\u622A\u56FE", "\u7968\u636E", "\u6587\u5B57\u5F88\u591A"]) ? ["\u6587\u5B57\u5BC6\u5EA6\u6B63\u5728\u7533\u8BF7\u5C0F\u7968\u7F16\u5236"] : [],
+    ...includesAny(text, ["\u8857\u9053", "\u5730\u94C1", "\u8F66\u7AD9", "\u901A\u52E4"]) ? ["\u8DEF\u8FC7\u611F\u5F3A\u5230\u50CF\u4E34\u65F6\u6293\u62CD\u8BC1\u636E"] : []
   ]);
   const cutenessLevel = clamp(
     (includesAny(text, ["\u53EF\u7231", "\u840C", "\u4E56", "\u5C0F\u72D7", "\u5C0F\u732B", "\u5BA0\u7269"]) ? 70 : 0) + (includesAny(text, ["\u59D4\u5C48", "\u8DB4", "\u770B\u7740\u955C\u5934"]) ? 20 : 0)
@@ -107,9 +169,9 @@ function analyzePhotoDescription(description) {
   const awkwardLevel = clamp(
     (includesAny(text, ["\u5C34\u5C2C", "\u5446", "\u653E\u7A7A", "\u65E0\u8BED"]) ? 75 : 0) + (includesAny(text, ["\u88C1\u6389", "\u534A\u5F20\u8138", "\u8868\u60C5\u5938\u5F20"]) ? 20 : 0)
   );
-  const chaosLevel = clamp(flaws.length * 18 + (includesAny(text, ["\u591A\u4EBA", "\u56DB\u4E2A\u4EBA", "\u6324", "\u6742\u7269", "\u6DF7\u4E71"]) ? 25 : 0));
+  const chaosLevel = clamp(flaws.length * 18 + (includesAny(text, ["\u591A\u4EBA", "\u56DB\u4E2A\u4EBA", "\u6324", "\u6742\u7269", "\u6DF7\u4E71", "\u8D27\u67B6", "\u5F88\u591A\u5B57", "\u8857\u9053"]) ? 25 : 0));
   const roastPotential = clamp(
-    flaws.length * 20 + funnyPoints.length * 12 + (includesAny(text, ["\u975E\u5E38\u5C0F", "\u534A\u5F20\u8138", "\u592A\u8FD1", "\u592A\u6697", "\u7CCA", "\u62A2\u955C"]) ? 30 : 0)
+    flaws.length * 20 + funnyPoints.length * 12 + (includesAny(text, ["\u975E\u5E38\u5C0F", "\u534A\u5F20\u8138", "\u592A\u8FD1", "\u592A\u6697", "\u7CCA", "\u62A2\u955C", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u89D2\u5EA6\u5947\u602A", "\u53CD\u5149"]) ? 30 : 0)
   );
   const strongestPunchline = detectPunchline(text);
   const mood = detectMood(text, cutenessLevel, awkwardLevel, chaosLevel);
@@ -128,6 +190,17 @@ function analyzePhotoDescription(description) {
     strongestPunchline
   };
 }
+function scoreSceneType(text) {
+  let best = { type: "\u751F\u6D3B\u5207\u7247\u73B0\u573A", score: 0 };
+  for (const scene of sceneMap) {
+    const score = scene.keywords.reduce((total, keyword) => {
+      if (!text.includes(keyword)) return total;
+      return total + Math.max(1, Math.min(5, Math.ceil(keyword.length / 2)));
+    }, 0);
+    if (score > best.score) best = { type: scene.type, score };
+  }
+  return best.score > 0 ? best.type : "\u751F\u6D3B\u5207\u7247\u73B0\u573A";
+}
 function detectPunchline(text) {
   if (includesAny(text, ["\u4EBA\u7269\u975E\u5E38\u5C0F", "\u4EBA\u5F88\u5C0F", "\u4E3B\u4F53\u592A\u5C0F", "\u51E0\u4E4E\u770B\u4E0D\u6E05"])) return "\u4EBA\u5462\uFF1F";
   if (includesAny(text, ["\u88C1\u6389\u534A\u5F20\u8138", "\u534A\u5F20\u8138", "\u88C1\u6389"])) return "\u53F3\u8FB9\u90A3\u4F4D\uFF1A\u6211\u4E5F\u662F\u4EBA";
@@ -135,6 +208,10 @@ function detectPunchline(text) {
   if (includesAny(text, ["\u7CCA", "\u6A21\u7CCA", "\u865A\u7126"])) return "\u753B\u8D28\u6B63\u5728\u9003\u8DD1";
   if (includesAny(text, ["\u592A\u6697", "\u504F\u6697", "\u5149\u7EBF\u5DEE"])) return "\u706F\u5462\uFF1F";
   if (includesAny(text, ["\u80CC\u666F\u62A2\u955C", "\u6742\u7269", "\u80CC\u666F\u5F88\u4E71"])) return "\u80CC\u666F\u7533\u8BF7\u5F53\u4E3B\u89D2";
+  if (includesAny(text, ["\u5546\u54C1", "\u8D27\u67B6", "\u5305\u88C5"])) return "\u5546\u54C1\u6BD4\u4EBA\u66F4\u4F1A\u6446\u62CD";
+  if (includesAny(text, ["\u7535\u8111", "\u5DE5\u4F4D", "\u6587\u4EF6"])) return "\u6253\u5DE5\u5473\u5DF2\u7ECF\u6EA2\u51FA\u5C4F\u5E55";
+  if (includesAny(text, ["\u5F88\u591A\u5B57", "\u5BC6\u5BC6\u9EBB\u9EBB", "\u7968\u636E", "\u622A\u56FE"])) return "\u4FE1\u606F\u91CF\u6B63\u5728\u8D85\u8F7D";
+  if (includesAny(text, ["\u53CD\u5149", "\u73BB\u7483", "\u5C4F\u5E55\u53CD\u5149"])) return "\u53CD\u5149\u4E5F\u60F3\u5165\u955C";
   return void 0;
 }
 function detectMood(text, cuteness, awkward, chaos) {
@@ -142,6 +219,10 @@ function detectMood(text, cuteness, awkward, chaos) {
   if (includesAny(text, ["\u6D6A\u6F2B", "\u751C", "\u60C5\u4FA3"])) return "\u6D6A\u6F2B";
   if (awkward >= 75) return "\u5C34\u5C2C";
   if (chaos >= 70) return "\u5931\u63A7";
+  if (includesAny(text, ["\u529E\u516C\u5BA4", "\u5DE5\u4F4D", "\u4F5C\u4E1A", "\u6587\u4EF6", "\u4F1A\u8BAE"])) return "\u6253\u5DE5\u611F";
+  if (includesAny(text, ["\u4FBF\u5229\u5E97", "\u8D27\u67B6", "\u5546\u54C1", "\u5305\u88C5"])) return "\u8425\u4E1A\u611F";
+  if (includesAny(text, ["\u8857\u9053", "\u5730\u94C1", "\u8F66\u7AD9", "\u673A\u573A", "\u901A\u52E4"])) return "\u8DEF\u8FC7\u611F";
+  if (includesAny(text, ["\u5C55\u89C8", "\u6F14\u5531\u4F1A", "\u821E\u53F0", "\u706F\u724C"])) return "\u73B0\u573A\u611F";
   if (includesAny(text, ["\u9177", "\u5E05", "\u58A8\u955C"])) return "\u5F88\u9177";
   return "\u8F7B\u5FAE\u60F3\u5410\u69FD";
 }
@@ -1145,16 +1226,16 @@ function generateReceiptContent(analysis, roastLevel = "normal", skill, generate
   const motifs = skill?.visualMotifs?.length ? skill.visualMotifs : ["\u4ECA\u65E5\u7167\u7247\u5BA1\u5224\u5C0F\u7968", "\u7167\u7247\u68C0\u6D4B\u5355", "AI \u6210\u7247\u4F53\u68C0\u62A5\u544A"];
   const findings = buildFindings(analysis).slice(0, 4);
   return {
-    title: "SNAP ROAST BUDDY",
+    title: "\u62CD\u7ACB\u603C Snap Roast Buddy",
     subtitle: choose(motifs, analysis.sceneType),
     photoType: analysis.sceneType,
-    atmosphere: analysis.chaosLevel >= 65 ? "\u70ED\u95F9\u4F46\u6709\u70B9\u5931\u63A7" : analysis.mood === "\u53EF\u7231" ? "\u53EF\u7231\u503C\u8D85\u6807" : "\u52AA\u529B\u8425\u4E1A\u4E2D",
-    aiMood: roastLevel === "spicy" ? "\u5DF2\u7ECF\u5F00\u59CB\u618B\u5927\u62DB" : analysis.mood === "\u53EF\u7231" ? "\u88AB\u53EF\u7231\u51FB\u4E2D" : "\u6B63\u5728\u618B\u7B11",
+    atmosphere: atmosphereFor(analysis),
+    aiMood: aiMoodFor(analysis, roastLevel),
     findings,
     scores: [
-      { label: "\u79BB\u8C31\u6307\u6570", value: Math.max(35, analysis.roastPotential) },
-      { label: "\u6784\u56FE\u5B89\u5168", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
-      { label: "\u53EF\u53D1\u7A0B\u5EA6", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
+      { label: "\u69FD\u70B9\u5BC6\u5EA6", value: Math.max(35, analysis.roastPotential) },
+      { label: "\u753B\u9762\u79E9\u5E8F", value: 100 - Math.min(80, analysis.photoQualityIssues.length * 22 + analysis.chaosLevel / 3) },
+      { label: "\u5206\u4EAB\u4EF7\u503C", value: Math.max(30, 82 - analysis.photoQualityIssues.length * 13 + analysis.cutenessLevel / 5) }
     ],
     roast: generatedComment?.trim() || receiptRoast(analysis, roastLevel),
     advice: adviceFor(analysis),
@@ -1191,8 +1272,10 @@ function buildFindings(analysis) {
     if (point.includes("\u8868\u60C5")) return "\u8868\u60C5\u7BA1\u7406\u5DF2\u8FDB\u5165\u7EFC\u827A\u9891\u9053";
     return point;
   });
+  const sceneFinding = findingForScene(analysis);
+  if (sceneFinding) findings.unshift(sceneFinding);
   if (!findings.length) findings.push("\u753B\u9762\u6574\u4F53\u8FD8\u7B97\u7A33\u5B9A\uFF0C\u4F46\u672C\u673A\u4ECD\u7136\u53D1\u73B0\u4E86\u5410\u69FD\u7A7A\u95F4");
-  return findings;
+  return uniqueStrings(findings);
 }
 function receiptRoast(analysis, roastLevel) {
   if (hasIssue(analysis, "\u88C1")) {
@@ -1203,6 +1286,18 @@ function receiptRoast(analysis, roastLevel) {
   }
   if (analysis.cutenessLevel >= 75) {
     return "\u672C\u673A\u539F\u672C\u51C6\u5907\u5410\u69FD\uFF0C\n\u4F46\u53EF\u7231\u7A0B\u5EA6\u5BFC\u81F4\u5BA1\u5224\u6D41\u7A0B\u4E2D\u65AD\u3002";
+  }
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u9910\u996E", "\u5546\u54C1")) {
+    return "\u8FD9\u5F20\u7167\u7247\u7684\u6D88\u8D39\u6C14\u606F\u5F88\u5B8C\u6574\uFF0C\n\u672C\u673A\u5DEE\u70B9\u4EE5\u4E3A\u81EA\u5DF1\u8981\u5F00\u53D1\u7968\u3002";
+  }
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5", "\u5B66\u4E60")) {
+    return "\u753B\u9762\u91CC\u6709\u4E00\u79CD\u719F\u6089\u7684\u52AA\u529B\u611F\uFF0C\n\u50CF\u5468\u4E00\u65E9\u4E0A\u8FD8\u6CA1\u52A0\u8F7D\u5B8C\u7684\u4EBA\u751F\u3002";
+  }
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4", "\u65C5\u884C")) {
+    return "\u8FD9\u5F20\u7167\u7247\u5F88\u6709\u8DEF\u8FC7\u611F\uFF0C\n\u50CF\u751F\u6D3B\u7A81\u7136\u6309\u4E0B\u4E86\u622A\u56FE\u952E\u3002";
+  }
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) {
+    return "\u4FE1\u606F\u91CF\u5DF2\u7ECF\u6392\u961F\u8FDB\u573A\uFF0C\n\u672C\u673A\u8D1F\u8D23\u628A\u5B83\u4EEC\u6253\u5370\u6210\u8BC1\u636E\u3002";
   }
   if (roastLevel === "spicy") {
     return "\u8FD9\u5F20\u7167\u7247\u4E0D\u662F\u5931\u8BEF\uFF0C\n\u662F\u5BF9\u6444\u5F71\u89C4\u5219\u7684\u4E00\u6B21\u516C\u5F00\u6311\u6218\u3002";
@@ -1215,6 +1310,9 @@ function oneLineRoastFor(analysis, roastLevel) {
   if (hasIssue(analysis, "\u592A\u8FD1")) return "\u955C\u5934\u8BF4\uFF1A\u6211\u6709\u70B9\u5BB3\u6015\u3002";
   if (hasIssue(analysis, "\u7CCA")) return "\u8FD9\u4E00\u523B\u5F88\u73CD\u8D35\uFF0C\n\u53EF\u60DC\u753B\u8D28\u5148\u64A4\u9000\u4E86\u3002";
   if (hasIssue(analysis, "\u6697") || hasIssue(analysis, "\u5149\u7EBF")) return "\u6C14\u6C1B\u5230\u4E86\uFF0C\n\u706F\u5149\u8FD8\u5728\u8DEF\u4E0A\u3002";
+  if (sceneIncludes(analysis, "\u5546\u54C1", "\u4FBF\u5229\u5E97")) return "\u5546\u54C1\u9648\u5217\u8D62\u4E86\uFF0C\n\u4E3B\u89D2\u6682\u65F6\u7533\u8BF7\u8865\u4F4D\u3002";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5")) return "\u6253\u5DE5\u5473\u5F88\u6D53\uFF0C\n\u50CF\u7167\u7247\u4E5F\u60F3\u4E0B\u73ED\u3002";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u5B57\u592A\u591A\u4E86\uFF0C\n\u672C\u673A\u5148\u6253\u5370\u4E00\u4EFD\u51B7\u9759\u4E00\u4E0B\u3002";
   return roastLevel === "spicy" ? "\u672C\u673A\u77ED\u6682\u6C89\u9ED8\uFF0C\n\u7136\u540E\u9009\u62E9\u6253\u5370\u8BC1\u636E\u3002" : "\u8FD9\u5F20\u5F88\u6709\u8BB0\u5FC6\u70B9\uFF0C\n\u4E3B\u8981\u662F\u56E0\u4E3A\u5B83\u5F88\u96BE\u5FD8\u3002";
 }
 function adviceFor(analysis, tiny = false) {
@@ -1224,10 +1322,17 @@ function adviceFor(analysis, tiny = false) {
   if (hasIssue(analysis, "\u6697") || hasIssue(analysis, "\u5149\u7EBF")) return `${prefix}\u8865\u4E00\u70B9\u5149\uFF0C\u522B\u8BA9\u6C14\u6C1B\u72EC\u81EA\u4E0A\u73ED\u3002`;
   if (hasIssue(analysis, "\u7CCA")) return `${prefix}\u6309\u5FEB\u95E8\u524D\u5148\u7A33\u4F4F\uFF0C\u522B\u8BA9\u56DE\u5FC6\u4EA7\u751F\u91CD\u5F71\u3002`;
   if (hasIssue(analysis, "\u80CC\u666F")) return `${prefix}\u6362\u4E2A\u5E72\u51C0\u80CC\u666F\uFF0C\u8BA9\u4E3B\u89D2\u91CD\u65B0\u593A\u56DE\u4E3B\u573A\u3002`;
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return `${prefix}\u9760\u8FD1\u4E3B\u4F53\u4E00\u70B9\uFF0C\u522B\u8BA9\u8D27\u67B6\u66FF\u4F60\u51FA\u9053\u3002`;
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u5B66\u4E60")) return `${prefix}\u628A\u684C\u9762\u6E05\u51FA\u4E00\u5C0F\u5757\u4E3B\u573A\uFF0C\u6253\u5DE5\u611F\u4F1A\u5C11\u4E09\u5206\u3002`;
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4")) return `${prefix}\u7B49\u8DEF\u4EBA\u548C\u80CC\u666F\u51B7\u9759\u4E00\u79D2\uFF0C\u518D\u6309\u5FEB\u95E8\u3002`;
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return `${prefix}\u4FDD\u7559\u91CD\u70B9\u6587\u5B57\uFF0C\u5176\u4F59\u4FE1\u606F\u4EA4\u7ED9\u5C0F\u7968\u6162\u6162\u5BA1\u3002`;
   return `${prefix}\u4FDD\u7559\u8FD9\u5F20\uFF0C\u4F46\u53EF\u4EE5\u518D\u62CD\u4E00\u5F20\u5F53\u4FDD\u9669\u3002`;
 }
 function verdictFor(analysis, roastLevel) {
   if (analysis.cutenessLevel >= 75) return "\u4E0D\u8BB8\u5220\uFF0C\u672C\u673A\u6279\u51C6\u6536\u85CF";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u9002\u5408\u5B58\u6863\uFF0C\u8BC1\u636E\u611F\u5F88\u5F3A";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5")) return "\u5EFA\u8BAE\u6536\u85CF\uFF0C\u4E0B\u73ED\u540E\u518D\u5BA1";
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return "\u53EF\u53D1\uFF0C\u50CF\u4E00\u5F20\u6D88\u8D39\u73B0\u573A\u8BC1\u8BCD";
   if (analysis.roastPotential >= 80) return roastLevel === "spicy" ? "\u5EFA\u8BAE\u53D1\uFF0C\u4F46\u8BF7\u51C6\u5907\u89E3\u91CA\u6743" : "\u53EF\u53D1\uFF0C\u4F46\u9700\u8981\u914D\u6587\u72E1\u8FA9";
   return "\u53EF\u53D1\uFF0C\u8F7B\u5FAE\u52A0\u5DE5\u540E\u66F4\u7A33";
 }
@@ -1260,7 +1365,11 @@ function moodLabelFor(faceType, analysis) {
     begging_give: "\u62DC\u6258\u518D\u62CD\u4E00\u5F20",
     farewell: "\u6E9C\u4E86\u6E9C\u4E86"
   };
-  return analysis.mood === "\u6D6A\u6F2B" ? "\u751C\u5EA6\u8D85\u6807" : labels[faceType];
+  if (analysis.mood === "\u6D6A\u6F2B") return "\u751C\u5EA6\u8D85\u6807";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u4E0B\u73ED\u5931\u8D25";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u8D27\u67B6\u9707\u60CA";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u8DEF\u8FC7\u6293\u62CD";
+  return labels[faceType];
 }
 function pixelCommentFor(analysis, faceType, roastLevel) {
   if (faceType === "cute_love") return "\u8FD9\u5F20\u4E0D\u8BB8\u5220\u3002\n\u672C\u673A\u6279\u51C6\u6536\u85CF\u3002";
@@ -1275,6 +1384,38 @@ function pixelCommentFor(analysis, faceType, roastLevel) {
 }
 function hasIssue(analysis, keyword) {
   return [...analysis.flaws, ...analysis.funnyPoints, ...analysis.photoQualityIssues].some((item) => item.includes(keyword));
+}
+function atmosphereFor(analysis) {
+  if (analysis.chaosLevel >= 65) return "\u70ED\u95F9\u4F46\u6709\u70B9\u5931\u63A7";
+  if (analysis.mood === "\u53EF\u7231") return "\u53EF\u7231\u503C\u8D85\u6807";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u52AA\u529B\u4E0A\u73ED\u4E2D";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u5546\u54C1\u6B63\u5728\u8425\u4E1A";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u4E34\u65F6\u8DEF\u8FC7\u73B0\u573A";
+  if (analysis.mood === "\u73B0\u573A\u611F") return "\u73B0\u573A\u611F\u62C9\u6EE1";
+  return "\u52AA\u529B\u8425\u4E1A\u4E2D";
+}
+function aiMoodFor(analysis, roastLevel) {
+  if (roastLevel === "spicy") return "\u5DF2\u7ECF\u5F00\u59CB\u618B\u5927\u62DB";
+  if (analysis.mood === "\u53EF\u7231") return "\u88AB\u53EF\u7231\u51FB\u4E2D";
+  if (analysis.mood === "\u6253\u5DE5\u611F") return "\u60F3\u66FF\u4F60\u4E0B\u73ED";
+  if (analysis.mood === "\u8425\u4E1A\u611F") return "\u6B63\u5728\u76D8\u70B9\u8D27\u67B6";
+  if (analysis.mood === "\u8DEF\u8FC7\u611F") return "\u6293\u5230\u8DEF\u8FC7\u8BC1\u636E";
+  return "\u6B63\u5728\u618B\u7B11";
+}
+function findingForScene(analysis) {
+  if (sceneIncludes(analysis, "\u4FBF\u5229\u5E97", "\u5546\u54C1")) return "\u8D27\u67B6\u548C\u5546\u54C1\u6B63\u5728\u52AA\u529B\u62A2\u8D70\u955C\u5934\u7EE9\u6548";
+  if (sceneIncludes(analysis, "\u529E\u516C\u5BA4", "\u6253\u5DE5", "\u5B66\u4E60")) return "\u684C\u9762\u4FE1\u606F\u900F\u9732\u51FA\u4E00\u79CD\u4E0D\u60F3\u4E0A\u73ED\u7684\u8BDA\u5B9E";
+  if (sceneIncludes(analysis, "\u8857\u666F", "\u901A\u52E4")) return "\u80CC\u666F\u6D41\u52A8\u611F\u5F88\u5F3A\uFF0C\u50CF\u73B0\u573A\u521A\u88AB\u4E34\u65F6\u622A\u80E1";
+  if (sceneIncludes(analysis, "\u6587\u5B57", "\u7968\u636E", "\u622A\u56FE")) return "\u6587\u5B57\u5BC6\u5EA6\u5F88\u9AD8\uFF0C\u9002\u5408\u8FDB\u5165\u8BC1\u636E\u4FDD\u5B58\u6D41\u7A0B";
+  if (sceneIncludes(analysis, "\u9910\u996E", "\u5496\u5561")) return "\u98DF\u7269\u5F88\u52AA\u529B\uFF0C\u62CD\u6444\u65F6\u673A\u4E5F\u5F88\u52AA\u529B";
+  return void 0;
+}
+function sceneIncludes(analysis, ...keywords) {
+  const haystack = [analysis.sceneType, analysis.mood, ...analysis.visualKeywords].join(" ");
+  return keywords.some((keyword) => haystack.includes(keyword));
+}
+function uniqueStrings(values) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 // packages/layout/src/renderSvgPreview.ts
