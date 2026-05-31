@@ -494,18 +494,528 @@ select {
   min-height: var(--paper-height, 180px);
 }
 
-.p5-receipt-host {
+.html-receipt-host {
   display: block;
   width: 384px;
   min-height: var(--paper-height, 180px);
   background: #fff;
 }
 
-.p5-receipt-host canvas {
-  display: block;
-  width: 384px !important;
-  height: auto !important;
+.html-receipt {
+  --receipt-ink: #080808;
+  --receipt-space-sm: 8px;
+  --receipt-space-md: 12px;
+  --receipt-space-lg: 18px;
+  position: relative;
+  box-sizing: border-box;
+  width: 384px;
+  overflow: hidden;
+  padding: 18px 20px 20px;
   background: #fff;
+  color: var(--receipt-ink);
+  font-family: "HarmonyOS Sans SC", "Alibaba PuHuiTi", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.48;
+  font-kerning: normal;
+}
+
+.html-receipt::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 0 1px, transparent 1px 9px);
+  content: "";
+}
+
+.html-receipt > * {
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-header {
+  position: relative;
+  border-block: 4px double var(--receipt-ink);
+  padding: 11px 0 9px;
+  text-align: center;
+}
+
+.receipt-header::before,
+.receipt-header::after {
+  position: absolute;
+  top: 10px;
+  font-size: 11px;
+  font-weight: 900;
+  content: "SRB";
+}
+
+.receipt-header::before {
+  left: 0;
+}
+
+.receipt-header::after {
+  right: 0;
+  content: "384";
+}
+
+.receipt-brand strong {
+  display: block;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 0.95;
+}
+
+.receipt-brand span,
+.receipt-mode {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.receipt-mode small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.receipt-alert {
+  margin: 12px 0 4px;
+  border: 2px solid #080808;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.receipt-barrage {
+  position: relative;
+  z-index: 2;
+  height: 0;
+  pointer-events: none;
+}
+
+.receipt-barrage span {
+  position: absolute;
+  top: calc(3px + var(--barrage-index) * 22px);
+  right: calc(-3px + var(--barrage-index) * 13px);
+  border: 1px solid var(--receipt-ink);
+  padding: 1px 5px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+  transform: rotate(calc(-2deg + var(--barrage-index) * 1.4deg));
+}
+
+.html-receipt--execution .receipt-barrage span:nth-child(odd) {
+  background: var(--receipt-ink);
+  color: #fff;
+}
+
+.receipt-section {
+  border-top: 1px dashed var(--receipt-ink);
+  padding: var(--receipt-space-md) 0 10px;
+}
+
+.receipt-section h2 {
+  display: inline-block;
+  margin: 0 0 8px;
+  border-bottom: 3px solid var(--receipt-ink);
+  padding-bottom: 2px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.receipt-verdict,
+.receipt-advice,
+.receipt-total,
+.mood-sticker p,
+.receipt-footer p {
+  margin: 0;
+}
+
+.receipt-verdict {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.receipt-section--verdict {
+  padding-bottom: 14px;
+}
+
+.receipt-section--verdict .receipt-verdict {
+  max-width: 290px;
+}
+
+.receipt-section--verdict::after {
+  display: block;
+  width: 54px;
+  height: 5px;
+  margin-top: 10px;
+  background: var(--receipt-ink);
+  content: "";
+}
+
+.receipt-identity {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.receipt-identity div {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 4px;
+}
+
+.receipt-identity dt,
+.receipt-identity dd {
+  margin: 0;
+}
+
+.receipt-identity dt {
+  font-weight: 800;
+}
+
+.receipt-analysis {
+  display: grid;
+  grid-template-columns: 1fr 106px;
+  gap: 8px;
+  align-items: center;
+}
+
+.receipt-metrics {
+  display: grid;
+  gap: 5px;
+}
+
+.receipt-metric {
+  display: grid;
+  grid-template-columns: 54px 1fr 30px;
+  gap: 3px;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.receipt-metric i {
+  overflow: hidden;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.receipt-metric b {
+  text-align: right;
+}
+
+.receipt-radar {
+  display: block;
+  width: 106px;
+  height: 106px;
+  overflow: visible;
+}
+
+.receipt-radar circle,
+.receipt-radar line {
+  fill: none;
+  stroke: #080808;
+  stroke-width: 1;
+}
+
+.receipt-radar polygon {
+  fill: rgba(0, 0, 0, 0.2);
+  stroke: #080808;
+  stroke-width: 2;
+}
+
+.composition-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 210px;
+  margin: 4px auto 7px;
+  border-top: 1px solid #080808;
+  border-left: 1px solid #080808;
+}
+
+.composition-map span {
+  display: grid;
+  height: 32px;
+  border-right: 1px solid #080808;
+  border-bottom: 1px solid #080808;
+  place-items: center;
+  font-weight: 900;
+}
+
+.receipt-caption {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.receipt-charges {
+  display: grid;
+  gap: 4px;
+}
+
+.receipt-charges div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.receipt-section--charges {
+  border-top: 3px double var(--receipt-ink);
+}
+
+.receipt-section--charges h2 {
+  background: var(--receipt-ink);
+  color: #fff;
+  padding: 4px 7px;
+}
+
+.receipt-section--charges .receipt-charges {
+  border-left: 3px solid var(--receipt-ink);
+  padding-left: 8px;
+}
+
+.receipt-section--charges .receipt-charges div:nth-child(odd) {
+  background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(0, 0, 0, 0.06) 7px 8px);
+}
+
+.receipt-section--charges .receipt-charges span {
+  font-weight: 700;
+}
+
+.receipt-section--charges .receipt-charges b {
+  min-width: 28px;
+  text-align: right;
+}
+
+.receipt-total {
+  margin-top: 9px;
+  border-top: 1px solid #080808;
+  padding-top: 8px;
+}
+
+.receipt-section--charges .receipt-total {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.receipt-section--charges .receipt-total b {
+  display: block;
+  font-size: 13px;
+}
+
+.receipt-footer {
+  border-block: 2px dashed var(--receipt-ink);
+  padding: 10px 0;
+}
+
+.receipt-footer p + p {
+  margin-top: 6px;
+}
+
+.receipt-footer div {
+  margin-top: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.receipt-footer::after {
+  display: block;
+  margin-top: 9px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  content: "|||| ||| |||||| || ||||| ||| |||||| || |||";
+}
+
+.receipt-noise {
+  margin: 10px -20px -20px;
+  padding: 10px 8px 14px;
+  overflow: hidden;
+  background: #080808;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.html-receipt--spicy .receipt-section h2 {
+  transform: translateX(3px) rotate(-0.5deg);
+}
+
+.html-receipt--execution .receipt-alert {
+  background: #080808;
+  color: #fff;
+}
+
+.html-receipt--execution .receipt-section--verdict {
+  border-top-width: 3px;
+}
+
+.html-receipt--execution .receipt-noise {
+  font-size: 16px;
+  line-height: 0.92;
+}
+
+.big-roast-stage {
+  position: relative;
+  margin: 14px -10px;
+  border-block: 4px solid #080808;
+  padding: 14px 10px;
+}
+
+.big-roast-kicker {
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.big-roast-title {
+  padding: 16px 0;
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 0.96;
+  text-align: center;
+  word-break: break-all;
+}
+
+.big-roast-note {
+  margin: 6px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.big-roast-index {
+  border-top: 1px solid var(--receipt-ink);
+  margin-top: 10px;
+  padding-top: 5px;
+  font-size: 10px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.receipt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.receipt-chips span {
+  border: 1px solid #080808;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.html-receipt--bigText.html-receipt--spicy .big-roast-title,
+.html-receipt--bigText.html-receipt--execution .big-roast-title {
+  margin-inline: -22px;
+  padding: 18px 10px;
+  background: #080808;
+  color: #fff;
+  transform: rotate(-2deg);
+}
+
+.receipt-overprint {
+  position: absolute;
+  inset: 42px -18px auto;
+  opacity: 0.15;
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 0.82;
+  pointer-events: none;
+}
+
+.receipt-overprint span {
+  display: block;
+}
+
+.receipt-side-comments {
+  display: grid;
+  gap: 3px;
+  border-left: 5px solid #080808;
+  margin: 8px 0 14px;
+  padding-left: 8px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.mood-sticker {
+  padding: 16px 0 13px;
+}
+
+.mood-sticker__frame {
+  position: relative;
+  display: grid;
+  min-height: 210px;
+  border: 4px solid #080808;
+  padding: 14px;
+  text-align: center;
+  place-content: center;
+}
+
+.mood-sticker__serial {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.mood-sticker__face {
+  font-family: "Arial Black", "HarmonyOS Sans SC", sans-serif;
+  font-size: 76px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mood-sticker__frame strong {
+  margin-top: 14px;
+  font-size: 18px;
+}
+
+.mood-sticker p {
+  margin-top: 10px;
+}
+
+.html-receipt--face.html-receipt--gentle .mood-sticker__frame {
+  border-radius: 30px;
+}
+
+.html-receipt--face.html-receipt--spicy .mood-sticker__frame {
+  border-style: dashed;
+  transform: rotate(-1deg);
+}
+
+.html-receipt--face.html-receipt--execution .mood-sticker__frame {
+  border-width: 9px;
+  box-shadow: 8px 8px 0 #080808;
+}
+
+.receipt-manga {
+  display: grid;
+  gap: 8px;
+  border-block: 1px dashed #080808;
+  margin: 10px 0;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.receipt-manga img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
 }
 
 .text-details {
@@ -2024,19 +2534,18 @@ pre {
   height: auto;
 }
 
-.product-paper.p5-receipt-host {
+.product-paper.html-receipt-host {
   width: calc(100% - 28px);
 }
 
-.product-paper.p5-receipt-host canvas {
+.product-paper.html-receipt-host .html-receipt {
   position: relative;
   z-index: 2;
-  width: 100% !important;
-  height: auto !important;
+  width: 100%;
 }
 
-.album-carousel .p5-receipt-host,
-.album-carousel .p5-receipt-host canvas {
+.album-carousel .html-receipt-host,
+.album-carousel .html-receipt-host .html-receipt {
   pointer-events: none;
   touch-action: pan-x pan-y;
 }

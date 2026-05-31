@@ -11,7 +11,7 @@ import {
   type ProductRoastLevel,
   type TextGenerationMode
 } from "./sharedProductFlow.js";
-import { updateReceiptPreview } from "./p5ReceiptRenderer.js";
+import { updateReceiptPreview } from "./htmlReceiptRenderer.js";
 import {
   connectPrinter,
   disconnectPrinter,

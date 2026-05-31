@@ -1,7 +1,7 @@
 import { generateRoastLayoutWithSkills } from "../../packages/layout/src/generateRoastLayoutWithSkills.js";
 import type { LayoutType, RoastLevel, RoastMode } from "../../packages/layout/src/types.js";
 import { createStandaloneMangaTicket, createTicketHtmlWithManga, layoutSkills as sharedLayoutSkills } from "./sharedProductFlow.js";
-import { destroyReceiptPreviews, updateReceiptPreview } from "./p5ReceiptRenderer.js";
+import { destroyReceiptPreviews, updateReceiptPreview } from "./htmlReceiptRenderer.js";
 import { createRasterPrintBytesFromElement } from "./lib/printer.js";
 
 type ProductLayoutType = "receipt" | "big_text" | "expression" | "sketch";
@@ -865,7 +865,7 @@ async function exportCurrentPrintCommand(): Promise<void> {
 
   try {
     const bytes = await createPrintCommandBytes(record);
-    downloadBytes(bytes, createPrintCommandFilename(record));
+    downloadText(formatPrintCommandHex(bytes), createPrintCommandFilename(record));
     softHaptic();
   } catch (error) {
     window.alert(error instanceof Error ? error.message : "导出打印指令失败。");
@@ -912,10 +912,16 @@ async function waitForTicketRender(host: HTMLElement): Promise<void> {
   }
 }
 
-function downloadBytes(bytes: Uint8Array, filename: string): void {
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  const blob = new Blob([buffer], { type: "text/plain;charset=x-user-defined" });
+function formatPrintCommandHex(bytes: Uint8Array, bytesPerLine = 16): string {
+  const rows: string[] = [];
+  for (let offset = 0; offset < bytes.length; offset += bytesPerLine) {
+    rows.push(Array.from(bytes.slice(offset, offset + bytesPerLine), (byte) => byte.toString(16).padStart(2, "0").toUpperCase()).join(" "));
+  }
+  return `${rows.join("\r\n")}\r\n`;
+}
+
+function downloadText(text: string, filename: string): void {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
