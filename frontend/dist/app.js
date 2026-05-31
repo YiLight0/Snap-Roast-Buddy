@@ -137,7 +137,7 @@ var require_omggif = __commonJS({
         var min_code_size = 0;
         while (num_colors >>= 1) ++min_code_size;
         num_colors = 1 << min_code_size;
-        var delay2 = opts.delay === void 0 ? 0 : opts.delay;
+        var delay = opts.delay === void 0 ? 0 : opts.delay;
         var disposal = opts.disposal === void 0 ? 0 : opts.disposal;
         if (disposal < 0 || disposal > 3)
           throw new Error("Disposal out of range.");
@@ -149,13 +149,13 @@ var require_omggif = __commonJS({
           if (transparent_index < 0 || transparent_index >= num_colors)
             throw new Error("Transparent color index.");
         }
-        if (disposal !== 0 || use_transparency || delay2 !== 0) {
+        if (disposal !== 0 || use_transparency || delay !== 0) {
           buf[p2++] = 33;
           buf[p2++] = 249;
           buf[p2++] = 4;
           buf[p2++] = disposal << 2 | (use_transparency === true ? 1 : 0);
-          buf[p2++] = delay2 & 255;
-          buf[p2++] = delay2 >> 8 & 255;
+          buf[p2++] = delay & 255;
+          buf[p2++] = delay >> 8 & 255;
           buf[p2++] = transparent_index;
           buf[p2++] = 0;
         }
@@ -297,7 +297,7 @@ var require_omggif = __commonJS({
       }
       var no_eof = true;
       var frames = [];
-      var delay2 = 0;
+      var delay = 0;
       var transparent_index = null;
       var disposal = 0;
       var loop_count = null;
@@ -329,7 +329,7 @@ var require_omggif = __commonJS({
                 if (buf[p2++] !== 4 || buf[p2 + 4] !== 0)
                   throw new Error("Invalid graphics extension block.");
                 var pf1 = buf[p2++];
-                delay2 = buf[p2++] | buf[p2++] << 8;
+                delay = buf[p2++] | buf[p2++] << 8;
                 transparent_index = buf[p2++];
                 if ((pf1 & 1) === 0) transparent_index = null;
                 disposal = pf1 >> 2 & 7;
@@ -388,7 +388,7 @@ var require_omggif = __commonJS({
               data_length: p2 - data_offset,
               transparent_index,
               interlaced: !!interlace_flag,
-              delay: delay2,
+              delay,
               disposal
             });
             break;
@@ -1272,7 +1272,7 @@ var require_gifenc = __commonJS({
           const {
             transparent = false,
             transparentIndex = 0,
-            delay: delay2 = 0,
+            delay = 0,
             palette = null,
             repeat = 0,
             colorDepth = 8,
@@ -1300,7 +1300,7 @@ var require_gifenc = __commonJS({
               encodeNetscapeExt(stream, repeat);
             }
           }
-          const delayTime = Math.round(delay2 / 10);
+          const delayTime = Math.round(delay / 10);
           encodeGraphicControlExt(stream, dispose, delayTime, transparent, transparentIndex);
           const useLocalColorTable = Boolean(palette) && !first;
           encodeImageDescriptor(stream, width, height, useLocalColorTable ? palette : null);
@@ -1313,7 +1313,7 @@ var require_gifenc = __commonJS({
         writeUTFBytes(stream, "GIF89a");
       }
     }
-    function encodeGraphicControlExt(stream, dispose, delay2, transparent, transparentIndex) {
+    function encodeGraphicControlExt(stream, dispose, delay, transparent, transparentIndex) {
       stream.writeByte(33);
       stream.writeByte(249);
       stream.writeByte(4);
@@ -1335,7 +1335,7 @@ var require_gifenc = __commonJS({
       disp <<= 2;
       const userInput = 0;
       stream.writeByte(0 | disp | userInput | transp);
-      writeUInt16(stream, delay2);
+      writeUInt16(stream, delay);
       stream.writeByte(transparentIndex || 0);
       stream.writeByte(0);
     }
@@ -34170,13 +34170,13 @@ function loadingDisplaying(p53, fn2) {
     if (typeof duration3 !== "number") {
       throw TypeError("Duration parameter must be a number");
     }
-    const delay2 = options2 && options2.delay || 0;
+    const delay = options2 && options2.delay || 0;
     const units2 = options2 && options2.units || "seconds";
     const silent = options2 && options2.silent || false;
     const notificationDuration = options2 && options2.notificationDuration || 0;
     const notificationID = options2 && options2.notificationID || "progressBar";
     const resetAnimation = options2 && options2.reset !== void 0 ? options2.reset : true;
-    if (typeof delay2 !== "number") {
+    if (typeof delay !== "number") {
       throw TypeError("Delay parameter must be a number");
     }
     if (units2 !== "seconds" && units2 !== "frames") {
@@ -34199,7 +34199,7 @@ function loadingDisplaying(p53, fn2) {
     let gifFrameDelay = 1 / _frameRate * 1e3;
     gifFrameDelay = gifFrameDelay < 20 ? 20 : gifFrameDelay;
     const nFrames = units2 === "seconds" ? duration3 * _frameRate : duration3;
-    const nFramesDelay = units2 === "seconds" ? delay2 * _frameRate : delay2;
+    const nFramesDelay = units2 === "seconds" ? delay * _frameRate : delay;
     let frameIterator;
     let totalNumberOfFrames;
     if (resetAnimation) {
@@ -95783,73 +95783,9 @@ function jitter(range2, intensity) {
 }
 
 // frontend/src/lib/printer.ts
-var DEVICE_NAME = "SnapPrinter-S3";
 var SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
 var RX_CHAR_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
-var CHUNK_SIZE = 100;
-var CHUNK_DELAY_MS = 30;
 var PRINT_WIDTH_DOTS = 384;
-var bleDevice;
-var rxCharacteristic;
-async function connectPrinter() {
-  try {
-    const bluetooth = getBluetooth();
-    bleDevice = await bluetooth.requestDevice({
-      filters: [{ name: DEVICE_NAME }, { namePrefix: "SnapPrinter" }],
-      optionalServices: [SERVICE_UUID]
-    });
-    bleDevice.addEventListener?.("gattserverdisconnected", () => {
-      rxCharacteristic = void 0;
-    });
-    const server = await bleDevice.gatt?.connect();
-    if (!server) throw new Error("\u65E0\u6CD5\u8FDE\u63A5\u6253\u5370\u673A GATT \u670D\u52A1\u3002");
-    const service = await server.getPrimaryService(SERVICE_UUID);
-    rxCharacteristic = await service.getCharacteristic(RX_CHAR_UUID);
-    return true;
-  } catch (error52) {
-    rxCharacteristic = void 0;
-    throw normalizeBluetoothError(error52);
-  }
-}
-function disconnectPrinter() {
-  bleDevice?.gatt?.disconnect();
-  rxCharacteristic = void 0;
-}
-function isPrinterConnected() {
-  return Boolean(rxCharacteristic && bleDevice?.gatt?.connected);
-}
-async function sendBytes(bytes) {
-  if (!rxCharacteristic) throw new Error("\u672A\u8FDE\u63A5\u6253\u5370\u673A\u3002");
-  const data3 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  for (let index = 0; index < data3.length; index += CHUNK_SIZE) {
-    const chunk = data3.slice(index, index + CHUNK_SIZE);
-    if (rxCharacteristic.writeValueWithoutResponse) {
-      await rxCharacteristic.writeValueWithoutResponse(chunk);
-    } else if (rxCharacteristic.writeValue) {
-      await rxCharacteristic.writeValue(chunk);
-    } else {
-      throw new Error("\u5F53\u524D\u84DD\u7259\u7279\u5F81\u4E0D\u652F\u6301\u5199\u5165\u3002");
-    }
-    await delay(CHUNK_DELAY_MS);
-  }
-}
-async function feedDots(n2 = 80) {
-  await sendBytes(new Uint8Array([27, 74, clampByte(n2)]));
-}
-async function printTestText() {
-  const encoder = new TextEncoder();
-  const init = new Uint8Array([27, 64]);
-  const text2 = encoder.encode("Hello ESP32-S3!\nBluetooth print test.\nSnap Roast Buddy\n----------------\n");
-  const feed = new Uint8Array([27, 100, 4]);
-  await sendBytes(concatBytes(init, text2, feed));
-}
-async function printRasterFromElement(element2) {
-  const canvas2 = await elementToCanvas(element2);
-  const init = new Uint8Array([27, 64]);
-  const raster = canvasToEscPosRaster(canvas2);
-  const feed = new Uint8Array([27, 100, 4]);
-  await sendBytes(concatBytes(init, raster, feed));
-}
 function canvasToEscPosRaster(canvas2, threshold = 128) {
   const scale = PRINT_WIDTH_DOTS / canvas2.width;
   const targetHeight = Math.max(1, Math.round(canvas2.height * scale));
@@ -95965,32 +95901,18 @@ function loadImage(src) {
     image4.src = src;
   });
 }
-function getBluetooth() {
-  const bluetooth = navigator.bluetooth;
-  if (!bluetooth) throw new Error("\u5F53\u524D\u6D4F\u89C8\u5668\u4E0D\u652F\u6301 Web Bluetooth\u3002");
-  return bluetooth;
-}
-function normalizeBluetoothError(error52) {
-  if (!(error52 instanceof Error)) return new Error("\u8FDE\u63A5\u5931\u8D25\u3002");
-  if (error52.name === "NotFoundError") {
-    return new Error("\u6CA1\u6709\u9009\u62E9\u5230 SnapPrinter-S3\u3002\u8BF7\u786E\u8BA4 ESP32 \u6B63\u5728\u5E7F\u64AD\u3001\u6CA1\u6709\u88AB Python \u7A0B\u5E8F\u5360\u7528\uFF0C\u5E76\u5728\u5F39\u7A97\u4E2D\u9009\u62E9 SnapPrinter-S3\u3002");
+function bytesToBase64(bytes) {
+  const CHUNK = 8192;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    const slice2 = bytes.subarray(i, Math.min(i + CHUNK, bytes.length));
+    let chunkStr = "";
+    for (let j = 0; j < slice2.length; j += 1) {
+      chunkStr += String.fromCharCode(slice2[j]);
+    }
+    binary += chunkStr;
   }
-  if (error52.name === "NotAllowedError" || error52.name === "SecurityError") {
-    return new Error("\u6D4F\u89C8\u5668\u963B\u6B62\u4E86\u84DD\u7259\u8BBF\u95EE\u3002\u8BF7\u4F7F\u7528 Chrome/Edge\uFF0C\u5E76\u901A\u8FC7 HTTPS \u6216\u672C\u673A localhost \u6253\u5F00\u9875\u9762\u3002");
-  }
-  if (error52.name === "NetworkError") {
-    return new Error("\u84DD\u7259 GATT \u8FDE\u63A5\u5931\u8D25\u3002\u8BF7\u5173\u95ED Python \u8FDE\u63A5\u3001\u53D6\u6D88\u7CFB\u7EDF\u5DF2\u914D\u5BF9\u540E\u91CD\u542F ESP32 \u518D\u8BD5\u3002");
-  }
-  if (error52.name === "NotSupportedError") {
-    return new Error("\u5F53\u524D\u6D4F\u89C8\u5668\u6216\u8BBE\u5907\u4E0D\u652F\u6301 Web Bluetooth\u3002");
-  }
-  return new Error(`${error52.name || "BluetoothError"}: ${error52.message}`);
-}
-function clampByte(value) {
-  return Math.max(0, Math.min(255, Math.round(value)));
-}
-function delay(ms) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
+  return btoa(binary);
 }
 
 // frontend/src/app.ts
@@ -96043,9 +95965,6 @@ var classifyButton = mustQuery("#classifyButton");
 var generateButton = mustQuery("#generateButton");
 var generateMangaButton = mustQuery("#generateMangaButton");
 var testSupabaseButton = mustQuery("#testSupabaseButton");
-var connectPrinterButton = mustQuery("#connectPrinterButton");
-var feedPrinterButton = mustQuery("#feedPrinterButton");
-var testPrintButton = mustQuery("#testPrintButton");
 var printCurrentButton = mustQuery("#printCurrentButton");
 var examplesEl = mustQuery("#examples");
 var receiptPaper = mustQuery("#print-preview");
@@ -96112,10 +96031,7 @@ classifyButton.addEventListener("click", classifyDescription);
 generateButton.addEventListener("click", generateWithApi);
 generateMangaButton.addEventListener("click", generateMangaStep);
 testSupabaseButton.addEventListener("click", testSupabaseConnection);
-connectPrinterButton.addEventListener("click", togglePrinterConnection);
-feedPrinterButton.addEventListener("click", testPrinterFeed);
-testPrintButton.addEventListener("click", testPrinterText);
-printCurrentButton.addEventListener("click", printCurrentLayout);
+attachPrintButtonHandlers();
 input.addEventListener("input", () => {
   resetGeneratedState();
   window.clearTimeout(inputUpdateTimer);
@@ -96312,73 +96228,97 @@ async function testSupabaseConnection() {
     setBusy(testSupabaseButton, false, "\u6D4B\u8BD5 Supabase \u8FDE\u63A5");
   }
 }
-async function togglePrinterConnection() {
-  if (isPrinterConnected()) {
-    disconnectPrinter();
-    setStepStatus(printerStatus, "\u672A\u8FDE\u63A5", "ready");
-    connectPrinterButton.textContent = "\u8FDE\u63A5\u6253\u5370\u673A";
-    return;
-  }
-  setBusy(connectPrinterButton, true, "\u6B63\u5728\u8FDE\u63A5");
-  setStepStatus(printerStatus, "\u6B63\u5728\u8FDE\u63A5 SnapPrinter-S3\u3002", "loading");
+var ESP32_IP_STORAGE_KEY = "snap_roast_esp32_ip";
+var PRINT_LONG_PRESS_MS = 900;
+function getStoredEsp32Ip() {
   try {
-    await connectPrinter();
-    setStepStatus(printerStatus, "\u5DF2\u8FDE\u63A5 SnapPrinter-S3\u3002", "ready");
-    connectPrinterButton.textContent = "\u65AD\u5F00\u6253\u5370\u673A";
-  } catch (error52) {
-    setStepStatus(printerStatus, error52 instanceof Error ? error52.message : "\u8FDE\u63A5\u5931\u8D25\u3002", "error");
-    connectPrinterButton.textContent = "\u8FDE\u63A5\u6253\u5370\u673A";
-  } finally {
-    connectPrinterButton.disabled = false;
+    return (localStorage.getItem(ESP32_IP_STORAGE_KEY) ?? "").trim();
+  } catch {
+    return "";
   }
 }
-async function testPrinterFeed() {
-  if (!isPrinterConnected()) {
-    setStepStatus(printerStatus, "\u672A\u8FDE\u63A5\u6253\u5370\u673A\u3002", "error");
-    return;
-  }
-  setBusy(feedPrinterButton, true, "\u53D1\u9001\u4E2D");
-  setStepStatus(printerStatus, "\u6B63\u5728\u53D1\u9001\u8FDB\u7EB8\u6307\u4EE4\u3002", "loading");
+function setStoredEsp32Ip(ip) {
   try {
-    await feedDots(80);
-    setStepStatus(printerStatus, "\u6D4B\u8BD5\u8FDB\u7EB8\u5B8C\u6210\u3002", "ready");
-  } catch (error52) {
-    setStepStatus(printerStatus, error52 instanceof Error ? error52.message : "\u53D1\u9001\u5931\u8D25\u3002", "error");
-  } finally {
-    setBusy(feedPrinterButton, false, "\u6D4B\u8BD5\u8FDB\u7EB8");
+    if (ip) localStorage.setItem(ESP32_IP_STORAGE_KEY, ip);
+    else localStorage.removeItem(ESP32_IP_STORAGE_KEY);
+  } catch {
   }
 }
-async function testPrinterText() {
-  if (!isPrinterConnected()) {
-    setStepStatus(printerStatus, "\u672A\u8FDE\u63A5\u6253\u5370\u673A\u3002", "error");
-    return;
-  }
-  setBusy(testPrintButton, true, "\u6253\u5370\u4E2D");
-  setStepStatus(printerStatus, "\u6B63\u5728\u6253\u5370\u82F1\u6587\u6D4B\u8BD5\u6587\u5B57\u3002", "loading");
-  try {
-    await printTestText();
-    setStepStatus(printerStatus, "\u6D4B\u8BD5\u6587\u5B57\u6253\u5370\u5B8C\u6210\u3002", "ready");
-  } catch (error52) {
-    setStepStatus(printerStatus, error52 instanceof Error ? error52.message : "\u6253\u5370\u5931\u8D25\u3002", "error");
-  } finally {
-    setBusy(testPrintButton, false, "\u6D4B\u8BD5\u6587\u5B57");
-  }
+function normalizeIp(raw) {
+  return raw.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 }
-async function printCurrentLayout() {
-  if (!isPrinterConnected()) {
-    setStepStatus(printerStatus, "\u672A\u8FDE\u63A5\u6253\u5370\u673A\u3002", "error");
-    return;
+function askForEsp32Ip(current2) {
+  const hint = "\u8BF7\u8F93\u5165 ESP32 \u7684 IP\uFF08\u5728 Arduino \u4E32\u53E3\u76D1\u89C6\u5668\u91CC\u80FD\u770B\u5230\uFF0C\u4E00\u822C\u662F 172.20.10.X\uFF09\u3002\n\u7559\u7A7A\u53EF\u6E05\u9664\u5DF2\u4FDD\u5B58\u7684 IP\u3002";
+  const next = window.prompt(hint, current2);
+  if (next === null) return current2;
+  const normalized = normalizeIp(next);
+  setStoredEsp32Ip(normalized);
+  if (normalized) {
+    setStepStatus(printerStatus, `\u5DF2\u4FDD\u5B58 ESP32 IP\uFF1A${normalized}`, "ready");
+  } else {
+    setStepStatus(printerStatus, "\u5DF2\u6E05\u9664 ESP32 IP\uFF08\u957F\u6309\u6309\u94AE\u53EF\u91CD\u65B0\u8BBE\u7F6E\uFF09\u3002", "ready");
   }
+  return normalized;
+}
+async function buildRasterBase64(element2) {
+  const canvas2 = await elementToCanvas(element2);
+  const raster = canvasToEscPosRaster(canvas2);
+  return bytesToBase64(raster);
+}
+function submitRasterToEsp32(ip, base643) {
+  const encoded = encodeURIComponent(base643);
+  const url2 = `http://${ip}/print-bridge?t=${Date.now()}#${encoded}`;
+  console.log("[print] \u8DF3\u8F6C\u5230 bridge:", `http://${ip}/print-bridge?t=\u2026#\u2026`, "base64 \u957F\u5EA6:", base643.length);
+  window.location.href = url2;
+}
+async function triggerEsp32Print() {
+  let ip = getStoredEsp32Ip();
+  if (!ip) ip = askForEsp32Ip("");
+  if (!ip) return;
   setBusy(printCurrentButton, true, "\u6253\u5370\u4E2D");
   setStepStatus(printerStatus, "\u6B63\u5728\u628A\u5F53\u524D\u6392\u7248\u8F6C\u6362\u4E3A 384 \u70B9\u9ED1\u767D\u4F4D\u56FE\u3002", "loading");
+  let base643;
   try {
-    await printRasterFromElement(receiptPaper);
-    setStepStatus(printerStatus, "\u6253\u5370\u5B8C\u6210\u3002", "ready");
+    base643 = await buildRasterBase64(receiptPaper);
   } catch (error52) {
-    setStepStatus(printerStatus, error52 instanceof Error ? error52.message : "\u6253\u5370\u5931\u8D25\u3002", "error");
-  } finally {
-    setBusy(printCurrentButton, false, "\u6253\u5370\u5F53\u524D\u6392\u7248");
+    setStepStatus(printerStatus, "\u4F4D\u56FE\u751F\u6210\u5931\u8D25\uFF1A" + (error52 instanceof Error ? error52.message : String(error52)), "error");
+    setBusy(printCurrentButton, false, "\u6253\u5370\u5F53\u524D\u5C0F\u7968");
+    return;
   }
+  setStepStatus(printerStatus, `\u5DF2\u751F\u6210 base64\uFF08${base643.length} \u5B57\u7B26\uFF09\uFF0C\u8DF3 ESP32 bridge\u2026`, "loading");
+  try {
+    submitRasterToEsp32(ip, base643);
+  } catch (error52) {
+    setStepStatus(printerStatus, "\u8DF3\u8F6C bridge \u5931\u8D25\uFF1A" + (error52 instanceof Error ? error52.message : String(error52)), "error");
+    setBusy(printCurrentButton, false, "\u6253\u5370\u5F53\u524D\u5C0F\u7968");
+  }
+}
+function attachPrintButtonHandlers() {
+  let longPressTimer = 0;
+  let longPressFired = false;
+  const startLongPress = () => {
+    longPressFired = false;
+    window.clearTimeout(longPressTimer);
+    longPressTimer = window.setTimeout(() => {
+      longPressFired = true;
+      askForEsp32Ip(getStoredEsp32Ip());
+    }, PRINT_LONG_PRESS_MS);
+  };
+  const cancelLongPress = () => {
+    window.clearTimeout(longPressTimer);
+  };
+  printCurrentButton.addEventListener("pointerdown", startLongPress);
+  printCurrentButton.addEventListener("pointerup", cancelLongPress);
+  printCurrentButton.addEventListener("pointerleave", cancelLongPress);
+  printCurrentButton.addEventListener("pointercancel", cancelLongPress);
+  printCurrentButton.addEventListener("click", (event) => {
+    if (longPressFired) {
+      event.preventDefault();
+      longPressFired = false;
+      return;
+    }
+    void triggerEsp32Print();
+  });
 }
 function renderLocal() {
   if (mangaMode.value === "standalone" && latestMangaImageUrl) {
@@ -96491,7 +96431,14 @@ setStepStatus(imageStatus, "\u8BF7\u9009\u62E9\u793A\u4F8B\u56FE\u6216\u4E0A\u4F
 setStepStatus(classificationStatus, "\u7B49\u5F85\u4E09\u5206\u7C7B\u3002", "ready");
 setStepStatus(mangaStatus, "\u6F2B\u753B\u4F1A\u76F4\u63A5\u7531\u56FE\u7247\u751F\u6210\u767D\u5E95\u9ED1\u7EBF\u7ED3\u679C\uFF0C\u518D\u6309\u8BBE\u7F6E\u63D2\u5165\u5C0F\u7968\u3002", "ready");
 setStepStatus(supabaseStatus, "\u7B49\u5F85\u68C0\u6D4B Supabase\u3002", "ready");
-setStepStatus(printerStatus, "\u672A\u8FDE\u63A5", "ready");
+{
+  const savedIp = getStoredEsp32Ip();
+  setStepStatus(
+    printerStatus,
+    savedIp ? `\u5DF2\u4FDD\u5B58 ESP32 IP\uFF1A${savedIp}\uFF08\u957F\u6309\u6309\u94AE\u53EF\u4FEE\u6539\uFF09` : "\u672A\u8BBE\u7F6E ESP32 IP\uFF08\u957F\u6309\u6309\u94AE\u53EF\u8BBE\u7F6E\uFF09",
+    "ready"
+  );
+}
 setStatus("API \u5C31\u7EEA\u3002\u53EF\u4EE5\u4ECE\u56FE\u7247\u5206\u6790\u5F00\u59CB\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u7F16\u8F91\u6587\u5B57\u751F\u6210\u3002", "ready");
 renderClassification();
 renderWorkflow();

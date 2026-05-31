@@ -131,6 +131,15 @@
           <button class="secondary-action" type="button" id="generateMangaButton">生成漫画</button>
           <p class="step-status" id="mangaStatus" data-state="ready">漫画会直接由图片生成白底黑线结果，再按设置插入小票。</p>
         </section>
+
+        <section class="step-card">
+          <div class="step-title">
+            <span>5</span>
+            <h2>ESP32 打印</h2>
+          </div>
+          <button class="primary-action" type="button" id="printCurrentButton">打印当前小票</button>
+          <p class="step-status" id="printerStatus" data-state="ready">长按按钮可设置 / 修改 ESP32 IP（保存在 localStorage）。</p>
+        </section>
       </section>
 
       <section class="preview-pane" aria-label="小票预览">
@@ -144,7 +153,7 @@
         <div class="paper-stage">
           <div class="paper-shadow">
             <div class="paper-teeth" aria-hidden="true"></div>
-            <div id="receiptPaper" class="receipt-paper"></div>
+            <div id="print-preview" class="receipt-paper"></div>
             <div class="paper-feed" aria-hidden="true"></div>
           </div>
         </div>
