@@ -825,7 +825,7 @@ var require_gifenc = __commonJS({
     function rgb888_to_rgb444(r, g2, b2) {
       return r >> 4 << 8 | g2 & 240 | b2 >> 4;
     }
-    function clamp3(value, min, max) {
+    function clamp4(value, min, max) {
       return value < min ? min : value > max ? max : value;
     }
     function sqr(value) {
@@ -1030,12 +1030,12 @@ var require_gifenc = __commonJS({
       let palette = [];
       var k = 0;
       for (i = 0; ; ++k) {
-        let r = clamp3(Math.round(bins[i].rc), 0, 255);
-        let g2 = clamp3(Math.round(bins[i].gc), 0, 255);
-        let b2 = clamp3(Math.round(bins[i].bc), 0, 255);
+        let r = clamp4(Math.round(bins[i].rc), 0, 255);
+        let g2 = clamp4(Math.round(bins[i].gc), 0, 255);
+        let b2 = clamp4(Math.round(bins[i].bc), 0, 255);
         let a = 255;
         if (hasAlpha) {
-          a = clamp3(Math.round(bins[i].ac), 0, 255);
+          a = clamp4(Math.round(bins[i].ac), 0, 255);
           if (oneBitAlpha) {
             const threshold = typeof oneBitAlpha === "number" ? oneBitAlpha : 127;
             a = a <= threshold ? 0 : 255;
@@ -13290,9 +13290,9 @@ function toBase(hsb) {
 }
 
 // node_modules/p5/dist/creating_reading-C7hu6sg1.js
-var map = (n2, start1, stop1, start2, stop2, clamp3) => {
+var map = (n2, start1, stop1, start2, stop2, clamp4) => {
   let result = (n2 - start1) / (stop1 - start1) * (stop2 - start2) + start2;
-  if (clamp3) {
+  if (clamp4) {
     result = Math.max(result, Math.min(start2, stop2));
     result = Math.min(result, Math.max(start2, stop2));
   }
@@ -13324,7 +13324,7 @@ var Color = class _Color {
     _Color.#colorjsMaxes[mode2].push([0, 1]);
     _Color.#grayscaleMap[mode2] = definition.fromGray;
   }
-  constructor(vals, colorMode, colorMaxes, { clamp: clamp3 = false } = {}) {
+  constructor(vals, colorMode, colorMaxes, { clamp: clamp4 = false } = {}) {
     this._cachedMode = colorMode || RGB;
     if (vals instanceof _Color) {
       const mode2 = colorMode ? _Color.colorMap[colorMode] : _Color.colorMap[vals.mode];
@@ -13358,13 +13358,13 @@ var Color = class _Color {
       let mappedVals;
       if (colorMaxes) {
         if (vals.length === 4) {
-          mappedVals = _Color.mapColorRange(vals, this._cachedMode, colorMaxes, clamp3);
+          mappedVals = _Color.mapColorRange(vals, this._cachedMode, colorMaxes, clamp4);
         } else if (vals.length === 3) {
           mappedVals = _Color.mapColorRange(
             [vals[0], vals[1], vals[2]],
             this._cachedMode,
             colorMaxes,
-            clamp3
+            clamp4
           );
           mappedVals.push(1);
         } else if (vals.length === 2) {
@@ -13372,14 +13372,14 @@ var Color = class _Color {
             mappedVals = _Color.#grayscaleMap[this._cachedMode](
               vals[0],
               colorMaxes,
-              clamp3
+              clamp4
             );
           } else {
             mappedVals = _Color.mapColorRange(
               [vals[0], vals[0], vals[0]],
               this._cachedMode,
               colorMaxes,
-              clamp3
+              clamp4
             );
           }
           const alphaMaxes = Array.isArray(colorMaxes[colorMaxes.length - 1]) ? colorMaxes[colorMaxes.length - 1] : [0, colorMaxes[colorMaxes.length - 1]];
@@ -13390,7 +13390,7 @@ var Color = class _Color {
               alphaMaxes[1],
               0,
               1,
-              clamp3
+              clamp4
             )
           );
         } else if (vals.length === 1) {
@@ -13398,14 +13398,14 @@ var Color = class _Color {
             mappedVals = _Color.#grayscaleMap[this._cachedMode](
               vals[0],
               colorMaxes,
-              clamp3
+              clamp4
             );
           } else {
             mappedVals = _Color.mapColorRange(
               [vals[0], vals[0], vals[0]],
               this._cachedMode,
               colorMaxes,
-              clamp3
+              clamp4
             );
           }
           mappedVals.push(1);
@@ -13459,7 +13459,7 @@ var Color = class _Color {
     this._cachedColor = newColor;
   }
   // Convert from p5 color range to color.js color range
-  static mapColorRange(origin, mode2, maxes, clamp3) {
+  static mapColorRange(origin, mode2, maxes, clamp4) {
     const p5Maxes = maxes.map((max) => {
       if (!Array.isArray(max)) {
         return [0, max];
@@ -13475,7 +13475,7 @@ var Color = class _Color {
         p5Maxes[i][1],
         colorjsMaxes[i][0],
         colorjsMaxes[i][1],
-        clamp3
+        clamp4
       );
       return newval;
     });
@@ -14077,7 +14077,7 @@ var Color = class _Color {
 };
 function color(p53, fn2, lifecycles) {
   p53.Color = Color;
-  srgb_default.fromGray = p3_default.fromGray = function(val, maxes, clamp3) {
+  srgb_default.fromGray = p3_default.fromGray = function(val, maxes, clamp4) {
     const p5Maxes = maxes.map((max) => {
       if (!Array.isArray(max)) {
         return [0, max];
@@ -14085,10 +14085,10 @@ function color(p53, fn2, lifecycles) {
         return max;
       }
     });
-    const v = map(val, p5Maxes[2][0], p5Maxes[2][1], 0, 1, clamp3);
+    const v = map(val, p5Maxes[2][0], p5Maxes[2][1], 0, 1, clamp4);
     return [v, v, v];
   };
-  HSBSpace.fromGray = hsl_default.fromGray = function(val, maxes, clamp3) {
+  HSBSpace.fromGray = hsl_default.fromGray = function(val, maxes, clamp4) {
     const p5Maxes = maxes.map((max) => {
       if (!Array.isArray(max)) {
         return [0, max];
@@ -14096,10 +14096,10 @@ function color(p53, fn2, lifecycles) {
         return max;
       }
     });
-    const v = map(val, p5Maxes[2][0], p5Maxes[2][1], 0, 100, clamp3);
+    const v = map(val, p5Maxes[2][0], p5Maxes[2][1], 0, 100, clamp4);
     return [0, 0, v];
   };
-  hwb_default.fromGray = function(val, maxes, clamp3) {
+  hwb_default.fromGray = function(val, maxes, clamp4) {
     const p5Maxes = maxes.map((max) => {
       if (!Array.isArray(max)) {
         return [0, max];
@@ -14119,7 +14119,7 @@ function color(p53, fn2, lifecycles) {
     }
     return [0, white4, black];
   };
-  lab_default.fromGray = lch_default.fromGray = oklab_default.fromGray = oklch_default.fromGray = function(val, maxes, clamp3) {
+  lab_default.fromGray = lch_default.fromGray = oklab_default.fromGray = oklch_default.fromGray = function(val, maxes, clamp4) {
     const p5Maxes = maxes.map((max) => {
       if (!Array.isArray(max)) {
         return [0, max];
@@ -14127,7 +14127,7 @@ function color(p53, fn2, lifecycles) {
         return max;
       }
     });
-    const v = map(val, p5Maxes[0][0], p5Maxes[0][1], 0, 100, clamp3);
+    const v = map(val, p5Maxes[0][0], p5Maxes[0][1], 0, 100, clamp4);
     return [v, 0, 0];
   };
   p53.Color.addColorMode(RGB, srgb_default);
@@ -90636,13 +90636,13 @@ function text(p53, fn2) {
         );
         for (let iRow = iyMin; iRow < iyMax; ++iRow) rows[iRow].push(index);
       }
-      function clamp3(v, min, max) {
+      function clamp4(v, min, max) {
         if (v < min) return min;
         if (v > max) return max;
         return v;
       }
       function byte(v) {
-        return clamp3(255 * v, 0, 255);
+        return clamp4(255 * v, 0, 255);
       }
       class Cubic {
         constructor(p0, c0, c13, p1) {
@@ -95257,7 +95257,9 @@ Promise.all([waitForDocumentReady(), waitingForTranslator]).then(_globalInit);
 // frontend/src/p5ReceiptRenderer.ts
 var receiptWidth = 384;
 var rendererMap = /* @__PURE__ */ new WeakMap();
-var fontStack = "PingFang SC, Microsoft YaHei, Noto Sans SC, SimHei, sans-serif";
+var bodyFont = "PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans SC, SimHei, sans-serif";
+var displayFont = "FZLanTingHeiS-EB-GB, Source Han Sans SC, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, SimHei, sans-serif";
+var serifFont = "Songti SC, STSong, Source Han Serif SC, Noto Serif CJK SC, Noto Serif SC, SimSun, serif";
 function initP5ReceiptRenderer(container) {
   container.classList.add("p5-receipt-host");
 }
@@ -95278,7 +95280,7 @@ function updateReceiptPreview(container, data3, receiptMode, roastLevel2, option
       canvas2.parent(container);
       p2.pixelDensity(Math.min(window.devicePixelRatio || 1, 2));
       p2.noLoop();
-      p2.textFont(fontStack);
+      p2.textFont(bodyFont);
       drawReceipt(p2, normalized, mode2, roastLevel2, intensity, baseHeight, options2, mangaImage);
       if (options2.mangaImageUrl && options2.mangaMode && options2.mangaMode !== "none") {
         p2.loadImage(
@@ -95306,10 +95308,10 @@ function getReceiptHeight(mode2, roastLevel2, data3 = normalizeReceiptData({})) 
   const intensity = getRoastIntensity(roastLevel2);
   if (mode2 === "simple") {
     const textLoad = data3.findings.join("").length + data3.roast.length + data3.advice.length + data3.verdict.length;
-    return Math.round(500 + intensity * 430 + Math.min(260, textLoad * (0.9 + intensity * 0.6)));
+    return Math.round(470 + intensity * 480 + Math.min(300, textLoad * (0.72 + intensity * 0.42)));
   }
-  if (mode2 === "bigText") return Math.round(500 + intensity * 210);
-  return Math.round(520 + intensity * 240);
+  if (mode2 === "bigText") return Math.round(520 + intensity * 220);
+  return Math.round(560 + intensity * 230);
 }
 function wrapChineseText(p2, text2, maxWidth) {
   const lines = [];
@@ -95332,7 +95334,7 @@ function wrapChineseText(p2, text2, maxWidth) {
 function drawDashedLine(p2, x1, y, x2, dash = 9, gap = 6) {
   p2.push();
   p2.stroke(0);
-  p2.strokeWeight(2);
+  p2.strokeWeight(1.6);
   for (let x = x1; x < x2; x += dash + gap) p2.line(x, y, Math.min(x + dash, x2), y);
   p2.pop();
 }
@@ -95342,42 +95344,45 @@ function drawStamp(p2, text2, x, y, size = 72, angle = -0.15) {
   p2.rotate(angle);
   p2.noFill();
   p2.stroke(0);
-  p2.strokeWeight(4);
+  p2.strokeWeight(3);
   p2.rectMode(p2.CENTER);
-  p2.rect(0, 0, size * 1.52, size * 0.72);
+  p2.rect(0, 0, size * 1.55, size * 0.64);
+  p2.textFont(displayFont);
   p2.textAlign(p2.CENTER, p2.CENTER);
   p2.textStyle(p2.BOLD);
-  p2.textSize(size * 0.23);
+  p2.textSize(size * 0.22);
   p2.noStroke();
   p2.fill(0);
-  p2.text(text2, 0, 1);
+  p2.text(text2, 0, 0);
   p2.pop();
 }
 function drawTag(p2, text2, x, y, inverted = false, angle = 0) {
+  const safeText = squeezeText(text2, 8);
   p2.push();
   p2.translate(x, y);
   p2.rotate(angle);
+  p2.textFont(bodyFont);
   p2.textStyle(p2.BOLD);
-  p2.textSize(13);
-  const width = Math.max(48, p2.textWidth(text2) + 14);
+  p2.textSize(12);
+  const width = Math.max(44, p2.textWidth(safeText) + 14);
   p2.stroke(0);
-  p2.strokeWeight(2);
+  p2.strokeWeight(1.6);
   p2.fill(inverted ? 0 : 255);
   p2.rect(0, -14, width, 22);
   p2.noStroke();
   p2.fill(inverted ? 255 : 0);
   p2.textAlign(p2.LEFT, p2.CENTER);
-  p2.text(text2, 7, -3);
+  p2.text(safeText, 7, -3);
   p2.pop();
 }
 function drawSpeedLines(p2, x, y, width, count, angle = -0.25) {
   p2.push();
   p2.stroke(0);
-  p2.strokeWeight(2.4);
+  p2.strokeWeight(1.8);
   for (let i = 0; i < count; i += 1) {
-    const yy = y + i * 9;
-    const len = width * (0.42 + i * 37 % 50 / 100);
-    p2.line(x + i % 3 * 7, yy, x + len, yy + Math.sin(angle) * len * 0.18);
+    const yy = y + i * 8;
+    const len = width * (0.32 + seededUnit(i + 17) * 0.58);
+    p2.line(x + i % 3 * 8, yy, x + len, yy + Math.sin(angle) * len * 0.22);
   }
   p2.pop();
 }
@@ -95394,26 +95399,34 @@ function extractShortWords(data3) {
     normalized.headline,
     normalized.oneLineRoast
   ];
-  const words = pool.flatMap((item) => String(item || "").split(/[，。！？、\s:：/|]+/)).map((item) => item.trim()).filter((item) => item.length >= 2 && item.length <= 6);
-  return Array.from(new Set(words)).slice(0, 18);
+  const words = pool.flatMap((item) => splitChinesePhrases(String(item || ""))).map((item) => item.trim()).filter((item) => item.length >= 2 && item.length <= 7);
+  return Array.from(new Set(words)).slice(0, 24);
 }
 function drawTextDensityBlock(p2, phrases, x, y, width, height, intensity) {
+  const pool = phrases.filter(Boolean).flatMap((phrase) => splitChinesePhrases(phrase)).filter(Boolean);
+  const safePool = pool.length ? pool : ["\u7EE7\u7EED\u68C0\u6D4B", "\u753B\u9762\u8FC7\u8F7D", "\u73B0\u573A\u5931\u63A7"];
+  const rows = Math.round(18 + intensity * 46);
   p2.push();
-  p2.textStyle(p2.BOLD);
-  p2.fill(0);
+  p2.textFont(bodyFont);
+  p2.textAlign(p2.LEFT, p2.TOP);
   p2.noStroke();
-  const rows = Math.round(20 + intensity * 42);
   for (let i = 0; i < rows; i += 1) {
-    const progress = i / Math.max(1, rows - 1);
-    p2.textSize(11 + progress * 4);
-    const phrase = phrases[i % phrases.length] || "\u68C0\u6D4B\u5F02\u5E38";
-    const yy = y + progress * height + Math.sin(i * 1.7) * 4;
-    const repeats = Math.round(2 + progress * 7);
+    const t = i / Math.max(1, rows - 1);
+    const yy = y + t * height;
+    const density = Math.pow(t, 1.65);
+    const size = 10.5 + density * 8;
+    const leading = 16 - density * 12;
+    const repeats = Math.round(1 + density * 9 + intensity * 2);
+    p2.textSize(size);
+    p2.textStyle(t > 0.6 ? p2.BOLD : p2.NORMAL);
     for (let j = 0; j < repeats; j += 1) {
+      const word = safePool[(i * 5 + j * 3) % safePool.length];
+      const xx = x + seededUnit(i * 97 + j * 31) * Math.max(1, width - 38);
       p2.push();
-      p2.translate(x + (i * 29 + j * 43) % width, yy + j * (3 - progress * 2));
-      p2.rotate((j - repeats / 2) * 0.015 * intensity);
-      p2.text(phrase, 0, 0);
+      p2.translate(xx, yy + j * leading * (0.36 - density * 0.25));
+      p2.rotate((seededUnit(i * 13 + j * 11) - 0.5) * density * 0.32);
+      p2.fill(0, 95 + density * 160);
+      p2.text(word, 0, 0);
       p2.pop();
     }
   }
@@ -95421,7 +95434,7 @@ function drawTextDensityBlock(p2, phrases, x, y, width, height, intensity) {
 }
 function drawReceipt(p2, data3, mode2, roastLevel2, intensity, baseHeight, options2, mangaImage) {
   p2.background(255);
-  p2.textFont(fontStack);
+  p2.textFont(bodyFont);
   p2.noStroke();
   p2.fill(0);
   drawThermalTexture(p2, baseHeight + (options2.mangaImageUrl && options2.mangaMode !== "none" ? 292 : 0), intensity);
@@ -95441,180 +95454,163 @@ function drawReceipt(p2, data3, mode2, roastLevel2, intensity, baseHeight, optio
 function renderSimpleReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
   const margin2 = 18;
   const width = receiptWidth - margin2 * 2;
-  let y = 25;
-  p2.textAlign(p2.CENTER, p2.TOP);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(22 + intensity * 7);
-  p2.text(data3.title, receiptWidth / 2 + jitter(1, intensity), y);
-  y += 34;
-  drawDashedLine(p2, margin2, y, receiptWidth - margin2);
-  y += 15;
-  p2.textSize(13);
-  p2.text(data3.subtitle, receiptWidth / 2, y);
-  y += 26;
-  drawTag(p2, data3.photoType, margin2, y + 12, intensity > 0.7, -0.03 * intensity);
-  drawTag(p2, data3.aiMood, 178, y + 12, false, 0.045 * intensity);
-  y += 42;
-  const scores = data3.scores.slice(0, intensity >= 0.75 ? 3 : 2);
-  for (const score of scores) {
-    p2.textAlign(p2.LEFT, p2.TOP);
-    p2.textStyle(p2.BOLD);
-    p2.textSize(13);
-    p2.text(score.label, margin2, y);
-    p2.stroke(0);
-    p2.strokeWeight(2);
-    p2.noFill();
-    p2.rect(margin2 + 94, y + 3, 170, 10);
-    p2.fill(0);
-    p2.noStroke();
-    p2.rect(margin2 + 94, y + 3, Math.max(12, 170 * score.value / 100), 10);
-    p2.textAlign(p2.RIGHT, p2.TOP);
-    p2.text(`${Math.round(score.value)}`, receiptWidth - margin2, y - 2);
-    y += 24 - intensity * 3;
-  }
-  y += 8;
-  drawSectionLabel(p2, "AI FINDINGS", margin2, y, intensity);
-  y += 24;
-  const findingCount = roastLevel2 === "gentle" ? 2 : roastLevel2 === "normal" ? 3 : data3.findings.length;
+  const execution = roastLevel2 === "execution" || roastLevel2 === "public_execution";
+  const words = extractShortWords(data3);
+  let y = 24;
+  drawMicroHeader(p2, data3, intensity);
+  y += 82;
+  const scoreCount = intensity < 0.35 ? 2 : 3;
+  drawScoreBands(p2, data3.scores.slice(0, scoreCount), margin2, y, width, intensity);
+  y += 58 + scoreCount * 18;
+  drawSectionLabel(p2, "\u56FE\u50CF\u68C0\u6D4B", margin2, y, intensity);
+  y += 30;
+  p2.textFont(bodyFont);
   p2.textAlign(p2.LEFT, p2.TOP);
+  p2.fill(0);
   p2.textStyle(p2.BOLD);
   p2.textSize(14);
-  for (const finding of data3.findings.slice(0, findingCount)) {
-    y = drawWrappedLine(p2, `- ${finding}`, margin2 + jitter(3, intensity), y, width, 14, 20 - intensity * 4);
-    y += 4 - intensity * 2;
+  const findingCount = intensity < 0.35 ? 2 : intensity < 0.75 ? 3 : data3.findings.length;
+  for (const [index, finding] of data3.findings.slice(0, findingCount).entries()) {
+    const rowY = y + index * (29 - intensity * 5);
+    drawVerticalIndex(p2, index + 1, margin2, rowY + 2);
+    y = drawWrappedLine(p2, finding, margin2 + 26, rowY, width - 26, 14, 19 - intensity * 2, 0);
   }
-  y += 8;
-  drawDashedLine(p2, margin2, y, receiptWidth - margin2, 7, 5);
   y += 18;
-  const paragraphs = [data3.roast, data3.advice, data3.verdict];
-  for (const [index, paragraph] of paragraphs.entries()) {
-    const density = roastLevel2 === "execution" || roastLevel2 === "public_execution" ? y / height : 0;
-    const size = 16 + intensity * 3 + density * 3;
-    const leading = Math.max(9, 24 - density * 17);
+  const quoteStart = y;
+  const mainParagraphs = compactParagraphs([data3.roast, data3.advice, data3.verdict]);
+  mainParagraphs.forEach((paragraph, index) => {
+    const t = execution ? y / height : 0;
+    const size = 15 + intensity * 2 + t * 2.2;
+    const leading = execution ? Math.max(9, 22 - t * 15) : 21 - intensity * 2;
+    p2.textFont(index === 0 ? displayFont : bodyFont);
     p2.textStyle(index === 0 ? p2.BOLD : p2.NORMAL);
     p2.textSize(size);
-    y = drawWrappedLine(p2, paragraph, margin2 + jitter(7, intensity * density), y, width, size, leading, density * intensity * 0.2);
-    y += Math.max(4, 22 - density * 20);
+    if (index === 0) drawSideCaption(p2, "AI \u65C1\u767D", receiptWidth - 32, y + 2, intensity);
+    y = drawWrappedLine(p2, paragraph, margin2 + jitterDet(8, intensity * t, index), y, width - 8, size, leading, t * intensity * 0.32);
+    y += execution ? Math.max(2, 18 - t * 18) : 18 - intensity * 5;
+  });
+  drawPoeticWordField(p2, words, margin2, quoteStart - 12, width, Math.max(112, y - quoteStart + 18), intensity, execution ? "dense" : "light");
+  if (intensity >= 0.62) {
+    drawStamp(p2, intensity >= 1 ? "\u4E8B\u6545\u5F52\u6863" : "\u91CD\u70B9\u89C2\u5BDF", 282, 205 + intensity * 46, 82 + intensity * 13, -0.16);
+    drawSpeedLines(p2, 240, 86, 104, Math.round(4 + intensity * 7));
   }
-  if (intensity >= 0.7) {
-    drawStamp(p2, intensity >= 1 ? "\u4E8B\u6545\u5B58\u6863" : "\u91CD\u70B9\u89C2\u5BDF", 278, 214 + intensity * 44, 82 + intensity * 16, -0.18);
-    drawSpeedLines(p2, 244, 84, 94, Math.round(4 + intensity * 7));
+  const tagY = Math.min(height - 178, y + 10);
+  for (let i = 0; i < Math.round(2 + intensity * 9); i += 1) {
+    drawTag(p2, words[i % words.length] || "\u8FC7\u8F7D", 18 + i * 71 % 260, tagY + i * (19 - intensity * 2), i % 4 === 0, (i % 2 ? -1 : 1) * 0.055 * intensity);
   }
-  const tags = extractShortWords(data3);
-  for (let i = 0; i < Math.round(intensity * 9); i += 1) {
-    drawTag(p2, tags[i % tags.length] || "\u5F02\u5E38", 18 + i * 73 % 260, y + 8 + i * 21, i % 3 === 0, (i % 2 ? -1 : 1) * 0.08 * intensity);
-  }
-  if (intensity >= 1) {
-    const blockY = height * 0.72;
-    drawTextDensityBlock(p2, [data3.roast, data3.verdict, ...tags], margin2 - 4, blockY, width + 8, height - blockY - 18, intensity);
+  if (execution) {
+    const blockY = height * 0.68;
+    drawDensityRamp(p2, [data3.roast, data3.advice, data3.verdict, ...words], margin2 - 4, blockY, width + 8, height - blockY - 18, intensity);
   } else {
-    drawBarcode(p2, margin2, height - 56, width, 34, intensity);
+    drawBarcode(p2, margin2, height - 58, width, 34, intensity);
   }
 }
 function renderBigTextReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
   const phrase = cleanBigPhrase(data3.oneLineRoast || data3.headline || data3.roast);
   const chunks = splitBigPhrase(phrase);
+  const words = extractShortWords(data3);
+  const execution = roastLevel2 === "execution" || roastLevel2 === "public_execution";
+  drawPosterHeader(p2, data3, intensity);
+  drawSpeedLines(p2, 20, 78, 310, Math.round(4 + intensity * 10), -0.38);
+  const startY = 122;
+  const usableH = height - 178;
+  const dominant = chunks[0] || phrase.slice(0, 3);
+  const secondary = chunks.slice(1, execution ? 5 : 4);
+  const dominantSize = fitTextSize(p2, dominant, receiptWidth * 1.08, receiptWidth * (0.75 + intensity * 0.42), 54, 178);
+  p2.push();
+  p2.translate(receiptWidth / 2 + jitterDet(12, intensity, 1), startY + dominantSize * 0.5);
+  p2.rotate(-0.06 - intensity * 0.08);
+  p2.textFont(displayFont);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(dominantSize);
+  drawGhostText(p2, dominant, intensity, 0, 0);
   p2.fill(0);
-  p2.noStroke();
-  drawSpeedLines(p2, 18, 32, 160 + intensity * 150, Math.round(5 + intensity * 12), -0.4);
-  drawTag(p2, data3.topLabel || "SNAP VERDICT", 18, 36, intensity > 0.6, -0.06);
-  let y = 92;
-  chunks.slice(0, intensity >= 1 ? 5 : 4).forEach((chunk, index) => {
-    const targetWidth = receiptWidth * (index === 0 ? 1.02 : 0.88 + intensity * 0.12);
-    const size = fitTextSize(p2, chunk, targetWidth, receiptWidth * (0.45 + intensity * 0.45), 34, 132 + intensity * 34);
+  p2.text(dominant, 0, 0);
+  p2.pop();
+  let y = startY + dominantSize * (0.78 - intensity * 0.08);
+  secondary.forEach((chunk, index) => {
+    const target = receiptWidth * (0.82 + intensity * 0.22);
+    const size = fitTextSize(p2, chunk, target, receiptWidth * (0.48 + intensity * 0.22), 34, 112 + intensity * 34);
     p2.push();
-    p2.translate(receiptWidth / 2 + jitter(16, intensity), y + size * 0.52);
-    p2.rotate((index % 2 ? 1 : -1) * (0.04 + intensity * 0.13));
+    p2.translate(receiptWidth / 2 + jitterDet(20, intensity, index + 5), y + size * 0.48);
+    p2.rotate((index % 2 ? 1 : -1) * (0.035 + intensity * 0.095));
+    p2.textFont(index % 2 ? serifFont : displayFont);
     p2.textAlign(p2.CENTER, p2.CENTER);
     p2.textStyle(p2.BOLD);
     p2.textSize(size);
-    for (let ghost = 0; ghost < Math.round(intensity * 4); ghost += 1) {
-      p2.fill(0, 45 + ghost * 22);
-      p2.text(chunk, -ghost * 4, ghost * 5);
-    }
+    drawGhostText(p2, chunk, intensity * 0.8, 0, 0);
     p2.fill(0);
     p2.text(chunk, 0, 0);
     p2.pop();
-    if (index === 1 && intensity > 0.55) {
-      p2.fill(0);
-      p2.rect(0, y + size * 0.28, receiptWidth, 18 + intensity * 18);
-    }
-    y += size * (0.76 - intensity * 0.1);
+    if (index === 0 && intensity > 0.55) drawBlackSlash(p2, y + size * 0.62, intensity);
+    y += size * (0.74 - intensity * 0.07);
   });
-  const notes = [data3.subHeadline, data3.tinyAdvice, data3.verdict, ...extractShortWords(data3)].filter(Boolean);
-  p2.textStyle(p2.BOLD);
-  p2.textSize(11 + intensity * 3);
-  for (let i = 0; i < Math.round(5 + intensity * 13); i += 1) {
-    const x = 16 + i * 61 % 300;
-    const yy = Math.min(height - 32, 88 + i * 47 % Math.max(140, height - 132));
-    drawTag(p2, String(notes[i % notes.length] || "\u8865\u5200"), x, yy, i % 4 === 0, (i % 2 ? 1 : -1) * 0.13 * intensity);
+  drawCurvedSentenceBand(p2, [data3.subHeadline, data3.tinyAdvice, data3.verdict, ...words], receiptWidth / 2, Math.min(height - 182, y + 42), 164, 50 + intensity * 34, intensity);
+  const noteCount = Math.round(5 + intensity * 14);
+  for (let i = 0; i < noteCount; i += 1) {
+    const note = words[i % words.length] || data3.tinyAdvice;
+    const xx = 18 + seededUnit(i * 41) * 302;
+    const yy = 126 + seededUnit(i * 67) * Math.max(110, usableH);
+    drawTinyAnnotation(p2, note, xx, yy, (seededUnit(i * 13) - 0.5) * intensity * 0.85, i % 5 === 0);
   }
-  if (roastLevel2 === "execution" || roastLevel2 === "public_execution") {
+  if (execution) {
+    p2.textFont(displayFont);
     p2.textAlign(p2.CENTER, p2.CENTER);
     p2.textStyle(p2.BOLD);
     p2.textSize(18);
-    for (let yy = height - 124; yy < height - 20; yy += 21) p2.text(`/// ${phrase} ///`, receiptWidth / 2, yy);
+    for (let yy = height - 126; yy < height - 24; yy += 18) {
+      p2.fill(0, 118);
+      p2.text(`/// ${phrase} ///`, receiptWidth / 2, yy);
+    }
+  } else {
+    drawBarcode(p2, 28, height - 48, receiptWidth - 56, 24, intensity);
   }
 }
 function renderFaceReceiptCanvas(p2, data3, intensity, height, roastLevel2) {
   const words = extractShortWords(data3);
   const pattern = facePatternType(roastLevel2, data3);
-  p2.textAlign(p2.CENTER, p2.CENTER);
-  p2.textStyle(p2.BOLD);
-  p2.fill(0);
-  drawTag(p2, `${data3.moodLabel || "BUDDY FACE"} / ${pattern}`, 18, 36, intensity > 0.75, 0);
   const cx = receiptWidth / 2;
   const cy = height * 0.47;
-  const faceW = 270 + intensity * 34;
-  const faceH = 300 + intensity * 80;
-  drawTextArc(p2, words, cx, cy, faceW / 2, faceH / 2, 0.18, Math.PI * 1.82, 12 + intensity * 7);
+  const faceW = 268 + intensity * 46;
+  const faceH = 330 + intensity * 78;
+  drawTag(p2, `${data3.moodLabel} / ${pattern}`, 18, 38, intensity > 0.72, 0);
+  drawWordFaceContour(p2, words, cx, cy, faceW, faceH, intensity);
   const eyeWord = words[0] || "\u55EF\uFF1F";
   const browWord = words[1] || "\u884C\u5427";
-  const mouthWord = words[2] || data3.shortComment.slice(0, 4) || "\u79BB\u8C31";
+  const mouthWord = words[2] || squeezeText(data3.shortComment, 4);
   const angry = pattern === "angry" || pattern === "breakdown" || pattern === "judgement";
   const disgust = pattern === "disgust" || pattern === "speechless";
-  drawFaceFeature(p2, browWord, cx - 76, cy - 100, 58, angry ? -0.38 : -0.12, intensity);
-  drawFaceFeature(p2, browWord, cx + 76, cy - 100, 58, angry ? 0.38 : 0.12, intensity);
-  drawFaceFeature(p2, eyeWord, cx - 70, cy - 58, 42 + intensity * 18, disgust ? 0.18 : 0, intensity);
-  drawFaceFeature(p2, eyeWord, cx + 70, cy - 58, 42 + intensity * 18, disgust ? -0.18 : 0, intensity);
+  drawFaceFeature(p2, browWord, cx - 76, cy - 100, 34 + intensity * 18, angry ? -0.38 : -0.13, intensity);
+  drawFaceFeature(p2, browWord, cx + 76, cy - 100, 34 + intensity * 18, angry ? 0.38 : 0.13, intensity);
+  drawFaceFeature(p2, eyeWord, cx - 68, cy - 50, 35 + intensity * 18, disgust ? 0.18 : -0.03, intensity);
+  drawFaceFeature(p2, eyeWord, cx + 68, cy - 50, 35 + intensity * 18, disgust ? -0.18 : 0.03, intensity);
   if (pattern === "smile" || pattern === "confused") {
-    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 70, 86, 46, 0.12, Math.PI - 0.12, 13 + intensity * 5);
-  } else if (pattern === "breakdown") {
-    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 82, 118, 84, 0.04, Math.PI * 1.96, 16 + intensity * 8);
+    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 72, 92, 45, 0.14, Math.PI - 0.14, 13 + intensity * 5);
+  } else if (pattern === "breakdown" || pattern === "judgement") {
+    drawTextArc(p2, [mouthWord, data3.shortComment, ...words], cx, cy + 78, 120, 84, 0.03, Math.PI * 1.97, 15 + intensity * 8);
     p2.stroke(0);
-    p2.strokeWeight(8);
+    p2.strokeWeight(3 + intensity * 4);
     p2.noFill();
-    p2.rect(cx - 72, cy + 36, 144, 112);
+    p2.rect(cx - 76, cy + 32, 152, 110);
   } else {
-    drawFaceFeature(p2, mouthWord.repeat(2), cx, cy + 78, 70 + intensity * 36, disgust ? -0.16 : 0.08, intensity);
+    drawFaceFeature(p2, mouthWord.repeat(2).slice(0, 8), cx, cy + 74, 48 + intensity * 34, disgust ? -0.16 : 0.08, intensity);
   }
-  const labelCount = Math.round(5 + intensity * 16);
-  for (let i = 0; i < labelCount; i += 1) {
-    const angle = i / labelCount * Math.PI * 2;
-    const radius = 120 + i * 31 % 54 + intensity * 20;
-    drawTag(
-      p2,
-      words[i % words.length] || "\u68C0\u6D4B",
-      cx + Math.cos(angle) * radius - 24,
-      cy + Math.sin(angle) * radius,
-      intensity > 0.7 && i % 3 === 0,
-      angle * 0.18
-    );
-  }
-  if (intensity >= 0.75) drawSpeedLines(p2, 20, height - 116, 320, Math.round(8 + intensity * 10), -0.25);
-  if (intensity >= 1) drawTextDensityBlock(p2, [data3.shortComment, ...words], 20, height - 150, 344, 120, 0.7);
+  drawEmotionRain(p2, [data3.shortComment, ...words], 22, 98, receiptWidth - 44, height - 148, intensity, pattern);
+  if (intensity >= 0.75) drawSpeedLines(p2, 20, height - 122, 320, Math.round(7 + intensity * 9), -0.25);
+  if (intensity >= 1) drawTextDensityBlock(p2, [data3.shortComment, data3.verdict, ...words], 20, height - 154, 344, 124, 0.72);
 }
 function normalizeReceiptData(data3) {
   const value = data3 && typeof data3 === "object" ? data3 : {};
   const findings = arrayOfStrings(value.findings ?? value.tags ?? value.keywords);
   const keywords2 = arrayOfStrings(value.keywords ?? value.tags ?? value.findings);
   const scores = Array.isArray(value.scores) ? value.scores.map((score, index) => ({
-    label: String(score.label ?? `SCORE ${index + 1}`),
+    label: String(score.label ?? `\u8BC4\u5206${index + 1}`),
     value: Number(score.value ?? 50)
   })) : [
     { label: "\u6784\u56FE\u98CE\u9669", value: 72 },
     { label: "\u5410\u69FD\u6D53\u5EA6", value: 84 },
-    { label: "\u53EF\u53D1\u7A0B\u5EA6", value: 58 }
+    { label: "\u53EF\u53D1\u8868\u7A0B\u5EA6", value: 58 }
   ];
   const roast = firstString(value.roast, value.oneLineRoast, value.shortComment, value.caption, value.aiComment, value.generatedComment, "\u8FD9\u5F20\u7167\u7247\u5F88\u52AA\u529B\uFF0C\u52AA\u529B\u5230\u673A\u5668\u90FD\u60F3\u9012\u4E00\u5F20\u8865\u62CD\u7533\u8BF7\u3002");
   return {
@@ -95627,7 +95623,7 @@ function normalizeReceiptData(data3) {
     scores,
     roast,
     advice: firstString(value.advice, value.tinyAdvice, "\u5EFA\u8BAE\u4E0B\u6B21\u5148\u7A33\u4F4F\u955C\u5934\uFF0C\u518D\u7A33\u4F4F\u5168\u573A\u3002"),
-    verdict: firstString(value.verdict, value.headline, "\u53EF\u53D1\uFF0C\u4F46\u9700\u8981\u914D\u6587\u81EA\u6551"),
+    verdict: firstString(value.verdict, value.headline, "\u53EF\u53D1\uFF0C\u4F46\u9700\u8981\u914D\u6587\u81EA\u6551\u3002"),
     topLabel: firstString(value.topLabel, value.subtitle, ">>> \u73B0\u573A\u5224\u5B9A <<<"),
     headline: firstString(value.headline, value.verdict, roast.slice(0, 8)),
     subHeadline: firstString(value.subHeadline, value.subtitle, ""),
@@ -95645,21 +95641,22 @@ function normalizeReceiptMode(mode2) {
 }
 function drawThermalTexture(p2, height, intensity) {
   p2.push();
-  p2.stroke(0, 16);
+  p2.stroke(0, 10);
   p2.strokeWeight(1);
-  for (let y = 0; y < height; y += 9) p2.line(0, y, receiptWidth, y);
+  for (let y = 0; y < height; y += 11) p2.line(0, y, receiptWidth, y);
   p2.stroke(0, 18 + intensity * 12);
-  for (let x = 10; x < receiptWidth; x += 31) p2.point(x, x * 17 % height);
+  const points = Math.round(90 + intensity * 160);
+  for (let i = 0; i < points; i += 1) {
+    p2.point(seededUnit(i * 17) * receiptWidth, seededUnit(i * 31) * height);
+  }
   p2.pop();
 }
 function drawMangaBlock(p2, image4, y, imageUrl) {
   p2.push();
-  p2.fill(255);
-  p2.stroke(0);
-  p2.strokeWeight(2);
-  drawDashedLine(p2, 18, y + 16, receiptWidth - 18, y + 16);
+  drawDashedLine(p2, 18, y + 16, receiptWidth - 18);
   p2.noStroke();
   p2.fill(0);
+  p2.textFont(displayFont);
   p2.textAlign(p2.CENTER, p2.TOP);
   p2.textStyle(p2.BOLD);
   p2.textSize(17);
@@ -95673,49 +95670,270 @@ function drawMangaBlock(p2, image4, y, imageUrl) {
   } else {
     p2.noStroke();
     p2.fill(0);
+    p2.textFont(bodyFont);
     p2.textSize(13);
     p2.text("\u6F2B\u753B\u52A0\u8F7D\u4E2D", receiptWidth / 2, y + 148);
     if (imageUrl.startsWith("data:")) p2.text("\u672C\u5730\u56FE\u7247", receiptWidth / 2, y + 170);
   }
-  drawDashedLine(p2, 18, y + 278, receiptWidth - 18, y + 278);
+  drawDashedLine(p2, 18, y + 278, receiptWidth - 18);
+  p2.pop();
+}
+function drawMicroHeader(p2, data3, intensity) {
+  p2.push();
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textFont(displayFont);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(22 + intensity * 5);
+  p2.fill(0);
+  p2.text(data3.title, 18, 18);
+  p2.textFont(bodyFont);
+  p2.textSize(11);
+  p2.textStyle(p2.NORMAL);
+  p2.text(`${data3.subtitle} / ${data3.photoType}`, 20, 51);
+  drawDashedLine(p2, 18, 72, receiptWidth - 18, 8, 5);
+  drawTag(p2, data3.aiMood, receiptWidth - 126, 58, intensity > 0.7, 0.02 * intensity);
+  p2.pop();
+}
+function drawPosterHeader(p2, data3, intensity) {
+  p2.push();
+  p2.fill(0);
+  p2.noStroke();
+  p2.rect(0, 0, receiptWidth, 58 + intensity * 12);
+  p2.fill(255);
+  p2.textFont(displayFont);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(23 + intensity * 5);
+  p2.text("\u5224\u8BCD", 18, 12);
+  p2.textSize(12);
+  p2.textFont(bodyFont);
+  p2.text(data3.topLabel || "SNAP VERDICT", 86, 18);
+  p2.pop();
+}
+function drawScoreBands(p2, scores, x, y, width, intensity) {
+  p2.push();
+  p2.textFont(bodyFont);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  scores.forEach((score, index) => {
+    const yy = y + index * 22;
+    p2.noStroke();
+    p2.fill(0);
+    p2.textStyle(p2.BOLD);
+    p2.textSize(12);
+    p2.text(squeezeText(score.label, 6), x, yy);
+    p2.stroke(0);
+    p2.strokeWeight(1.5);
+    p2.noFill();
+    p2.rect(x + 78, yy + 4, width - 124, 9);
+    p2.noStroke();
+    p2.fill(0);
+    p2.rect(x + 78, yy + 4, Math.max(10, (width - 124) * clamp3(score.value / 100, 0, 1)), 9);
+    p2.textAlign(p2.RIGHT, p2.TOP);
+    p2.text(`${Math.round(score.value)}`, x + width, yy - 1);
+    p2.textAlign(p2.LEFT, p2.TOP);
+  });
+  if (intensity > 0.7) drawSpeedLines(p2, x + 224, y + 2, 94, 4 + Math.round(intensity * 4), -0.2);
   p2.pop();
 }
 function drawSectionLabel(p2, text2, x, y, intensity) {
   p2.push();
   p2.fill(0);
-  p2.rect(x, y - 2, 112 + intensity * 30, 20);
+  p2.rect(x, y - 2, 86 + intensity * 22, 21);
   p2.fill(255);
+  p2.textFont(displayFont);
   p2.textAlign(p2.LEFT, p2.TOP);
   p2.textStyle(p2.BOLD);
   p2.textSize(12);
   p2.text(text2, x + 8, y + 2);
   p2.pop();
 }
+function drawVerticalIndex(p2, value, x, y) {
+  p2.push();
+  p2.textFont(displayFont);
+  p2.textStyle(p2.BOLD);
+  p2.textSize(11);
+  p2.textAlign(p2.CENTER, p2.TOP);
+  p2.fill(255);
+  p2.stroke(0);
+  p2.strokeWeight(1.4);
+  p2.rect(x, y, 18, 18);
+  p2.noStroke();
+  p2.fill(0);
+  p2.text(String(value).padStart(2, "0"), x + 9, y + 2);
+  p2.pop();
+}
+function drawSideCaption(p2, text2, x, y, intensity) {
+  p2.push();
+  p2.translate(x, y);
+  p2.rotate(Math.PI / 2);
+  p2.textFont(serifFont);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(12 + intensity * 2);
+  p2.fill(0, 120);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.text(text2, 0, 0);
+  p2.pop();
+}
 function drawWrappedLine(p2, text2, x, y, width, size, leading, overlap = 0) {
   const lines = wrapChineseText(p2, text2, width);
   for (const [index, line] of lines.entries()) {
     p2.push();
-    p2.translate(x + jitter(7, overlap), y + index * leading);
-    p2.rotate(jitter(0.04, overlap));
+    p2.translate(x + jitterDet(7, overlap, index), y + index * leading);
+    p2.rotate(jitterDet(0.06, overlap, index + 12));
     p2.text(line, 0, 0);
     p2.pop();
   }
   return y + lines.length * leading + size * 0.2;
+}
+function drawPoeticWordField(p2, words, x, y, width, height, intensity, mode2) {
+  const count = Math.round((mode2 === "dense" ? 22 : 10) + intensity * 20);
+  p2.push();
+  p2.textFont(serifFont);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  for (let i = 0; i < count; i += 1) {
+    const word = words[i % words.length] || "\u73B0\u573A";
+    const xx = x + seededUnit(i * 73) * width;
+    const yy = y + seededUnit(i * 29) * height;
+    const size = 10 + seededUnit(i * 11) * (mode2 === "dense" ? 12 : 8);
+    const vertical = i % 3 === 0;
+    p2.push();
+    p2.translate(xx, yy);
+    p2.rotate(vertical ? Math.PI / 2 : (seededUnit(i * 19) - 0.5) * intensity * 0.38);
+    p2.textSize(size);
+    p2.textStyle(i % 5 === 0 ? p2.BOLD : p2.NORMAL);
+    p2.fill(0, mode2 === "dense" ? 78 : 42);
+    p2.text(word, 0, 0);
+    p2.pop();
+  }
+  p2.pop();
+}
+function drawDensityRamp(p2, phrases, x, y, width, height, intensity) {
+  p2.push();
+  drawTextDensityBlock(p2, phrases, x, y, width, height, intensity);
+  const pool = phrases.flatMap(splitChinesePhrases).filter(Boolean);
+  p2.textFont(displayFont);
+  p2.textAlign(p2.LEFT, p2.TOP);
+  p2.textStyle(p2.BOLD);
+  for (let row = 0; row < 24; row += 1) {
+    const t = row / 23;
+    const yy = y + height * (0.45 + t * 0.52);
+    const size = 11 + t * 9;
+    p2.textSize(size);
+    p2.fill(0, 80 + t * 160);
+    for (let col = 0; col < 6 + t * 8; col += 1) {
+      const word = pool[(row + col) % Math.max(1, pool.length)] || "\u8FC7\u8F7D";
+      p2.text(word, x + col * (32 - t * 17), yy + col * (2 - t * 4));
+    }
+  }
+  p2.pop();
 }
 function drawBarcode(p2, x, y, width, height, intensity) {
   p2.push();
   p2.noStroke();
   p2.fill(0);
   let cursor = x;
+  let i = 0;
   while (cursor < x + width) {
-    const w = 2 + cursor * 7 % 9 * (0.45 + intensity * 0.16);
+    const w = 1.5 + i % 5 * (0.8 + intensity * 0.18);
     p2.rect(cursor, y, w, height);
-    cursor += w + 2 + cursor * 5 % 6;
+    cursor += w + 2 + i % 4;
+    i += 1;
+  }
+  p2.pop();
+}
+function drawBlackSlash(p2, y, intensity) {
+  p2.push();
+  p2.fill(0);
+  p2.noStroke();
+  p2.translate(0, y);
+  p2.rotate(-0.035);
+  p2.rect(-8, -10, receiptWidth + 18, 15 + intensity * 15);
+  p2.pop();
+}
+function drawGhostText(p2, text2, intensity, x, y) {
+  const count = Math.round(intensity * 4);
+  for (let i = count; i > 0; i -= 1) {
+    p2.fill(0, 28 + i * 18);
+    p2.text(text2, x - i * 4, y + i * 4);
+  }
+}
+function drawCurvedSentenceBand(p2, phrases, cx, cy, rx, ry, intensity) {
+  const pool = phrases.flatMap((item) => splitChinesePhrases(String(item || ""))).filter(Boolean);
+  if (!pool.length) return;
+  p2.push();
+  p2.textFont(serifFont);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.NORMAL);
+  p2.textSize(12 + intensity * 2);
+  p2.fill(0, 120);
+  const count = Math.round(18 + intensity * 18);
+  for (let i = 0; i < count; i += 1) {
+    const t = -Math.PI * 0.9 + Math.PI * 1.8 * i / Math.max(1, count - 1);
+    const word = pool[i % pool.length];
+    p2.push();
+    p2.translate(cx + Math.cos(t) * rx, cy + Math.sin(t) * ry);
+    p2.rotate(t * 0.45);
+    p2.text(word, 0, 0);
+    p2.pop();
+  }
+  p2.pop();
+}
+function drawTinyAnnotation(p2, text2, x, y, angle, inverted) {
+  p2.push();
+  p2.translate(x, y);
+  p2.rotate(angle);
+  p2.textFont(serifFont);
+  p2.textStyle(inverted ? p2.BOLD : p2.NORMAL);
+  p2.textSize(inverted ? 14 : 12);
+  p2.textAlign(p2.LEFT, p2.CENTER);
+  p2.fill(0, inverted ? 180 : 96);
+  p2.text(squeezeText(text2, 8), 0, 0);
+  p2.pop();
+}
+function drawWordFaceContour(p2, words, cx, cy, w, h, intensity) {
+  p2.push();
+  p2.textFont(serifFont);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textStyle(p2.NORMAL);
+  const count = Math.round(34 + intensity * 32);
+  for (let i = 0; i < count; i += 1) {
+    const t = i / count * Math.PI * 2;
+    const word = words[i % words.length] || "\u68C0\u6D4B";
+    const wobble = 1 + (seededUnit(i * 31) - 0.5) * 0.12;
+    p2.push();
+    p2.translate(cx + Math.cos(t) * (w / 2) * wobble, cy + Math.sin(t) * (h / 2) * wobble);
+    p2.rotate(t + Math.PI / 2);
+    p2.textSize(11 + intensity * 4 + (i % 5 === 0 ? 4 : 0));
+    p2.fill(0, 85 + intensity * 70);
+    p2.text(word, 0, 0);
+    p2.pop();
+  }
+  p2.pop();
+}
+function drawEmotionRain(p2, phrases, x, y, width, height, intensity, pattern) {
+  const pool = phrases.flatMap(splitChinesePhrases).filter(Boolean);
+  const count = Math.round(10 + intensity * 30);
+  p2.push();
+  p2.textFont(serifFont);
+  p2.textAlign(p2.CENTER, p2.CENTER);
+  for (let i = 0; i < count; i += 1) {
+    const word = pool[i % Math.max(1, pool.length)] || "\u65E0\u8BED";
+    const xx = x + seededUnit(i * 43) * width;
+    const yy = y + seededUnit(i * 83) * height;
+    const size = 11 + seededUnit(i * 17) * (10 + intensity * 8);
+    p2.push();
+    p2.translate(xx, yy);
+    p2.rotate(pattern === "breakdown" ? (seededUnit(i * 7) - 0.5) * 1.2 : Math.PI / 2 * (i % 3 === 0 ? 1 : 0));
+    p2.textSize(size);
+    p2.textStyle(i % 6 === 0 ? p2.BOLD : p2.NORMAL);
+    p2.fill(0, 38 + intensity * 75);
+    p2.text(word, 0, 0);
+    p2.pop();
   }
   p2.pop();
 }
 function cleanBigPhrase(text2) {
-  return String(text2 || "").replace(/\n+/g, " ").replace(/\s+/g, "").slice(0, 24) || "\u79BB\u8C31";
+  return String(text2 || "").replace(/\n+/g, " ").replace(/\s+/g, "").slice(0, 26) || "\u79BB\u8C31";
 }
 function splitBigPhrase(text2) {
   if (text2.length <= 4) return [...text2];
@@ -95724,6 +95942,7 @@ function splitBigPhrase(text2) {
 }
 function fitTextSize(p2, text2, maxWidth, targetHeight, min, max) {
   let size = max;
+  p2.textFont(displayFont);
   p2.textStyle(p2.BOLD);
   while (size > min) {
     p2.textSize(size);
@@ -95733,18 +95952,20 @@ function fitTextSize(p2, text2, maxWidth, targetHeight, min, max) {
   return size;
 }
 function facePatternType(roastLevel2, data3) {
-  if (roastLevel2 === "gentle") return data3.shortComment.includes("\uFF1F") ? "confused" : "smile";
+  if (roastLevel2 === "gentle") return /吗|呢|？|\?/.test(data3.shortComment) ? "confused" : "smile";
   if (roastLevel2 === "normal") return "speechless";
-  if (roastLevel2 === "spicy") return data3.shortComment.includes("\u6012") ? "angry" : "disgust";
-  return data3.shortComment.includes("\u5BA1") ? "judgement" : "breakdown";
+  if (roastLevel2 === "spicy") return /怒|疯|炸|崩|救/.test(data3.shortComment) ? "angry" : "disgust";
+  return /审|判|处刑|完/.test(data3.shortComment) ? "judgement" : "breakdown";
 }
 function drawTextArc(p2, words, cx, cy, rx, ry, start, end, size) {
+  const safeWords = words.filter(Boolean);
   const count = Math.max(10, Math.round((end - start) * 8));
+  p2.textFont(serifFont);
   p2.textStyle(p2.BOLD);
   p2.textSize(size);
   for (let i = 0; i < count; i += 1) {
     const t = start + (end - start) * (i / Math.max(1, count - 1));
-    const word = words[i % words.length] || "\u68C0\u6D4B";
+    const word = safeWords[i % Math.max(1, safeWords.length)] || "\u68C0\u6D4B";
     p2.push();
     p2.translate(cx + Math.cos(t) * rx, cy + Math.sin(t) * ry);
     p2.rotate(t + Math.PI / 2);
@@ -95757,14 +95978,12 @@ function drawFaceFeature(p2, text2, x, y, size, angle, intensity) {
   p2.translate(x, y);
   p2.rotate(angle);
   p2.textAlign(p2.CENTER, p2.CENTER);
+  p2.textFont(displayFont);
   p2.textStyle(p2.BOLD);
   p2.textSize(size);
-  for (let i = 0; i < Math.round(intensity * 3); i += 1) {
-    p2.fill(0, 56);
-    p2.text(text2, -i * 3, i * 3);
-  }
+  drawGhostText(p2, squeezeText(text2, 4), intensity * 0.8, 0, 0);
   p2.fill(0);
-  p2.text(text2, 0, 0);
+  p2.text(squeezeText(text2, 4), 0, 0);
   p2.pop();
 }
 function firstString(...values) {
@@ -95775,11 +95994,34 @@ function firstString(...values) {
 }
 function arrayOfStrings(value) {
   if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
-  if (typeof value === "string") return value.split(/[，。！？、\n,;；]+/).map((item) => item.trim()).filter(Boolean);
+  if (typeof value === "string") return splitChinesePhrases(value);
   return [];
 }
-function jitter(range2, intensity) {
-  return (Math.random() - 0.5) * range2 * intensity;
+function splitChinesePhrases(text2) {
+  return String(text2 || "").split(/[，。！？、；：,.!?;:\n\r|/]+/).flatMap((item) => {
+    const clean = item.trim();
+    if (!clean) return [];
+    if (clean.length <= 7) return [clean];
+    const chunks = clean.match(/.{2,6}/g);
+    return chunks ?? [clean];
+  }).filter(Boolean);
+}
+function compactParagraphs(values) {
+  return values.map((value) => String(value || "").trim()).filter(Boolean);
+}
+function squeezeText(text2, maxLength) {
+  const value = String(text2 || "").trim();
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+function clamp3(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+function seededUnit(seed) {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+function jitterDet(range2, intensity, seed) {
+  return (seededUnit(seed + 101) - 0.5) * range2 * intensity;
 }
 
 // frontend/src/lib/printer.ts

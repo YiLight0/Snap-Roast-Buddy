@@ -172,6 +172,7 @@ let zoomHideTimer = 0;
 let albumSnapTimer = 0;
 let isSyncingAlbum = false;
 let visibleAlbumIndex = -1;
+let recordListVersion = 0;
 let funMessageIndex = 0;
 let regenerateDraftSettings: ProductSettings = { ...settings };
 let productRecordsLoadPromise: Promise<void> | undefined;
@@ -183,6 +184,7 @@ let activeGenerationPhase: GenerationPhase | undefined;
 let generationProgressFrame = 0;
 let displayedGenerationProgress = 0;
 const productRecordsPageSize = 5;
+const deletedRecordIds = new Set<string>();
 const localProductRecordsKey = "snap-roast-buddy.product-records.v1";
 const productRecordsDbName = "snap-roast-buddy";
 const productRecordsStoreName = "product-records";
@@ -698,6 +700,9 @@ async function confirmRegenerate() {
 async function deleteCurrentRecord() {
   const current = records[currentRecordIndex];
   if (!current) return;
+  const deletedIndex = currentRecordIndex;
+  deletedRecordIds.add(current.id);
+  invalidateRecordPages();
   try {
     await deleteProductRecord(current.id);
   } catch {
@@ -711,7 +716,9 @@ async function deleteCurrentRecord() {
     showCamera();
     return;
   }
-  showResult(Math.min(currentRecordIndex, records.length - 1));
+  const nextIndex = Math.min(deletedIndex, records.length - 1);
+  showResult(nextIndex);
+  if (!usingLocalRecordStore) void reloadProductRecordsAtIndex(nextIndex);
 }
 
 async function generateSnapRoastResult(imageUrl: string, productSettings: ProductSettings): Promise<PhotoRecord> {
@@ -1294,27 +1301,34 @@ function renderLatestThumb() {
 }
 
 async function loadProductRecords() {
+  const requestVersion = invalidateRecordPages();
   try {
     const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=0&limit=${productRecordsPageSize}&view=summary`);
-    const remoteRecords = [...(payload.records ?? [])].sort((a, b) => recordTimestamp(b) - recordTimestamp(a));
+    if (requestVersion !== recordListVersion) return;
+    const remoteRecords = [...(payload.records ?? [])].filter((record) => !deletedRecordIds.has(record.id)).sort((a, b) => recordTimestamp(b) - recordTimestamp(a));
     const localRecords = await readCachedProductRecords();
+    if (requestVersion !== recordListVersion) return;
     usingLocalRecordStore = remoteRecords.length === 0 && localRecords.length > 0;
     if (usingLocalRecordStore) {
-      productRecordsTotal = localRecords.length;
-      records = [...localRecords];
+      const nextLocalRecords = localRecords.filter((record) => !deletedRecordIds.has(record.id));
+      productRecordsTotal = nextLocalRecords.length;
+      records = [...nextLocalRecords];
     } else {
       productRecordsTotal = Math.max(payload.total ?? 0, remoteRecords.length);
       records = createRecordSlots(productRecordsTotal);
       placeLoadedRecords(0, remoteRecords, productRecordsTotal);
     }
+    clampCurrentRecordIndex();
     renderLatestThumb();
     void loadProductRecordAtIndex(0);
     if (!resultScreen.hidden) renderCurrentRecord();
   } catch {
+    if (requestVersion !== recordListVersion) return;
     usingLocalRecordStore = true;
-    const localRecords = await readCachedProductRecords();
+    const localRecords = (await readCachedProductRecords()).filter((record) => !deletedRecordIds.has(record.id));
     productRecordsTotal = localRecords.length;
     records = [...localRecords];
+    clampCurrentRecordIndex();
     renderLatestThumb();
     if (!resultScreen.hidden) renderCurrentRecord();
   }
@@ -1324,10 +1338,12 @@ async function loadProductRecordAtIndex(index: number) {
   if (usingLocalRecordStore || isHydratedRecord(records[index]) || index < 0) return;
   const pageOffset = Math.floor(index / productRecordsPageSize) * productRecordsPageSize;
   if (loadingRecordPages.has(pageOffset)) return;
+  const requestVersion = recordListVersion;
   loadingRecordPages.add(pageOffset);
   try {
     const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=${pageOffset}&limit=${productRecordsPageSize}&view=full`);
-    const nextRecords = payload.records ?? [];
+    if (requestVersion !== recordListVersion) return;
+    const nextRecords = (payload.records ?? []).filter((record) => !deletedRecordIds.has(record.id));
     const total = Math.max(payload.total ?? productRecordsTotal, pageOffset + nextRecords.length);
     if (total !== productRecordsTotal || records.length !== total) {
       productRecordsTotal = total;
@@ -1357,8 +1373,32 @@ function createRecordSlots(total: number): Array<PhotoRecord | undefined> {
 function placeLoadedRecords(offset: number, nextRecords: PhotoRecord[], total: number) {
   if (records.length !== total) records.length = total;
   nextRecords.forEach((record, index) => {
-    records[offset + index] = { ...records[offset + index], ...record };
+    if (!record?.id || deletedRecordIds.has(record.id)) return;
+    const targetIndex = offset + index;
+    const existingIndex = records.findIndex((item) => item?.id === record.id);
+    const slot = existingIndex >= 0 ? existingIndex : targetIndex;
+    const existing = records[slot];
+    records[slot] = existing?.id === record.id ? { ...existing, ...record } : record;
   });
+}
+
+function invalidateRecordPages() {
+  recordListVersion += 1;
+  loadingRecordPages.clear();
+  return recordListVersion;
+}
+
+function clampCurrentRecordIndex() {
+  currentRecordIndex = records.length ? Math.max(0, Math.min(currentRecordIndex, records.length - 1)) : 0;
+  visibleAlbumIndex = currentRecordIndex;
+}
+
+async function reloadProductRecordsAtIndex(index: number) {
+  currentRecordIndex = Math.max(0, index);
+  productRecordsLoadPromise = loadProductRecords();
+  await productRecordsLoadPromise;
+  currentRecordIndex = records.length ? Math.min(index, records.length - 1) : 0;
+  if (!resultScreen.hidden) renderCurrentRecord();
 }
 
 function prependLoadedRecord(record: PhotoRecord) {

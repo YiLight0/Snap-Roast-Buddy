@@ -29,6 +29,7 @@ Thumbs.db
 # Local product data and personal test photos
 local-data/
 local-photos/
+display-board/
 
 # ESP32 sketch local secrets (real WiFi credentials, do NOT commit)
 hardware/esp32/**/secrets.h

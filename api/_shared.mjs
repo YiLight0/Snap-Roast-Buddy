@@ -244,14 +244,14 @@ export async function handleListProductRecords(req, res) {
     const limit = Math.max(0, Math.min(limitParam || 24, 24));
     const view = cleanText(url.searchParams.get("view") || "full");
     const listQuery = new URLSearchParams({
-      select: view === "summary" ? "id,created_at,layout_type,generation_mode,roast_level,sketch_mode,caption" : "record,original_image_url,ticket_html,ticket_text,sketch_image_url",
-      order: "created_at.desc",
+      select: view === "summary" ? "id,created_at,layout_type,generation_mode,roast_level,sketch_mode,caption" : "id,created_at,layout_type,generation_mode,roast_level,sketch_mode,caption,record,original_image_url,ticket_html,ticket_text,sketch_image_url",
+      order: "created_at.desc,id.desc",
       offset: String(offset),
       limit: String(limit)
     });
     const countQuery = new URLSearchParams({
       select: "id",
-      order: "created_at.desc",
+      order: "created_at.desc,id.desc",
       limit: "1"
     });
 
