@@ -1,3 +1,4 @@
+
 // Snap Roast Buddy - WiFi 打印验证 sketch
 //
 // 在你已经跑通的 WiFi 连接 + Printer.println("Hello") 基础上扩展：
@@ -21,9 +22,34 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HardwareSerial.h>
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include <Preferences.h>
+#include <DNSServer.h>
 
-const char* ssid     = "iPhone on the beach";
-const char* password = "Qwer123321";
+// ---- 硬件快门按钮 + MQTT 中转 ----
+#define BUTTON_PIN 4
+#define BUTTON_DEBOUNCE_MS 30
+const char* MQTT_HOST = "broker.emqx.io";
+const int   MQTT_PORT = 8883;                                      // 原生 MQTT over TLS
+const char* MQTT_TOPIC = "snap-roast/db298f0eed7aa043/shutter";    // 与浏览器端必须一致
+
+static WiFiClientSecure mqttNet;
+static PubSubClient     mqtt(mqttNet);
+
+static int      btnLastLevel  = LOW;
+static uint32_t btnLastEdgeMs = 0;
+static uint32_t mqttLastTryMs = 0;
+
+// ---- WiFi 配网相关 ----
+static Preferences prefs;
+static DNSServer   dnsServer;
+static bool        inApMode = false;
+static const uint32_t LONG_PRESS_MS = 5000;
+static uint32_t btnPressStartMs = 0;
+static bool     longPressFired  = false;
+static const uint32_t STA_CONNECT_TIMEOUT_MS = 15000;
+static const char* AP_SSID = "SnapRoast-Setup";
 
 // 打印机 DTR 接 ESP32 GPIO 41（硬件流控）
 // MY-628 DTR：打印机输出，告诉主机自己是否能接收数据
@@ -34,6 +60,268 @@ const char* password = "Qwer123321";
 #define DTR_WAIT_TIMEOUT_MS  500
 
 static uint32_t dtrTimeoutCount = 0;
+
+// ---- WiFi 凭据持久化（NVS / Preferences namespace="wifi"） ----
+static String loadSavedSsid() {
+  return prefs.getString("ssid", "");
+}
+static String loadSavedPass() {
+  return prefs.getString("pass", "");
+}
+static void saveCreds(const String& ssid, const String& pass) {
+  prefs.putString("ssid", ssid);
+  prefs.putString("pass", pass);
+  Serial.print("已保存 SSID: ");
+  Serial.println(ssid);
+}
+static void clearCreds() {
+  prefs.remove("ssid");
+  prefs.remove("pass");
+  Serial.println("已清除保存的 WiFi 凭据");
+}
+
+// 全局打印机串口 + WebServer 实例。声明位置必须早于下面任何 handler，
+// 因为后续 handler 函数在文本顺序上引用 `server`（C++ 全局变量按文本可见性解析）。
+HardwareSerial Printer(1);
+WebServer server(80);
+
+// ---- AP 模式：配网 Web handler ----
+static void handleConfigRoot() {
+  sendCors();
+  String html;
+  html.reserve(4096);
+  html += "<!doctype html><html lang=\"zh-CN\"><head>";
+  html += "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">";
+  html += "<title>Snap Roast · 配置 WiFi</title><style>";
+  html += "*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;padding:20px;max-width:480px;margin:0 auto;background:#f7f7f7;color:#222}";
+  html += "h1{font-size:20px;margin:8px 0 16px}";
+  html += ".panel{background:#fff;padding:16px;border-radius:10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}";
+  html += ".list{max-height:240px;overflow:auto;border:1px solid #eee;border-radius:8px}";
+  html += ".item{padding:10px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;justify-content:space-between;align-items:center}";
+  html += ".item:last-child{border-bottom:none}.item:active{background:#eef}.item.sel{background:#e6f0ff}";
+  html += ".rssi{color:#888;font-size:12px}";
+  html += "label{display:block;font-size:13px;color:#666;margin-top:10px}";
+  html += "input{width:100%;padding:10px;font-size:15px;border:1px solid #ddd;border-radius:6px;margin-top:4px}";
+  html += "button{width:100%;padding:12px;font-size:15px;border:none;border-radius:8px;background:#06f;color:#fff;margin-top:16px;cursor:pointer}";
+  html += "button.secondary{background:#888;margin-top:8px}.muted{color:#666;font-size:13px;margin-top:8px}";
+  html += "#status{margin-top:12px;font-size:13px;color:#06a}#status.err{color:#c00}";
+  html += "</style></head><body>";
+  html += "<h1>Snap Roast Buddy · 配置 WiFi</h1>";
+  html += "<div class=\"panel\"><div>附近的 WiFi（点击选择）：</div>";
+  html += "<div id=\"list\" class=\"list\"><div class=\"muted\" style=\"padding:12px\">扫描中...</div></div>";
+  html += "<button class=\"secondary\" onclick=\"loadScan()\">🔄 重新扫描</button></div>";
+  html += "<div class=\"panel\">";
+  html += "<label>已选 SSID</label><input id=\"ssid\" placeholder=\"点上面列表，或手动输入\">";
+  html += "<label>密码</label><input id=\"pass\" type=\"password\" placeholder=\"WiFi 密码\">";
+  html += "<button onclick=\"save()\">保存并连接</button>";
+  html += "<div id=\"status\"></div></div>";
+  html += "<script>";
+  html += "const $=(id)=>document.getElementById(id);";
+  html += "async function loadScan(){const l=$('list');l.innerHTML='<div class=\"muted\" style=\"padding:12px\">扫描中...</div>';";
+  html += "try{const r=await fetch('/scan');const arr=await r.json();";
+  html += "if(!arr.length){l.innerHTML='<div class=\"muted\" style=\"padding:12px\">未扫描到 WiFi</div>';return;}";
+  html += "l.innerHTML='';arr.forEach(n=>{const d=document.createElement('div');d.className='item';";
+  html += "d.innerHTML='<span>📶 '+n.ssid.replace(/</g,'&lt;')+'</span><span class=\"rssi\">'+n.rssi+' dBm</span>';";
+  html += "d.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');$('ssid').value=n.ssid;$('pass').focus();};";
+  html += "l.appendChild(d);});}catch(e){l.innerHTML='<div class=\"muted err\" style=\"padding:12px\">扫描失败: '+e.message+'</div>';}}";
+  html += "async function save(){const s=$('status');s.classList.remove('err');";
+  html += "const ssid=$('ssid').value.trim();const pass=$('pass').value;";
+  html += "if(!ssid){s.textContent='请先选择或输入 SSID';s.classList.add('err');return;}";
+  html += "s.textContent='保存中...';";
+  html += "try{const r=await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ssid,pass})});";
+  html += "if(!r.ok){const t=await r.text();s.textContent='保存失败 HTTP '+r.status+': '+t;s.classList.add('err');return;}";
+  html += "document.body.innerHTML='<h1>✅ 已保存</h1><div class=\"panel\"><p>设备即将重启并连接 <b>'+ssid+'</b>。</p><p>请把手机 WiFi 切回原热点，等设备约 15 秒。</p></div>';";
+  html += "}catch(e){s.textContent='请求出错: '+e.message;s.classList.add('err');}}";
+  html += "loadScan();";
+  html += "</script></body></html>";
+  server.send(200, "text/html; charset=utf-8", html);
+}
+
+// 扫描周围 WiFi，返回 JSON 数组 [{ssid,rssi}]，按 RSSI 降序去重
+static void handleScan() {
+  sendCors();
+  Serial.println("/scan 开始扫描...");
+  int n = WiFi.scanNetworks(/*async=*/false, /*show_hidden=*/false);
+  Serial.printf("/scan 扫到 %d 个网络\n", n);
+
+  // 按 RSSI 降序排序索引，n 通常 < 30，插入排序足够。
+  // 同 SSID 取最强信号那一条（排序后遇到重复 SSID 必然更弱，直接跳过）。
+  const int MAX_SCAN = 64;
+  int idx[MAX_SCAN];
+  int count = n > MAX_SCAN ? MAX_SCAN : (n < 0 ? 0 : n);
+  for (int i = 0; i < count; i++) idx[i] = i;
+  for (int i = 1; i < count; i++) {
+    int key = idx[i];
+    int32_t keyRssi = WiFi.RSSI(key);
+    int j = i - 1;
+    while (j >= 0 && WiFi.RSSI(idx[j]) < keyRssi) {
+      idx[j + 1] = idx[j];
+      j--;
+    }
+    idx[j + 1] = key;
+  }
+
+  String resp = "[";
+  bool first = true;
+  for (int k = 0; k < count; k++) {
+    int i = idx[k];
+    String s = WiFi.SSID(i);
+    if (s.length() == 0) continue;
+    int32_t rssi = WiFi.RSSI(i);
+    bool dup = false;
+    for (int kk = 0; kk < k; kk++) {
+      if (WiFi.SSID(idx[kk]) == s) { dup = true; break; }
+    }
+    if (dup) continue;
+    if (!first) resp += ",";
+    first = false;
+    // SSID 转 JSON 字符串：转义 \ " 和控制字符
+    String esc;
+    esc.reserve(s.length() + 4);
+    for (size_t k = 0; k < s.length(); k++) {
+      char c = s[k];
+      if (c == '\\' || c == '"') { esc += '\\'; esc += c; }
+      else if ((uint8_t)c < 0x20) { /* 跳过控制字符 */ }
+      else esc += c;
+    }
+    resp += "{\"ssid\":\"" + esc + "\",\"rssi\":" + String((int)rssi) + "}";
+  }
+  resp += "]";
+  WiFi.scanDelete();
+  server.send(200, "application/json", resp);
+}
+
+// 解析 POST body JSON {"ssid":"...","pass":"..."}，写 NVS 后 1.5s 重启。
+// 手写极小 JSON 解析：只处理两个 string 字段，不依赖 ArduinoJson 库。
+static String jsonExtractString(const String& body, const char* key) {
+  String needle = String("\"") + key + "\"";
+  int kp = body.indexOf(needle);
+  if (kp < 0) return "";
+  int colon = body.indexOf(':', kp + needle.length());
+  if (colon < 0) return "";
+  int q1 = body.indexOf('"', colon + 1);
+  if (q1 < 0) return "";
+  String out;
+  out.reserve(64);
+  for (int i = q1 + 1; i < (int)body.length(); i++) {
+    char c = body[i];
+    if (c == '\\' && i + 1 < (int)body.length()) {
+      char n = body[++i];
+      if      (n == 'n')  out += '\n';
+      else if (n == 't')  out += '\t';
+      else if (n == 'r')  out += '\r';
+      else                out += n;     // \\ \" \/ 等都按字面下一字符处理
+    } else if (c == '"') {
+      return out;
+    } else {
+      out += c;
+    }
+  }
+  return "";  // 找不到收尾引号
+}
+
+static void handleSave() {
+  sendCors();
+  String body = server.arg("plain");
+  Serial.print("/save body 长度: ");
+  Serial.println(body.length());
+
+  String ssid = jsonExtractString(body, "ssid");
+  String pass = jsonExtractString(body, "pass");
+  if (ssid.length() == 0) {
+    server.send(400, "text/plain", "missing ssid");
+    return;
+  }
+  saveCreds(ssid, pass);
+  server.send(200, "text/plain", "ok");
+  Serial.println("1.5 秒后重启...");
+  delay(1500);
+  ESP.restart();
+}
+
+// catch-all：iOS/Android captive portal 探测域名都重定向到 /
+static void handleCaptiveRedirect() {
+  server.sendHeader("Location", "http://192.168.4.1/", true);
+  server.send(302, "text/plain", "");
+}
+
+// 用 NVS 里保存的账密尝试 STA 连接，timeoutMs 内成功返回 true
+static bool tryConnectSavedWiFi(uint32_t timeoutMs) {
+  String s = loadSavedSsid();
+  String p = loadSavedPass();
+  if (s.length() == 0) return false;
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(s.c_str(), p.c_str());
+  Serial.print("尝试连接 ");
+  Serial.print(s);
+  Serial.print(" ");
+  uint32_t start = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    if (millis() - start > timeoutMs) {
+      Serial.println(" 超时");
+      WiFi.disconnect(true);
+      return false;
+    }
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.print("已连接！ESP32 IP: ");
+  Serial.println(WiFi.localIP());
+  return true;
+}
+
+// STA 模式下注册全部打印路由 + 初始化 MQTT
+static void enterStaMode() {
+  inApMode = false;
+
+  server.on("/",      HTTP_GET,     handleRoot);
+  server.on("/ping",  HTTP_GET,     handlePing);
+  server.on("/print", HTTP_GET,     handlePrintGet);
+  server.on("/print", HTTP_POST,    handlePrintPost);
+  server.on("/print", HTTP_OPTIONS, handleOptions);
+  server.on("/print-raster", HTTP_POST,    handlePrintRaster);
+  server.on("/print-raster", HTTP_OPTIONS, handleOptions);
+  server.on("/print-chunk",  HTTP_POST,    handlePrintChunk);
+  server.on("/print-chunk",  HTTP_OPTIONS, handleOptions);
+  server.on("/print-bridge", HTTP_GET,     handlePrintBridge);
+  server.onNotFound([]() {
+    sendCors();
+    server.send(404, "text/plain", "Not found");
+  });
+  server.begin();
+  Serial.println("HTTP server 已启动 (端口 80)");
+  Serial.println("浏览器访问: http://" + WiFi.localIP().toString() + "/");
+
+  mqttNet.setInsecure();
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  Serial.println("MQTT 客户端已初始化, topic=" + String(MQTT_TOPIC));
+}
+
+static void enterApMode() {
+  inApMode = true;
+  Serial.println("==== 进入 AP 配网模式 ====");
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID);    // 开放无密码
+  IPAddress apIp = WiFi.softAPIP();
+  Serial.print("AP IP: ");
+  Serial.println(apIp);
+
+  // DNS 把所有域名解析到 AP IP，触发 captive portal 弹窗
+  dnsServer.start(53, "*", apIp);
+
+  // 只注册配网相关路由；打印路由在 AP 模式下不可用
+  server.on("/", HTTP_GET, handleConfigRoot);
+  server.on("/scan", HTTP_GET, handleScan);
+  server.on("/save", HTTP_POST,    handleSave);
+  server.on("/save", HTTP_OPTIONS, handleOptions);
+  server.onNotFound(handleCaptiveRedirect);
+  server.begin();
+  Serial.println("配网 HTTP server 已启动");
+  Serial.println("浏览器访问 http://192.168.4.1/");
+}
 
 // ---- 分块打印会话状态（/print-chunk 用） ----
 // ESP32 WebServer 的 form-urlencoded / text/plain body 解析对 60KB+ 不可靠：
@@ -48,9 +336,6 @@ static int  printSessionTotalChunks = 0;
 static uint32_t printSessionLastMillis = 0;
 static uint32_t printSessionBytesOut = 0;
 static const uint32_t PRINT_SESSION_TIMEOUT_MS = 30000;
-
-HardwareSerial Printer(1);
-WebServer server(80);
 
 // 检查 DTR 是否 READY，否则忙等到 READY 或超时降级。
 // 超时降级：避免 DTR 接错/极性反时整个 HTTP handler 卡死。
@@ -427,44 +712,94 @@ static void handlePrintChunk() {
   }
 }
 
+// 非阻塞重连：每 3 秒最多尝试一次，避免 loop 卡死
+static void mqttEnsureConnected() {
+  if (mqtt.connected()) return;
+  uint32_t now = millis();
+  if (now - mqttLastTryMs < 3000) return;
+  mqttLastTryMs = now;
+
+  String clientId = "snap-roast-esp32-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+  Serial.print("MQTT 连接中... ");
+  if (mqtt.connect(clientId.c_str())) {
+    Serial.println("OK");
+  } else {
+    Serial.print("失败, state=");
+    Serial.println(mqtt.state());
+  }
+}
+
+// STA 模式：边沿检测短按发布 MQTT；持续按下 5s 触发长按 → 清 NVS + 重启
+static void buttonPollStaMode() {
+  int level = digitalRead(BUTTON_PIN);
+  uint32_t now = millis();
+
+  // 上升沿（按下瞬间）
+  if (level == HIGH && btnLastLevel == LOW && (now - btnLastEdgeMs) > BUTTON_DEBOUNCE_MS) {
+    btnLastEdgeMs   = now;
+    btnPressStartMs = now;
+    longPressFired  = false;
+    btnLastLevel    = HIGH;
+    return;
+  }
+
+  // 持续按下 → 检查是否达到长按阈值
+  if (level == HIGH && btnLastLevel == HIGH && !longPressFired) {
+    if ((now - btnPressStartMs) >= LONG_PRESS_MS) {
+      longPressFired = true;
+      Serial.println("长按 5s → 清 WiFi 配置并重启");
+      clearCreds();
+      delay(200);
+      ESP.restart();
+    }
+    return;
+  }
+
+  // 下降沿（松开）
+  if (level == LOW && btnLastLevel == HIGH && (now - btnLastEdgeMs) > BUTTON_DEBOUNCE_MS) {
+    btnLastEdgeMs = now;
+    btnLastLevel  = LOW;
+    if (!longPressFired) {
+      // 短按 → 原 MQTT 快门发布逻辑
+      char payload[32];
+      snprintf(payload, sizeof(payload), "{\"ts\":%lu}", now);
+      bool ok = mqtt.publish(MQTT_TOPIC, payload);
+      Serial.printf("短按 → publish %s (ok=%d)\n", payload, ok ? 1 : 0);
+    }
+    return;
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   pinMode(DTR_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT);
   Printer.begin(57600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
   delay(500);
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  prefs.begin("wifi", /*readOnly=*/false);
 
-  Serial.print("正在连接热点");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  String savedSsid = loadSavedSsid();
+  if (savedSsid.length() > 0 && tryConnectSavedWiFi(STA_CONNECT_TIMEOUT_MS)) {
+    enterStaMode();
+  } else {
+    Serial.println(savedSsid.length() == 0
+                   ? "NVS 无 WiFi 凭据 → 进 AP 配网"
+                   : "保存的 WiFi 连不上 → 进 AP 配网");
+    enterApMode();
   }
-  Serial.println();
-  Serial.println("已连接！");
-  Serial.print("ESP32 IP: ");
-  Serial.println(WiFi.localIP());
-
-  server.on("/",      HTTP_GET,     handleRoot);
-  server.on("/ping",  HTTP_GET,     handlePing);
-  server.on("/print", HTTP_GET,     handlePrintGet);
-  server.on("/print", HTTP_POST,    handlePrintPost);
-  server.on("/print", HTTP_OPTIONS, handleOptions);
-  server.on("/print-raster", HTTP_POST,    handlePrintRaster);
-  server.on("/print-raster", HTTP_OPTIONS, handleOptions);
-  server.on("/print-chunk",  HTTP_POST,    handlePrintChunk);
-  server.on("/print-chunk",  HTTP_OPTIONS, handleOptions);
-  server.on("/print-bridge", HTTP_GET,     handlePrintBridge);
-  server.onNotFound([]() {
-    sendCors();
-    server.send(404, "text/plain", "Not found");
-  });
-  server.begin();
-  Serial.println("HTTP server 已启动 (端口 80)");
-  Serial.println("浏览器访问: http://" + WiFi.localIP().toString() + "/");
 }
 
 void loop() {
-  server.handleClient();
+  if (inApMode) {
+    dnsServer.processNextRequest();
+    server.handleClient();
+    // AP 模式下按钮无功能（长按重置只在 STA 模式有意义；
+    // AP 模式本身就是"重置后的状态"，再触发 reset 也是回到这里）
+  } else {
+    server.handleClient();
+    mqttEnsureConnected();
+    mqtt.loop();
+    buttonPollStaMode();
+  }
 }

@@ -18,6 +18,7 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
+    "mqtt": "^5.15.1",
     "p5": "^2.2.3"
   }
 }
