@@ -83,6 +83,40 @@ static void clearCreds() {
   Serial.println("已清除保存的 WiFi 凭据");
 }
 
+// ---- AP 模式：配网 Web handler ----
+static void handleConfigRoot() {
+  sendCors();
+  server.send(200, "text/html; charset=utf-8",
+              "<!doctype html><meta charset=utf-8><h1>SnapRoast 配网</h1><p>占位页（Task 3 替换）</p>");
+}
+
+// catch-all：iOS/Android captive portal 探测域名都重定向到 /
+static void handleCaptiveRedirect() {
+  server.sendHeader("Location", "http://192.168.4.1/", true);
+  server.send(302, "text/plain", "");
+}
+
+static void enterApMode() {
+  inApMode = true;
+  Serial.println("==== 进入 AP 配网模式 ====");
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID);    // 开放无密码
+  IPAddress apIp = WiFi.softAPIP();
+  Serial.print("AP IP: ");
+  Serial.println(apIp);
+
+  // DNS 把所有域名解析到 AP IP，触发 captive portal 弹窗
+  dnsServer.start(53, "*", apIp);
+
+  // 只注册配网相关路由；打印路由在 AP 模式下不可用
+  server.on("/", HTTP_GET, handleConfigRoot);
+  server.onNotFound(handleCaptiveRedirect);
+  server.begin();
+  Serial.println("配网 HTTP server 已启动");
+  Serial.println("浏览器访问 http://192.168.4.1/");
+}
+
 // ---- 分块打印会话状态（/print-chunk 用） ----
 // ESP32 WebServer 的 form-urlencoded / text/plain body 解析对 60KB+ 不可靠：
 // 1) 库内部 client.readBytes(buf, contentLength) 默认 1000ms 超时，跨 WiFi 收
