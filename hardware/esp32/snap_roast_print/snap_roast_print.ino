@@ -135,6 +135,43 @@ static void handleConfigRoot() {
   server.send(200, "text/html; charset=utf-8", html);
 }
 
+// 扫描周围 WiFi，返回 JSON 数组 [{ssid,rssi}]，按 RSSI 降序去重
+static void handleScan() {
+  sendCors();
+  Serial.println("/scan 开始扫描...");
+  int n = WiFi.scanNetworks(/*async=*/false, /*show_hidden=*/false);
+  Serial.printf("/scan 扫到 %d 个网络\n", n);
+
+  // 去重：同 SSID 保留最强 RSSI。简单 O(n^2) 即可，n 通常 < 30。
+  String resp = "[";
+  bool first = true;
+  for (int i = 0; i < n; i++) {
+    String s = WiFi.SSID(i);
+    if (s.length() == 0) continue;
+    int32_t rssi = WiFi.RSSI(i);
+    bool dup = false;
+    for (int j = 0; j < i; j++) {
+      if (WiFi.SSID(j) == s && WiFi.RSSI(j) >= rssi) { dup = true; break; }
+    }
+    if (dup) continue;
+    if (!first) resp += ",";
+    first = false;
+    // SSID 转 JSON 字符串：转义 \ " 和控制字符
+    String esc;
+    esc.reserve(s.length() + 4);
+    for (size_t k = 0; k < s.length(); k++) {
+      char c = s[k];
+      if (c == '\\' || c == '"') { esc += '\\'; esc += c; }
+      else if ((uint8_t)c < 0x20) { /* 跳过控制字符 */ }
+      else esc += c;
+    }
+    resp += "{\"ssid\":\"" + esc + "\",\"rssi\":" + String((int)rssi) + "}";
+  }
+  resp += "]";
+  WiFi.scanDelete();
+  server.send(200, "application/json", resp);
+}
+
 // catch-all：iOS/Android captive portal 探测域名都重定向到 /
 static void handleCaptiveRedirect() {
   server.sendHeader("Location", "http://192.168.4.1/", true);
@@ -156,6 +193,7 @@ static void enterApMode() {
 
   // 只注册配网相关路由；打印路由在 AP 模式下不可用
   server.on("/", HTTP_GET, handleConfigRoot);
+  server.on("/scan", HTTP_GET, handleScan);
   server.onNotFound(handleCaptiveRedirect);
   server.begin();
   Serial.println("配网 HTTP server 已启动");
