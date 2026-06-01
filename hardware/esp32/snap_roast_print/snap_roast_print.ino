@@ -64,6 +64,25 @@ const char* password = "Qwer123321";
 
 static uint32_t dtrTimeoutCount = 0;
 
+// ---- WiFi 凭据持久化（NVS / Preferences namespace="wifi"） ----
+static String loadSavedSsid() {
+  return prefs.getString("ssid", "");
+}
+static String loadSavedPass() {
+  return prefs.getString("pass", "");
+}
+static void saveCreds(const String& ssid, const String& pass) {
+  prefs.putString("ssid", ssid);
+  prefs.putString("pass", pass);
+  Serial.print("已保存 SSID: ");
+  Serial.println(ssid);
+}
+static void clearCreds() {
+  prefs.remove("ssid");
+  prefs.remove("pass");
+  Serial.println("已清除保存的 WiFi 凭据");
+}
+
 // ---- 分块打印会话状态（/print-chunk 用） ----
 // ESP32 WebServer 的 form-urlencoded / text/plain body 解析对 60KB+ 不可靠：
 // 1) 库内部 client.readBytes(buf, contentLength) 默认 1000ms 超时，跨 WiFi 收
@@ -494,6 +513,7 @@ void setup() {
   pinMode(DTR_PIN, INPUT_PULLUP);
   Printer.begin(57600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
   delay(500);
+  prefs.begin("wifi", /*readOnly=*/false);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
