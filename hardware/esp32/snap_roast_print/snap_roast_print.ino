@@ -139,16 +139,33 @@ static void handleScan() {
   int n = WiFi.scanNetworks(/*async=*/false, /*show_hidden=*/false);
   Serial.printf("/scan 扫到 %d 个网络\n", n);
 
-  // 去重：同 SSID 保留最强 RSSI。简单 O(n^2) 即可，n 通常 < 30。
+  // 按 RSSI 降序排序索引，n 通常 < 30，插入排序足够。
+  // 同 SSID 取最强信号那一条（排序后遇到重复 SSID 必然更弱，直接跳过）。
+  const int MAX_SCAN = 64;
+  int idx[MAX_SCAN];
+  int count = n > MAX_SCAN ? MAX_SCAN : (n < 0 ? 0 : n);
+  for (int i = 0; i < count; i++) idx[i] = i;
+  for (int i = 1; i < count; i++) {
+    int key = idx[i];
+    int32_t keyRssi = WiFi.RSSI(key);
+    int j = i - 1;
+    while (j >= 0 && WiFi.RSSI(idx[j]) < keyRssi) {
+      idx[j + 1] = idx[j];
+      j--;
+    }
+    idx[j + 1] = key;
+  }
+
   String resp = "[";
   bool first = true;
-  for (int i = 0; i < n; i++) {
+  for (int k = 0; k < count; k++) {
+    int i = idx[k];
     String s = WiFi.SSID(i);
     if (s.length() == 0) continue;
     int32_t rssi = WiFi.RSSI(i);
     bool dup = false;
-    for (int j = 0; j < i; j++) {
-      if (WiFi.SSID(j) == s && WiFi.RSSI(j) >= rssi) { dup = true; break; }
+    for (int kk = 0; kk < k; kk++) {
+      if (WiFi.SSID(idx[kk]) == s) { dup = true; break; }
     }
     if (dup) continue;
     if (!first) resp += ",";
