@@ -49,6 +49,9 @@ static const uint32_t LONG_PRESS_MS = 5000;
 static uint32_t btnPressStartMs = 0;
 static bool     longPressFired  = false;
 static const uint32_t STA_CONNECT_TIMEOUT_MS = 15000;
+static const uint32_t STA_RECONNECT_INTERVAL_MS = 5000;
+static uint32_t staLastReconnectTryMs = 0;
+static wl_status_t staLastStatus = WL_IDLE_STATUS;
 static const char* AP_SSID = "SnapRoast-Setup";
 
 // 打印机 DTR 接 ESP32 GPIO 41（硬件流控）
@@ -246,21 +249,32 @@ static void handleCaptiveRedirect() {
 }
 
 // 用 NVS 里保存的账密尝试 STA 连接，timeoutMs 内成功返回 true
-static bool tryConnectSavedWiFi(uint32_t timeoutMs) {
+static bool startSavedWiFi(bool keepApAlive) {
   String s = loadSavedSsid();
   String p = loadSavedPass();
   if (s.length() == 0) return false;
 
-  WiFi.mode(WIFI_STA);
+  WiFi.persistent(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.setSleep(false);
+  WiFi.mode(keepApAlive ? WIFI_AP_STA : WIFI_STA);
   WiFi.begin(s.c_str(), p.c_str());
-  Serial.print("尝试连接 ");
-  Serial.print(s);
-  Serial.print(" ");
+
+  Serial.print("尝试连接保存的 WiFi: ");
+  Serial.println(s);
+  return true;
+}
+
+static bool tryConnectSavedWiFi(uint32_t timeoutMs) {
+  String s = loadSavedSsid();
+  if (s.length() == 0) return false;
+
+  startSavedWiFi(false);
+  Serial.print("等待连接 ");
   uint32_t start = millis();
   while (WiFi.status() != WL_CONNECTED) {
     if (millis() - start > timeoutMs) {
       Serial.println(" 超时");
-      WiFi.disconnect(true);
       return false;
     }
     delay(500);
@@ -269,12 +283,17 @@ static bool tryConnectSavedWiFi(uint32_t timeoutMs) {
   Serial.println();
   Serial.print("已连接！ESP32 IP: ");
   Serial.println(WiFi.localIP());
+  staLastStatus = WL_CONNECTED;
   return true;
 }
 
 // STA 模式下注册全部打印路由 + 初始化 MQTT
 static void enterStaMode() {
   inApMode = false;
+  staLastReconnectTryMs = 0;
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.setSleep(false);
 
   server.on("/",      HTTP_GET,     handleRoot);
   server.on("/ping",  HTTP_GET,     handlePing);
@@ -303,7 +322,7 @@ static void enterApMode() {
   inApMode = true;
   Serial.println("==== 进入 AP 配网模式 ====");
 
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(AP_SSID);    // 开放无密码
   IPAddress apIp = WiFi.softAPIP();
   Serial.print("AP IP: ");
@@ -319,6 +338,8 @@ static void enterApMode() {
   server.on("/save", HTTP_OPTIONS, handleOptions);
   server.onNotFound(handleCaptiveRedirect);
   server.begin();
+  staLastReconnectTryMs = 0;
+  startSavedWiFi(true);
   Serial.println("配网 HTTP server 已启动");
   Serial.println("浏览器访问 http://192.168.4.1/");
 }
@@ -712,8 +733,56 @@ static void handlePrintChunk() {
   }
 }
 
-// 非阻塞重连：每 3 秒最多尝试一次，避免 loop 卡死
+// 非阻塞重连：每 5 秒最多尝试一次，避免 loop 卡死
+static bool reconnectTimerReady() {
+  uint32_t now = millis();
+  if (now - staLastReconnectTryMs < STA_RECONNECT_INTERVAL_MS) return false;
+  staLastReconnectTryMs = now;
+  return true;
+}
+
+static void pollSavedWiFiInApMode() {
+  if (loadSavedSsid().length() == 0) return;
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Saved WiFi is back, switching to STA. IP: ");
+    Serial.println(WiFi.localIP());
+    dnsServer.stop();
+    server.stop();
+    enterStaMode();
+    staLastStatus = WL_CONNECTED;
+    return;
+  }
+
+  if (reconnectTimerReady()) {
+    startSavedWiFi(true);
+  }
+}
+
+static void maintainStaWiFi() {
+  wl_status_t status = WiFi.status();
+  if (status == WL_CONNECTED) {
+    if (staLastStatus != WL_CONNECTED) {
+      Serial.print("WiFi reconnected. IP: ");
+      Serial.println(WiFi.localIP());
+    }
+    staLastStatus = status;
+    return;
+  }
+
+  if (staLastStatus == WL_CONNECTED) {
+    Serial.println("WiFi disconnected, will reconnect to saved hotspot.");
+    mqtt.disconnect();
+  }
+  staLastStatus = status;
+
+  if (reconnectTimerReady()) {
+    startSavedWiFi(false);
+  }
+}
+
 static void mqttEnsureConnected() {
+  if (WiFi.status() != WL_CONNECTED) return;
   if (mqtt.connected()) return;
   uint32_t now = millis();
   if (now - mqttLastTryMs < 3000) return;
@@ -794,12 +863,14 @@ void loop() {
   if (inApMode) {
     dnsServer.processNextRequest();
     server.handleClient();
+    pollSavedWiFiInApMode();
     // AP 模式下按钮无功能（长按重置只在 STA 模式有意义；
     // AP 模式本身就是"重置后的状态"，再触发 reset 也是回到这里）
   } else {
+    maintainStaWiFi();
     server.handleClient();
     mqttEnsureConnected();
-    mqtt.loop();
+    if (WiFi.status() == WL_CONNECTED) mqtt.loop();
     buttonPollStaMode();
   }
 }
