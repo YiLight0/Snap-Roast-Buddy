@@ -51,9 +51,6 @@ static bool     longPressFired  = false;
 static const uint32_t STA_CONNECT_TIMEOUT_MS = 15000;
 static const char* AP_SSID = "SnapRoast-Setup";
 
-const char* ssid     = "iPhone on the beach";
-const char* password = "Qwer123321";
-
 // 打印机 DTR 接 ESP32 GPIO 41（硬件流控）
 // MY-628 DTR：打印机输出，告诉主机自己是否能接收数据
 // 约定（最常见 ESC/POS）：LOW = READY（可接收），HIGH = BUSY（缓冲将满）
@@ -732,44 +729,21 @@ static void buttonPoll() {
 void setup() {
   Serial.begin(115200);
   pinMode(DTR_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT);
   Printer.begin(57600, SERIAL_8N1, 1, 2);  // RX=1, TX=2
   delay(500);
+
   prefs.begin("wifi", /*readOnly=*/false);
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  Serial.print("正在连接热点");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  String savedSsid = loadSavedSsid();
+  if (savedSsid.length() > 0 && tryConnectSavedWiFi(STA_CONNECT_TIMEOUT_MS)) {
+    enterStaMode();
+  } else {
+    Serial.println(savedSsid.length() == 0
+                   ? "NVS 无 WiFi 凭据 → 进 AP 配网"
+                   : "保存的 WiFi 连不上 → 进 AP 配网");
+    enterApMode();
   }
-  Serial.println();
-  Serial.println("已连接！");
-  Serial.print("ESP32 IP: ");
-  Serial.println(WiFi.localIP());
-
-  server.on("/",      HTTP_GET,     handleRoot);
-  server.on("/ping",  HTTP_GET,     handlePing);
-  server.on("/print", HTTP_GET,     handlePrintGet);
-  server.on("/print", HTTP_POST,    handlePrintPost);
-  server.on("/print", HTTP_OPTIONS, handleOptions);
-  server.on("/print-raster", HTTP_POST,    handlePrintRaster);
-  server.on("/print-raster", HTTP_OPTIONS, handleOptions);
-  server.on("/print-chunk",  HTTP_POST,    handlePrintChunk);
-  server.on("/print-chunk",  HTTP_OPTIONS, handleOptions);
-  server.on("/print-bridge", HTTP_GET,     handlePrintBridge);
-  server.onNotFound([]() {
-    sendCors();
-    server.send(404, "text/plain", "Not found");
-  });
-  server.begin();
-  Serial.println("HTTP server 已启动 (端口 80)");
-  Serial.println("浏览器访问: http://" + WiFi.localIP().toString() + "/");
-  pinMode(BUTTON_PIN, INPUT);          // 模块自带下拉
-  mqttNet.setInsecure();               // 跳过证书校验：公共 broker 不必校验
-  mqtt.setServer(MQTT_HOST, MQTT_PORT);
-  Serial.println("MQTT 客户端已初始化, topic=" + String(MQTT_TOPIC));
 }
 
 void loop() {
