@@ -747,8 +747,15 @@ void setup() {
 }
 
 void loop() {
-  server.handleClient();
-  mqttEnsureConnected();
-  mqtt.loop();
-  buttonPoll();
+  if (inApMode) {
+    dnsServer.processNextRequest();
+    server.handleClient();
+    // AP 模式下按钮无功能（长按重置只在 STA 模式有意义；
+    // AP 模式本身就是"重置后的状态"，再触发 reset 也是回到这里）
+  } else {
+    server.handleClient();
+    mqttEnsureConnected();
+    mqtt.loop();
+    buttonPoll();   // 暂时仍调用旧版，Task 9 替换为 buttonPollStaMode
+  }
 }
