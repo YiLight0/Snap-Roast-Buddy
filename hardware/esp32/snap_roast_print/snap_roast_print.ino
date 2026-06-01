@@ -86,8 +86,53 @@ static void clearCreds() {
 // ---- AP 模式：配网 Web handler ----
 static void handleConfigRoot() {
   sendCors();
-  server.send(200, "text/html; charset=utf-8",
-              "<!doctype html><meta charset=utf-8><h1>SnapRoast 配网</h1><p>占位页（Task 3 替换）</p>");
+  String html;
+  html.reserve(4096);
+  html += "<!doctype html><html lang=\"zh-CN\"><head>";
+  html += "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">";
+  html += "<title>Snap Roast · 配置 WiFi</title><style>";
+  html += "*{box-sizing:border-box}body{font-family:-apple-system,'PingFang SC',sans-serif;padding:20px;max-width:480px;margin:0 auto;background:#f7f7f7;color:#222}";
+  html += "h1{font-size:20px;margin:8px 0 16px}";
+  html += ".panel{background:#fff;padding:16px;border-radius:10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}";
+  html += ".list{max-height:240px;overflow:auto;border:1px solid #eee;border-radius:8px}";
+  html += ".item{padding:10px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;justify-content:space-between;align-items:center}";
+  html += ".item:last-child{border-bottom:none}.item:active{background:#eef}.item.sel{background:#e6f0ff}";
+  html += ".rssi{color:#888;font-size:12px}";
+  html += "label{display:block;font-size:13px;color:#666;margin-top:10px}";
+  html += "input{width:100%;padding:10px;font-size:15px;border:1px solid #ddd;border-radius:6px;margin-top:4px}";
+  html += "button{width:100%;padding:12px;font-size:15px;border:none;border-radius:8px;background:#06f;color:#fff;margin-top:16px;cursor:pointer}";
+  html += "button.secondary{background:#888;margin-top:8px}.muted{color:#666;font-size:13px;margin-top:8px}";
+  html += "#status{margin-top:12px;font-size:13px;color:#06a}#status.err{color:#c00}";
+  html += "</style></head><body>";
+  html += "<h1>Snap Roast Buddy · 配置 WiFi</h1>";
+  html += "<div class=\"panel\"><div>附近的 WiFi（点击选择）：</div>";
+  html += "<div id=\"list\" class=\"list\"><div class=\"muted\" style=\"padding:12px\">扫描中...</div></div>";
+  html += "<button class=\"secondary\" onclick=\"loadScan()\">🔄 重新扫描</button></div>";
+  html += "<div class=\"panel\">";
+  html += "<label>已选 SSID</label><input id=\"ssid\" placeholder=\"点上面列表，或手动输入\">";
+  html += "<label>密码</label><input id=\"pass\" type=\"password\" placeholder=\"WiFi 密码\">";
+  html += "<button onclick=\"save()\">保存并连接</button>";
+  html += "<div id=\"status\"></div></div>";
+  html += "<script>";
+  html += "const $=(id)=>document.getElementById(id);";
+  html += "async function loadScan(){const l=$('list');l.innerHTML='<div class=\"muted\" style=\"padding:12px\">扫描中...</div>';";
+  html += "try{const r=await fetch('/scan');const arr=await r.json();";
+  html += "if(!arr.length){l.innerHTML='<div class=\"muted\" style=\"padding:12px\">未扫描到 WiFi</div>';return;}";
+  html += "l.innerHTML='';arr.forEach(n=>{const d=document.createElement('div');d.className='item';";
+  html += "d.innerHTML='<span>📶 '+n.ssid.replace(/</g,'&lt;')+'</span><span class=\"rssi\">'+n.rssi+' dBm</span>';";
+  html += "d.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');$('ssid').value=n.ssid;$('pass').focus();};";
+  html += "l.appendChild(d);});}catch(e){l.innerHTML='<div class=\"muted err\" style=\"padding:12px\">扫描失败: '+e.message+'</div>';}}";
+  html += "async function save(){const s=$('status');s.classList.remove('err');";
+  html += "const ssid=$('ssid').value.trim();const pass=$('pass').value;";
+  html += "if(!ssid){s.textContent='请先选择或输入 SSID';s.classList.add('err');return;}";
+  html += "s.textContent='保存中...';";
+  html += "try{const r=await fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ssid,pass})});";
+  html += "if(!r.ok){const t=await r.text();s.textContent='保存失败 HTTP '+r.status+': '+t;s.classList.add('err');return;}";
+  html += "document.body.innerHTML='<h1>✅ 已保存</h1><div class=\"panel\"><p>设备即将重启并连接 <b>'+ssid+'</b>。</p><p>请把手机 WiFi 切回原热点，等设备约 15 秒。</p></div>';";
+  html += "}catch(e){s.textContent='请求出错: '+e.message;s.classList.add('err');}}";
+  html += "loadScan();";
+  html += "</script></body></html>";
+  server.send(200, "text/html; charset=utf-8", html);
 }
 
 // catch-all：iOS/Android captive portal 探测域名都重定向到 /
