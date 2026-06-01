@@ -101,7 +101,7 @@ export async function handleClassifyLayout(req, res) {
 
     if (!completion.ok) return sendUpstreamError(res, completion, "SiliconFlow classification request failed.");
 
-    const data = await completion.json();
+    const data = await readUpstreamJson(completion, "SiliconFlow classification returned a non-JSON response.");
     return sendJson(res, 200, {
       ...parseClassificationPayload(data),
       rawContent: data?.choices?.[0]?.message ?? null
@@ -136,7 +136,7 @@ export async function handleRoast(req, res) {
 
     if (!completion.ok) return sendUpstreamError(res, completion, "SiliconFlow API request failed.");
 
-    const data = await completion.json();
+    const data = await readUpstreamJson(completion, "SiliconFlow roast returned a non-JSON response.");
     const rawContent = data?.choices?.[0]?.message?.content ?? "";
     const parsed = parseModelPayload(String(rawContent));
 
