@@ -24,6 +24,8 @@
 #include <HardwareSerial.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include <Preferences.h>
+#include <DNSServer.h>
 
 // ---- 硬件快门按钮 + MQTT 中转 ----
 #define BUTTON_PIN 4
@@ -38,6 +40,16 @@ static PubSubClient     mqtt(mqttNet);
 static int      btnLastLevel  = LOW;
 static uint32_t btnLastEdgeMs = 0;
 static uint32_t mqttLastTryMs = 0;
+
+// ---- WiFi 配网相关 ----
+static Preferences prefs;
+static DNSServer   dnsServer;
+static bool        inApMode = false;
+static const uint32_t LONG_PRESS_MS = 5000;
+static uint32_t btnPressStartMs = 0;
+static bool     longPressFired  = false;
+static const uint32_t STA_CONNECT_TIMEOUT_MS = 15000;
+static const char* AP_SSID = "SnapRoast-Setup";
 
 const char* ssid     = "iPhone on the beach";
 const char* password = "Qwer123321";
