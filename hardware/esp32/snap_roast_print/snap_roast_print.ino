@@ -710,19 +710,44 @@ static void mqttEnsureConnected() {
   }
 }
 
-// 上升沿 = 按下，发布一次按键事件
-static void buttonPoll() {
+// STA 模式：边沿检测短按发布 MQTT；持续按下 5s 触发长按 → 清 NVS + 重启
+static void buttonPollStaMode() {
   int level = digitalRead(BUTTON_PIN);
   uint32_t now = millis();
-  if (level != btnLastLevel && (now - btnLastEdgeMs) > BUTTON_DEBOUNCE_MS) {
+
+  // 上升沿（按下瞬间）
+  if (level == HIGH && btnLastLevel == LOW && (now - btnLastEdgeMs) > BUTTON_DEBOUNCE_MS) {
+    btnLastEdgeMs   = now;
+    btnPressStartMs = now;
+    longPressFired  = false;
+    btnLastLevel    = HIGH;
+    return;
+  }
+
+  // 持续按下 → 检查是否达到长按阈值
+  if (level == HIGH && btnLastLevel == HIGH && !longPressFired) {
+    if ((now - btnPressStartMs) >= LONG_PRESS_MS) {
+      longPressFired = true;
+      Serial.println("长按 5s → 清 WiFi 配置并重启");
+      clearCreds();
+      delay(200);
+      ESP.restart();
+    }
+    return;
+  }
+
+  // 下降沿（松开）
+  if (level == LOW && btnLastLevel == HIGH && (now - btnLastEdgeMs) > BUTTON_DEBOUNCE_MS) {
     btnLastEdgeMs = now;
-    if (btnLastLevel == LOW && level == HIGH) {
+    btnLastLevel  = LOW;
+    if (!longPressFired) {
+      // 短按 → 原 MQTT 快门发布逻辑
       char payload[32];
       snprintf(payload, sizeof(payload), "{\"ts\":%lu}", now);
       bool ok = mqtt.publish(MQTT_TOPIC, payload);
-      Serial.printf("按下 → publish %s (ok=%d)\n", payload, ok ? 1 : 0);
+      Serial.printf("短按 → publish %s (ok=%d)\n", payload, ok ? 1 : 0);
     }
-    btnLastLevel = level;
+    return;
   }
 }
 
@@ -756,6 +781,6 @@ void loop() {
     server.handleClient();
     mqttEnsureConnected();
     mqtt.loop();
-    buttonPoll();   // 暂时仍调用旧版，Task 9 替换为 buttonPollStaMode
+    buttonPollStaMode();
   }
 }
