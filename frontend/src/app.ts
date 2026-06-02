@@ -100,7 +100,6 @@ const analyzeImageButton = mustQuery<HTMLButtonElement>("#analyzeImageButton");
 const classifyButton = mustQuery<HTMLButtonElement>("#classifyButton");
 const generateButton = mustQuery<HTMLButtonElement>("#generateButton");
 const generateMangaButton = mustQuery<HTMLButtonElement>("#generateMangaButton");
-const testSupabaseButton = mustQuery<HTMLButtonElement>("#testSupabaseButton");
 const printCurrentButton = mustQuery<HTMLButtonElement>("#printCurrentButton");
 const examplesEl = mustQuery<HTMLDivElement>("#examples");
 const receiptPaper = mustQuery<HTMLDivElement>("#print-preview");
@@ -116,7 +115,6 @@ const classificationConfidence = mustQuery<HTMLSpanElement>("#classificationConf
 const classificationReason = mustQuery<HTMLParagraphElement>("#classificationReason");
 const classificationStatus = mustQuery<HTMLParagraphElement>("#classificationStatus");
 const mangaStatus = mustQuery<HTMLParagraphElement>("#mangaStatus");
-const supabaseStatus = mustQuery<HTMLParagraphElement>("#supabaseStatus");
 const printerStatus = mustQuery<HTMLParagraphElement>("#printerStatus");
 
 let inputUpdateTimer = 0;
@@ -172,7 +170,6 @@ analyzeImageButton.addEventListener("click", analyzeImage);
 classifyButton.addEventListener("click", classifyDescription);
 generateButton.addEventListener("click", generateWithApi);
 generateMangaButton.addEventListener("click", generateMangaStep);
-testSupabaseButton.addEventListener("click", testSupabaseConnection);
 attachPrintButtonHandlers();
 input.addEventListener("input", () => {
   resetGeneratedState();
@@ -371,26 +368,6 @@ async function generateMangaImage(imagePayload: string): Promise<string> {
   const imageSrc = payload.imageDataUrl || payload.imageUrl || (payload.imageBase64 ? `data:image/png;base64,${payload.imageBase64}` : "");
   if (!imageSrc) throw new Error("图像编辑模型没有返回图片。");
   return imageSrc;
-}
-
-async function testSupabaseConnection() {
-  setBusy(testSupabaseButton, true, "正在检测...");
-  setStepStatus(supabaseStatus, "正在连接 Supabase product_records 表。", "loading");
-
-  try {
-    const response = await fetch("/api/supabase-health");
-    const payload = await parseJsonResponse<{ ok?: boolean; table?: string; sampleCount?: number; error?: string; detail?: string }>(response);
-    if (!response.ok || !payload.ok) throw new Error(payload.detail || payload.error || "Supabase 连接失败。");
-    setStepStatus(
-      supabaseStatus,
-      `Supabase 连接成功：${payload.table ?? "product_records"}，读取到 ${payload.sampleCount ?? 0} 条样本。`,
-      "ready"
-    );
-  } catch (error) {
-    setStepStatus(supabaseStatus, error instanceof Error ? error.message : "Supabase 连接失败。", "error");
-  } finally {
-    setBusy(testSupabaseButton, false, "测试 Supabase 连接");
-  }
 }
 
 // === ESP32 WiFi 打印（位图路径，与 product.ts 对齐） ==================
@@ -670,7 +647,6 @@ classificationConfidence.textContent = "-";
 setStepStatus(imageStatus, "请选择示例图或上传图片。", "ready");
 setStepStatus(classificationStatus, "等待三分类。", "ready");
 setStepStatus(mangaStatus, "漫画会直接由图片生成白底黑线结果，再按设置插入小票。", "ready");
-setStepStatus(supabaseStatus, "等待检测 Supabase。", "ready");
 {
   const savedIp = getStoredEsp32Ip();
   setStepStatus(

@@ -2272,7 +2272,6 @@ var analyzeImageButton = mustQuery("#analyzeImageButton");
 var classifyButton = mustQuery("#classifyButton");
 var generateButton = mustQuery("#generateButton");
 var generateMangaButton = mustQuery("#generateMangaButton");
-var testSupabaseButton = mustQuery("#testSupabaseButton");
 var printCurrentButton = mustQuery("#printCurrentButton");
 var examplesEl = mustQuery("#examples");
 var receiptPaper = mustQuery("#print-preview");
@@ -2288,7 +2287,6 @@ var classificationConfidence = mustQuery("#classificationConfidence");
 var classificationReason = mustQuery("#classificationReason");
 var classificationStatus = mustQuery("#classificationStatus");
 var mangaStatus = mustQuery("#mangaStatus");
-var supabaseStatus = mustQuery("#supabaseStatus");
 var printerStatus = mustQuery("#printerStatus");
 var inputUpdateTimer = 0;
 var selectedImageUrl = "";
@@ -2338,7 +2336,6 @@ analyzeImageButton.addEventListener("click", analyzeImage);
 classifyButton.addEventListener("click", classifyDescription);
 generateButton.addEventListener("click", generateWithApi);
 generateMangaButton.addEventListener("click", generateMangaStep);
-testSupabaseButton.addEventListener("click", testSupabaseConnection);
 attachPrintButtonHandlers();
 input.addEventListener("input", () => {
   resetGeneratedState();
@@ -2517,24 +2514,6 @@ async function generateMangaImage(imagePayload) {
   const imageSrc = payload.imageDataUrl || payload.imageUrl || (payload.imageBase64 ? `data:image/png;base64,${payload.imageBase64}` : "");
   if (!imageSrc) throw new Error("\u56FE\u50CF\u7F16\u8F91\u6A21\u578B\u6CA1\u6709\u8FD4\u56DE\u56FE\u7247\u3002");
   return imageSrc;
-}
-async function testSupabaseConnection() {
-  setBusy(testSupabaseButton, true, "\u6B63\u5728\u68C0\u6D4B...");
-  setStepStatus(supabaseStatus, "\u6B63\u5728\u8FDE\u63A5 Supabase product_records \u8868\u3002", "loading");
-  try {
-    const response = await fetch("/api/supabase-health");
-    const payload = await parseJsonResponse(response);
-    if (!response.ok || !payload.ok) throw new Error(payload.detail || payload.error || "Supabase \u8FDE\u63A5\u5931\u8D25\u3002");
-    setStepStatus(
-      supabaseStatus,
-      `Supabase \u8FDE\u63A5\u6210\u529F\uFF1A${payload.table ?? "product_records"}\uFF0C\u8BFB\u53D6\u5230 ${payload.sampleCount ?? 0} \u6761\u6837\u672C\u3002`,
-      "ready"
-    );
-  } catch (error) {
-    setStepStatus(supabaseStatus, error instanceof Error ? error.message : "Supabase \u8FDE\u63A5\u5931\u8D25\u3002", "error");
-  } finally {
-    setBusy(testSupabaseButton, false, "\u6D4B\u8BD5 Supabase \u8FDE\u63A5");
-  }
 }
 var ESP32_IP_STORAGE_KEY = "snap_roast_esp32_ip";
 var PRINT_LONG_PRESS_MS = 900;
@@ -2769,7 +2748,6 @@ classificationConfidence.textContent = "-";
 setStepStatus(imageStatus, "\u8BF7\u9009\u62E9\u793A\u4F8B\u56FE\u6216\u4E0A\u4F20\u56FE\u7247\u3002", "ready");
 setStepStatus(classificationStatus, "\u7B49\u5F85\u4E09\u5206\u7C7B\u3002", "ready");
 setStepStatus(mangaStatus, "\u6F2B\u753B\u4F1A\u76F4\u63A5\u7531\u56FE\u7247\u751F\u6210\u767D\u5E95\u9ED1\u7EBF\u7ED3\u679C\uFF0C\u518D\u6309\u8BBE\u7F6E\u63D2\u5165\u5C0F\u7968\u3002", "ready");
-setStepStatus(supabaseStatus, "\u7B49\u5F85\u68C0\u6D4B Supabase\u3002", "ready");
 {
   const savedIp = getStoredEsp32Ip();
   setStepStatus(

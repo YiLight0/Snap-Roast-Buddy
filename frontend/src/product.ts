@@ -68,16 +68,6 @@ type DoodleResponse = {
   detail?: string;
 };
 
-type ProductRecordsResponse = {
-  records?: PhotoRecord[];
-  record?: PhotoRecord;
-  total?: number;
-  offset?: number;
-  limit?: number;
-  error?: string;
-  detail?: string;
-};
-
 type FocusConstraintSet = MediaTrackConstraintSet & {
   focusMode?: string;
   pointsOfInterest?: { x: number; y: number }[];
@@ -178,19 +168,14 @@ let zoomHideTimer = 0;
 let albumSnapTimer = 0;
 let isSyncingAlbum = false;
 let visibleAlbumIndex = -1;
-let recordListVersion = 0;
 let funMessageIndex = 0;
 let regenerateDraftSettings: ProductSettings = { ...settings };
 let productRecordsLoadPromise: Promise<void> | undefined;
 let productRecordsTotal = 0;
-const loadingRecordPages = new Set<number>();
-let usingLocalRecordStore = false;
 let generationPhases: GenerationPhase[] = [];
 let activeGenerationPhase: GenerationPhase | undefined;
 let generationProgressFrame = 0;
 let displayedGenerationProgress = 0;
-const productRecordsPageSize = 5;
-const deletedRecordIds = new Set<string>();
 const localProductRecordsKey = "snap-roast-buddy.product-records.v1";
 const productRecordsDbName = "snap-roast-buddy";
 const productRecordsStoreName = "product-records";
@@ -716,16 +701,9 @@ async function deleteCurrentRecord() {
   const current = records[currentRecordIndex];
   if (!current) return;
   const deletedIndex = currentRecordIndex;
-  deletedRecordIds.add(current.id);
-  invalidateRecordPages();
-  try {
-    await deleteProductRecord(current.id);
-  } catch {
-    usingLocalRecordStore = true;
-  }
+  await deleteProductRecord(current.id);
   records = records.filter((item) => item?.id !== current.id);
-  productRecordsTotal = Math.max(0, productRecordsTotal - 1);
-  if (records.length > productRecordsTotal) records.length = productRecordsTotal;
+  productRecordsTotal = records.length;
   renderLatestThumb();
   if (records.length === 0) {
     showCamera();
@@ -733,7 +711,6 @@ async function deleteCurrentRecord() {
   }
   const nextIndex = Math.min(deletedIndex, records.length - 1);
   showResult(nextIndex);
-  if (!usingLocalRecordStore) void reloadProductRecordsAtIndex(nextIndex);
 }
 
 async function generateSnapRoastResult(imageUrl: string, productSettings: ProductSettings): Promise<PhotoRecord> {
@@ -850,7 +827,22 @@ async function generateSketch(imageUrl: string): Promise<string> {
   const payload = await postJson<DoodleResponse>("/api/generate-doodle", { imageDataUrl: imageUrl });
   const result = payload.imageDataUrl || payload.imageUrl || (payload.imageBase64 ? `data:image/png;base64,${payload.imageBase64}` : "");
   if (!result) throw new Error("漫画模型没有返回图片。");
-  return result;
+  return result.startsWith("data:") ? result : inlineRemoteImage(result);
+}
+
+async function inlineRemoteImage(imageUrl: string): Promise<string> {
+  const response = await fetch(`/api/inline-image?url=${encodeURIComponent(imageUrl)}`, { credentials: "same-origin" });
+  if (!response.ok) throw new Error("漫画图片保存到本机失败，请稍后重试。");
+  return blobToDataUrl(await response.blob());
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result || "")));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("漫画图片保存到本机失败。")));
+    reader.readAsDataURL(blob);
+  });
 }
 
 // === ESP32 WiFi 打印（位图路径）======================================
@@ -1146,7 +1138,6 @@ function renderCurrentRecord() {
   updateResultMeta(hydratedRecord ?? record);
   renderAlbumSlides();
   scrollAlbumToIndex(currentRecordIndex, "auto");
-  void loadProductRecordWindow(currentRecordIndex);
   resultScroller.scrollTop = 0;
 }
 
@@ -1386,7 +1377,6 @@ function shiftRecord(offset: number) {
   updateResultMeta(records[currentRecordIndex]);
   refreshAlbumSlideWindow(currentRecordIndex);
   scrollAlbumToIndex(currentRecordIndex, "smooth");
-  void loadProductRecordWindow(currentRecordIndex);
 }
 
 function syncAlbumScroll(source: HTMLDivElement) {
@@ -1403,7 +1393,6 @@ function updateAlbumMetaFromScroll(source: HTMLDivElement) {
   visibleAlbumIndex = index;
   currentRecordIndex = index;
   updateResultMeta(records[index]);
-  void loadProductRecordWindow(index);
 }
 
 function snapAlbumToNearest(source: HTMLDivElement) {
@@ -1414,7 +1403,6 @@ function snapAlbumToNearest(source: HTMLDivElement) {
   updateResultMeta(records[index]);
   refreshAlbumSlideWindow(index);
   scrollAlbumToIndex(index, "smooth");
-  void loadProductRecordWindow(index);
 }
 
 function scrollAlbumToIndex(index: number, behavior: ScrollBehavior = "smooth") {
@@ -1513,89 +1501,11 @@ function renderLatestThumb() {
 }
 
 async function loadProductRecords() {
-  const requestVersion = invalidateRecordPages();
-  try {
-    const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=0&limit=${productRecordsPageSize}&view=summary`);
-    if (requestVersion !== recordListVersion) return;
-    const remoteRecords = [...(payload.records ?? [])].filter((record) => !deletedRecordIds.has(record.id)).sort((a, b) => recordTimestamp(b) - recordTimestamp(a));
-    await clearCachedProductRecords();
-    if (requestVersion !== recordListVersion) return;
-    usingLocalRecordStore = false;
-    productRecordsTotal = Math.max(payload.total ?? 0, remoteRecords.length);
-    records = createRecordSlots(productRecordsTotal);
-    placeLoadedRecords(0, remoteRecords, productRecordsTotal);
-    clampCurrentRecordIndex();
-    renderLatestThumb();
-    void loadProductRecordAtIndex(0);
-    if (!resultScreen.hidden) renderCurrentRecord();
-  } catch {
-    if (requestVersion !== recordListVersion) return;
-    usingLocalRecordStore = true;
-    const localRecords = (await readCachedProductRecords()).filter((record) => !deletedRecordIds.has(record.id));
-    productRecordsTotal = localRecords.length;
-    records = [...localRecords];
-    clampCurrentRecordIndex();
-    renderLatestThumb();
-    if (!resultScreen.hidden) renderCurrentRecord();
-  }
-}
-
-async function loadProductRecordAtIndex(index: number) {
-  if (usingLocalRecordStore || isHydratedRecord(records[index]) || index < 0) return;
-  const pageOffset = Math.floor(index / productRecordsPageSize) * productRecordsPageSize;
-  if (loadingRecordPages.has(pageOffset)) return;
-  const requestVersion = recordListVersion;
-  loadingRecordPages.add(pageOffset);
-  try {
-    const payload = await getJson<ProductRecordsResponse>(`/api/product-records?offset=${pageOffset}&limit=${productRecordsPageSize}&view=full`);
-    if (requestVersion !== recordListVersion) return;
-    const nextRecords = (payload.records ?? []).filter((record) => !deletedRecordIds.has(record.id));
-    const total = Math.max(payload.total ?? productRecordsTotal, pageOffset + nextRecords.length);
-    if (total !== productRecordsTotal || records.length !== total) {
-      productRecordsTotal = total;
-      records.length = total;
-    }
-    placeLoadedRecords(pageOffset, nextRecords, productRecordsTotal);
-    if (nextRecords.length) await writeCachedProductRecords(mergeRecords(await readCachedProductRecords(), nextRecords));
-    renderLatestThumb();
-    if (!resultScreen.hidden) {
-      if (imageCarousel.children.length !== records.length) {
-        renderAlbumSlides();
-        scrollAlbumToIndex(currentRecordIndex, "auto");
-      } else {
-        refreshAlbumSlideWindow(currentRecordIndex);
-      }
-      updateResultMeta(records[currentRecordIndex]);
-    }
-  } finally {
-    loadingRecordPages.delete(pageOffset);
-  }
-}
-
-async function loadProductRecordWindow(index: number) {
-  await Promise.all([index - 1, index, index + 1].filter((item) => item >= 0 && item < records.length).map((item) => loadProductRecordAtIndex(item)));
-}
-
-function createRecordSlots(total: number): Array<PhotoRecord | undefined> {
-  return Array.from({ length: Math.max(0, total) }, () => undefined);
-}
-
-function placeLoadedRecords(offset: number, nextRecords: PhotoRecord[], total: number) {
-  if (records.length !== total) records.length = total;
-  nextRecords.forEach((record, index) => {
-    if (!record?.id || deletedRecordIds.has(record.id)) return;
-    const targetIndex = offset + index;
-    const existingIndex = records.findIndex((item) => item?.id === record.id);
-    const slot = existingIndex >= 0 ? existingIndex : targetIndex;
-    const existing = records[slot];
-    records[slot] = existing?.id === record.id ? { ...existing, ...record } : record;
-  });
-}
-
-function invalidateRecordPages() {
-  recordListVersion += 1;
-  loadingRecordPages.clear();
-  return recordListVersion;
+  records = [...await readCachedProductRecords()];
+  productRecordsTotal = records.length;
+  clampCurrentRecordIndex();
+  renderLatestThumb();
+  if (!resultScreen.hidden) renderCurrentRecord();
 }
 
 function clampCurrentRecordIndex() {
@@ -1603,18 +1513,9 @@ function clampCurrentRecordIndex() {
   visibleAlbumIndex = currentRecordIndex;
 }
 
-async function reloadProductRecordsAtIndex(index: number) {
-  currentRecordIndex = Math.max(0, index);
-  productRecordsLoadPromise = loadProductRecords();
-  await productRecordsLoadPromise;
-  currentRecordIndex = records.length ? Math.min(index, records.length - 1) : 0;
-  if (!resultScreen.hidden) renderCurrentRecord();
-}
-
 function prependLoadedRecord(record: PhotoRecord) {
   records = [record, ...records.filter((item) => item?.id !== record.id)];
-  productRecordsTotal = Math.max(productRecordsTotal + 1, records.filter(Boolean).length);
-  records.length = productRecordsTotal;
+  productRecordsTotal = records.length;
 }
 
 function isHydratedRecord(record: PhotoRecord | undefined): record is PhotoRecord & { originalImageUrl: string } {
@@ -1631,22 +1532,12 @@ async function ensureProductRecordsLoaded() {
 }
 
 async function saveProductRecord(record: PhotoRecord): Promise<PhotoRecord> {
-  try {
-    const payload = await postJson<ProductRecordsResponse>("/api/product-records", { record });
-    const savedRecord = payload.record ?? record;
-    await upsertCachedProductRecord(savedRecord);
-    return savedRecord;
-  } catch {
-    usingLocalRecordStore = true;
-    await upsertCachedProductRecord(record);
-    return record;
-  }
+  await upsertCachedProductRecord(record);
+  return record;
 }
 
 async function deleteProductRecord(id: string): Promise<void> {
-  const response = await fetch(`/api/product-records/${encodeURIComponent(id)}`, { method: "DELETE" });
-  if (response.ok) await removeCachedProductRecord(id);
-  if (!response.ok) throw new Error("删除记录失败。");
+  await removeCachedProductRecord(id);
 }
 
 async function readCachedProductRecords(): Promise<PhotoRecord[]> {
@@ -1659,41 +1550,23 @@ async function writeCachedProductRecords(nextRecords: PhotoRecord[]) {
   try {
     await writeIndexedProductRecords(nextRecords);
   } catch {
-    writeLocalProductRecords(nextRecords);
+    // localStorage below remains available as a compatibility fallback.
   }
+  writeLocalProductRecords(nextRecords);
 }
 
 async function upsertCachedProductRecord(record: PhotoRecord) {
   try {
     await upsertIndexedProductRecord(record);
   } catch {
-    const nextRecords = [record, ...readLocalProductRecords().filter((item) => item.id !== record.id)];
-    writeLocalProductRecords(nextRecords);
+    // localStorage below remains available as a compatibility fallback.
   }
+  const nextRecords = [record, ...readLocalProductRecords().filter((item) => item.id !== record.id)];
+  writeLocalProductRecords(nextRecords);
 }
 
 async function removeCachedProductRecord(id: string) {
   await writeCachedProductRecords((await readCachedProductRecords()).filter((record) => record.id !== id));
-}
-
-async function clearCachedProductRecords() {
-  try {
-    const database = await openProductRecordsDatabase();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(productRecordsStoreName, "readwrite");
-      transaction.objectStore(productRecordsStoreName).clear();
-      transaction.addEventListener("complete", () => resolve());
-      transaction.addEventListener("error", () => reject(transaction.error ?? new Error("IndexedDB clear failed.")));
-      transaction.addEventListener("abort", () => reject(transaction.error ?? new Error("IndexedDB clear aborted.")));
-    });
-  } catch {
-    // Continue with the authoritative remote records if browser storage is unavailable.
-  }
-  try {
-    window.localStorage.removeItem(localProductRecordsKey);
-  } catch {
-    // Continue with the authoritative remote records if browser storage is unavailable.
-  }
 }
 
 async function readIndexedProductRecords(): Promise<PhotoRecord[]> {
@@ -1723,7 +1596,6 @@ async function writeIndexedProductRecords(nextRecords: PhotoRecord[]): Promise<v
     store.clear();
     nextRecords
       .sort((a, b) => recordTimestamp(b) - recordTimestamp(a))
-      .slice(0, 80)
       .forEach((record) => store.put(record));
     transaction.addEventListener("complete", () => resolve());
     transaction.addEventListener("error", () => reject(transaction.error ?? new Error("IndexedDB write failed.")));
@@ -1740,14 +1612,6 @@ async function upsertIndexedProductRecord(record: PhotoRecord): Promise<void> {
     transaction.addEventListener("error", () => reject(transaction.error ?? new Error("IndexedDB upsert failed.")));
     transaction.addEventListener("abort", () => reject(transaction.error ?? new Error("IndexedDB upsert aborted.")));
   });
-}
-
-function mergeRecords(...recordGroups: PhotoRecord[][]): PhotoRecord[] {
-  const byId = new Map<string, PhotoRecord>();
-  recordGroups.flat().forEach((record) => {
-    if (record?.id) byId.set(record.id, record);
-  });
-  return Array.from(byId.values()).sort((a, b) => recordTimestamp(b) - recordTimestamp(a));
 }
 
 function openProductRecordsDatabase(): Promise<IDBDatabase> {
@@ -1793,20 +1657,6 @@ function writeLocalProductRecords(nextRecords: PhotoRecord[]) {
       // Try again with fewer base64-heavy photos.
     }
   }
-}
-
-async function getJson<T extends { error?: string; detail?: string }>(url: string): Promise<T> {
-  const response = await fetch(url);
-  const rawText = await response.text();
-  let payload: T;
-  try {
-    payload = (rawText ? JSON.parse(rawText) : {}) as T;
-  } catch {
-    const message = rawText.trim().slice(0, 240) || `HTTP ${response.status}`;
-    throw new Error(response.ok ? `响应不是有效 JSON：${message}` : message);
-  }
-  if (!response.ok || payload.error) throw new Error(formatApiError(payload, "读取记录失败。"));
-  return payload;
 }
 
 function centerSelectedCameraMode() {
