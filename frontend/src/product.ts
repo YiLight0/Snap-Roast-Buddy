@@ -145,6 +145,7 @@ const ticketLongPreview = mustQuery<HTMLDivElement>("#ticketLongPreview");
 const ticketCarousel = mustQuery<HTMLDivElement>("#ticketCarousel");
 const regenerateButton = mustQuery<HTMLButtonElement>("#regenerateButton");
 const printButton = mustQuery<HTMLButtonElement>("#printButton");
+const exportReceiptImageButton = mustQuery<HTMLButtonElement>("#exportReceiptImageButton");
 const exportPrintCommandButton = mustQuery<HTMLButtonElement>("#exportPrintCommandButton");
 const deleteRecordButton = mustQuery<HTMLButtonElement>("#deleteRecordButton");
 const backToCameraButton = mustQuery<HTMLButtonElement>("#backToCameraButton");
@@ -262,6 +263,7 @@ startGenerateButton.addEventListener("click", (event) => {
 backToCameraButton.addEventListener("click", showCamera);
 regenerateButton.addEventListener("click", openRegenerateSheet);
 confirmRegenerateButton.addEventListener("click", () => confirmRegenerate());
+exportReceiptImageButton.addEventListener("click", () => void exportCurrentReceiptImage());
 exportPrintCommandButton.addEventListener("click", () => void exportCurrentPrintCommand());
 deleteRecordButton.addEventListener("click", openDeleteConfirmDialog);
 attachPrintButtonHandlers();
@@ -894,6 +896,29 @@ async function exportCurrentPrintCommand(): Promise<void> {
   }
 }
 
+async function exportCurrentReceiptImage(): Promise<void> {
+  const record = records[currentRecordIndex];
+  if (!hasExportableTicket(record)) {
+    window.alert("当前结果没有可导出的小票图片。");
+    return;
+  }
+
+  exportReceiptImageButton.disabled = true;
+
+  try {
+    const blob = await withPrintableTicketElement(record, async (ticketElement) => {
+      const canvas = await elementToCanvas(ticketElement);
+      return canvasToBlob(canvas, "image/png");
+    });
+    downloadBlob(blob, createReceiptImageFilename(record));
+    softHaptic();
+  } catch (error) {
+    window.alert(error instanceof Error ? error.message : "导出小票图片失败。");
+  } finally {
+    updateResultActionButtons();
+  }
+}
+
 async function createPrintCommandBytes(record: PhotoRecord): Promise<Uint8Array> {
   return withPrintableTicketElement(record, (ticketElement) => createRasterPrintBytesFromElement(ticketElement));
 }
@@ -949,6 +974,10 @@ function formatPrintCommandHex(bytes: Uint8Array, bytesPerLine = 16): string {
 
 function downloadText(text: string, filename: string): void {
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  downloadBlob(blob, filename);
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -959,10 +988,25 @@ function downloadText(text: string, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function canvasToBlob(canvas: HTMLCanvasElement, type: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("无法生成小票图片。"));
+    }, type);
+  });
+}
+
 function createPrintCommandFilename(record: PhotoRecord): string {
   const stamp = (record.createdAt ?? new Date().toISOString()).replace(/[:.]/g, "-").slice(0, 19);
   const id = record.id ? `-${record.id.slice(0, 8)}` : "";
   return `拍立怼-print-command-${stamp}${id}.txt`.replace(/[\\/:*?"<>|]/g, "-");
+}
+
+function createReceiptImageFilename(record: PhotoRecord): string {
+  const stamp = (record.createdAt ?? new Date().toISOString()).replace(/[:.]/g, "-").slice(0, 19);
+  const id = record.id ? `-${record.id.slice(0, 8)}` : "";
+  return `拍立怼-receipt-${stamp}${id}.png`.replace(/[\\/:*?"<>|]/g, "-");
 }
 
 function getStoredEsp32Ip(): string {
@@ -1126,6 +1170,7 @@ function updateResultActionButtons(record: PhotoRecord | undefined = records[cur
   regenerateButton.disabled = !hydratedRecord;
   deleteRecordButton.disabled = !record;
   printButton.disabled = !hasTicket;
+  exportReceiptImageButton.disabled = !hasTicket;
   exportPrintCommandButton.disabled = !hasTicket;
 }
 

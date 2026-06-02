@@ -2682,6 +2682,57 @@ pre {
   font-weight: 700;
 }
 
+.result-export-image-button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(44, 44, 46, 0.76);
+  color: var(--product-label);
+  box-shadow: inset 0 0 0 1px var(--product-separator);
+  pointer-events: auto;
+}
+
+.result-export-image-button:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
+.result-export-image-button span,
+.result-export-image-button span::before,
+.result-export-image-button span::after {
+  position: absolute;
+  content: "";
+}
+
+.result-export-image-button span {
+  left: 11px;
+  top: 8px;
+  width: 14px;
+  height: 15px;
+  border-bottom: 3px solid currentColor;
+}
+
+.result-export-image-button span::before {
+  left: 6px;
+  top: 0;
+  width: 3px;
+  height: 11px;
+  background: currentColor;
+}
+
+.result-export-image-button span::after {
+  left: 3px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-right: 3px solid currentColor;
+  border-bottom: 3px solid currentColor;
+  transform: rotate(45deg);
+}
+
 .ticket-long-preview {
   display: grid;
   justify-items: stretch;
