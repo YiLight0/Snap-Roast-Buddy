@@ -221,14 +221,14 @@ async function inlineEmbeddedImages(root: HTMLElement) {
     ...htmlImages.map(async (image) => {
       const src = image.getAttribute("src") || image.src;
       const dataUrl = await toInlineImageUrl(src);
-      if (!dataUrl) return;
+      if (!dataUrl) throw new Error("小票中的漫画图片读取失败，请稍后重试。");
       image.setAttribute("src", dataUrl);
       image.removeAttribute("srcset");
     }),
     ...svgImages.map(async (image) => {
       const href = image.getAttribute("href") || image.getAttributeNS("http://www.w3.org/1999/xlink", "href") || "";
       const dataUrl = await toInlineImageUrl(href);
-      if (!dataUrl) return;
+      if (!dataUrl) throw new Error("小票中的漫画图片读取失败，请稍后重试。");
       image.setAttribute("href", dataUrl);
       image.setAttributeNS("http://www.w3.org/1999/xlink", "href", dataUrl);
     })
@@ -238,9 +238,23 @@ async function inlineEmbeddedImages(root: HTMLElement) {
 async function toInlineImageUrl(src: string) {
   if (!src) return "";
   if (src.startsWith("data:")) return src;
+  let absoluteUrl: string;
   try {
-    const absoluteUrl = new URL(src, document.baseURI).href;
+    absoluteUrl = new URL(src, document.baseURI).href;
+  } catch {
+    return "";
+  }
+  try {
     const response = await fetch(absoluteUrl, { mode: "cors", credentials: "omit" });
+    if (response.ok) return await blobToDataUrl(await response.blob());
+  } catch {
+    // Fall through to the same-origin proxy.
+  }
+
+  // Some generated-image hosts allow display but do not expose CORS headers.
+  // Use our same-origin API as a fallback so receipt exports can still inline them.
+  try {
+    const response = await fetch(`/api/inline-image?url=${encodeURIComponent(absoluteUrl)}`, { credentials: "same-origin" });
     if (!response.ok) return "";
     return await blobToDataUrl(await response.blob());
   } catch {

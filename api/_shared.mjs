@@ -54,6 +54,41 @@ export async function handleAnalyzeImage(req, res) {
   }
 }
 
+export async function handleInlineImage(req, res) {
+  try {
+    const requestUrl = new URL(req.url ?? "/api/inline-image", `https://${req.headers.host ?? "localhost"}`);
+    const imageUrl = validateExternalImageUrl(requestUrl.searchParams.get("url"));
+    const response = await fetchExternalImage(imageUrl);
+    if (!response.ok) {
+      res.statusCode = response.status;
+      res.end("Image fetch failed.");
+      return;
+    }
+
+    const contentType = response.headers.get("content-type") || "image/png";
+    if (!contentType.startsWith("image/")) {
+      res.statusCode = 415;
+      res.end("Unsupported image type.");
+      return;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > 8 * 1024 * 1024) {
+      res.statusCode = 413;
+      res.end("Image too large.");
+      return;
+    }
+
+    res.statusCode = 200;
+    res.setHeader("content-type", contentType);
+    res.setHeader("cache-control", "public, max-age=3600");
+    res.end(Buffer.from(arrayBuffer));
+  } catch (error) {
+    res.statusCode = error?.statusCode ?? 400;
+    res.end(error instanceof Error ? error.message : "Image proxy failed.");
+  }
+}
+
 export async function handleClassifyLayout(req, res) {
   try {
     requireApiKey();
@@ -570,6 +605,42 @@ async function downloadImageAsDataUrl(imageUrl) {
   } catch {
     return "";
   }
+}
+
+async function fetchExternalImage(initialUrl) {
+  let url = initialUrl;
+  for (let redirects = 0; redirects <= 4; redirects += 1) {
+    const response = await fetch(url, { redirect: "manual" });
+    if (response.status < 300 || response.status >= 400) return response;
+    const location = response.headers.get("location");
+    if (!location) return response;
+    url = validateExternalImageUrl(new URL(location, url).href);
+  }
+  throw Object.assign(new Error("Too many image redirects."), { statusCode: 400 });
+}
+
+function validateExternalImageUrl(rawUrl) {
+  let url;
+  try {
+    url = new URL(String(rawUrl || ""));
+  } catch {
+    throw Object.assign(new Error("Invalid image URL."), { statusCode: 400 });
+  }
+
+  if (url.protocol !== "https:" || url.username || url.password || isPrivateHostname(url.hostname)) {
+    throw Object.assign(new Error("Unsupported image URL."), { statusCode: 400 });
+  }
+  return url;
+}
+
+function isPrivateHostname(hostname) {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (normalized === "localhost" || normalized.endsWith(".localhost") || normalized === "::1") return true;
+  if (/^127\./.test(normalized) || /^10\./.test(normalized) || /^192\.168\./.test(normalized)) return true;
+  const private172 = normalized.match(/^172\.(\d+)\./);
+  if (private172 && Number(private172[1]) >= 16 && Number(private172[1]) <= 31) return true;
+  if (/^169\.254\./.test(normalized) || /^0\./.test(normalized)) return true;
+  return false;
 }
 
 async function normalizeRecordImages(record) {

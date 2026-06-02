@@ -2149,14 +2149,14 @@ async function inlineEmbeddedImages(root) {
     ...htmlImages.map(async (image) => {
       const src = image.getAttribute("src") || image.src;
       const dataUrl = await toInlineImageUrl(src);
-      if (!dataUrl) return;
+      if (!dataUrl) throw new Error("\u5C0F\u7968\u4E2D\u7684\u6F2B\u753B\u56FE\u7247\u8BFB\u53D6\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002");
       image.setAttribute("src", dataUrl);
       image.removeAttribute("srcset");
     }),
     ...svgImages.map(async (image) => {
       const href = image.getAttribute("href") || image.getAttributeNS("http://www.w3.org/1999/xlink", "href") || "";
       const dataUrl = await toInlineImageUrl(href);
-      if (!dataUrl) return;
+      if (!dataUrl) throw new Error("\u5C0F\u7968\u4E2D\u7684\u6F2B\u753B\u56FE\u7247\u8BFB\u53D6\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002");
       image.setAttribute("href", dataUrl);
       image.setAttributeNS("http://www.w3.org/1999/xlink", "href", dataUrl);
     })
@@ -2165,9 +2165,19 @@ async function inlineEmbeddedImages(root) {
 async function toInlineImageUrl(src) {
   if (!src) return "";
   if (src.startsWith("data:")) return src;
+  let absoluteUrl;
   try {
-    const absoluteUrl = new URL(src, document.baseURI).href;
+    absoluteUrl = new URL(src, document.baseURI).href;
+  } catch {
+    return "";
+  }
+  try {
     const response = await fetch(absoluteUrl, { mode: "cors", credentials: "omit" });
+    if (response.ok) return await blobToDataUrl(await response.blob());
+  } catch {
+  }
+  try {
+    const response = await fetch(`/api/inline-image?url=${encodeURIComponent(absoluteUrl)}`, { credentials: "same-origin" });
     if (!response.ok) return "";
     return await blobToDataUrl(await response.blob());
   } catch {
